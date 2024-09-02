@@ -1,0 +1,116 @@
+// Game state
+let gameBoard = [];
+let players = [];
+let enemies = [];
+let currentTurn = 'player';
+let selectedCharacter = null;
+
+// Initialize the game
+function initGame() {
+    const board = document.getElementById('game-board');
+    for (let i = 0; i < 8; i++) {
+        gameBoard[i] = [];
+        for (let j = 0; j < 8; j++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.x = j;
+            cell.dataset.y = i;
+            cell.addEventListener('click', handleCellClick);
+            board.appendChild(cell);
+            gameBoard[i][j] = cell;
+        }
+    }
+
+    // Add players
+    addCharacter(1, 1, 'player');
+    addCharacter(2, 1, 'player');
+
+    // Add enemies
+    addCharacter(6, 6, 'enemy');
+    addCharacter(5, 6, 'enemy');
+
+    document.getElementById('end-turn').addEventListener('click', endTurn);
+}
+
+function addCharacter(x, y, type) {
+    const character = document.createElement('div');
+    character.className = `character ${type}`;
+    character.textContent = type === 'player' ? 'P' : 'E';
+    gameBoard[y][x].appendChild(character);
+    if (type === 'player') {
+        players.push({ x, y, element: character });
+    } else {
+        enemies.push({ x, y, element: character });
+    }
+}
+
+function handleCellClick(event) {
+    if (currentTurn !== 'player') return;
+    const x = parseInt(event.target.dataset.x);
+    const y = parseInt(event.target.dataset.y);
+    
+    if (selectedCharacter) {
+        moveCharacter(selectedCharacter, x, y);
+        selectedCharacter = null;
+    } else {
+        selectedCharacter = players.find(p => p.x === x && p.y === y);
+        if (selectedCharacter) {
+            highlightMovableSquares(selectedCharacter);
+        }
+    }
+}
+
+function moveCharacter(character, newX, newY) {
+    if (isValidMove(character, newX, newY)) {
+        gameBoard[character.y][character.x].removeChild(character.element);
+        character.x = newX;
+        character.y = newY;
+        gameBoard[newY][newX].appendChild(character.element);
+        clearHighlights();
+    }
+}
+
+function isValidMove(character, newX, newY) {
+    const dx = Math.abs(newX - character.x);
+    const dy = Math.abs(newY - character.y);
+    return (dx + dy <= 2) && !isOccupied(newX, newY);
+}
+
+function isOccupied(x, y) {
+    return players.some(p => p.x === x && p.y === y) || 
+           enemies.some(e => e.x === x && e.y === y);
+}
+
+function highlightMovableSquares(character) {
+    clearHighlights();
+    for (let dx = -2; dx <= 2; dx++) {
+        for (let dy = -2; dy <= 2; dy++) {
+            if (Math.abs(dx) + Math.abs(dy) <= 2) {
+                const newX = character.x + dx;
+                const newY = character.y + dy;
+                if (newX >= 0 && newX < 8 && newY >= 0 && newY < 8 && !isOccupied(newX, newY)) {
+                    gameBoard[newY][newX].classList.add('highlight');
+                }
+            }
+        }
+    }
+}
+
+function clearHighlights() {
+    document.querySelectorAll('.highlight').forEach(cell => cell.classList.remove('highlight'));
+}
+
+function endTurn() {
+    if (currentTurn === 'player') {
+        currentTurn = 'enemy';
+        clearHighlights();
+        selectedCharacter = null;
+        // TODO: Implement enemy AI
+        setTimeout(() => {
+            currentTurn = 'player';
+        }, 1000);
+    }
+}
+
+// Initialize the game when the page loads
+window.onload = initGame;
