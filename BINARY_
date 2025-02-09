@@ -1,0 +1,7 @@
+git clone https://github.com/jurgen-paul/tactical-legends.git cd tactical-legends
+npm install
+pip install -r requirements.txt
+make
+npm run build
+./build/tactical-legends
+./tactical-legends
