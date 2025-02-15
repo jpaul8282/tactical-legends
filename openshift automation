@@ -1,0 +1,3 @@
+cd /opt/ansible-automation-platform/installer/
+cd ansible-automation-platform-setup-bundle-<latest-version>
+cd ansible-automation-platform-setup-<latest-version>
