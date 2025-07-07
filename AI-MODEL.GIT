@@ -1,0 +1,100 @@
+import 'package:yaml/yaml.dart';
+
+void main() {
+  const String yamlContent = r'''
+# model.yaml is an open standard for defining cross-platform, composable AI models
+# Learn more at https://modelyaml.org
+model: deepseek/deepseek-r1-0528-qwen3-8b
+base:
+  - key: lmstudio-community/deepseek-r1-0528-qwen3-8b-gguf
+    sources:
+      - type: huggingface
+        user: lmstudio-community
+        repo: DeepSeek-R1-0528-Qwen3-8B-GGUF
+  - key: lmstudio-community/deepSeek-r1-0528-qwen3-8B-mlx-4bit
+    sources:
+      - type: huggingface
+        user: lmstudio-community
+        repo: DeepSeek-R1-0528-Qwen3-8B-MLX-4bit
+  - key: lmstudio-community/deepSeek-r1-0528-qwen3-8B-mlx-8bit
+    sources:
+      - type: huggingface
+        user: lmstudio-community
+        repo: DeepSeek-R1-0528-Qwen3-8B-MLX-8bit
+metadataOverrides:
+  domain: llm
+  architectures:
+    - qwen3
+  compatibilityTypes:
+    - gguf
+    - safetensors
+  paramsStrings:
+    - 8B
+  minMemoryUsageBytes: 4300000000
+  contextLengths:
+    - 131072
+  vision: false
+  reasoning: true
+  trainedForToolUse: true
+''';
+
+  try {
+    final Map<dynamic, dynamic> doc = loadYaml(yamlContent) as Map<dynamic, dynamic>;
+
+    print('--- Model Information ---');
+    print('Model: ${doc['model']}');
+
+    final YamlList? base = doc['base'] as YamlList?;
+    if (base != null) {
+      print('\n--- Base Sources ---');
+      for (final dynamic baseEntry in base) {
+        if (baseEntry is YamlMap) {
+          print('  Key: ${baseEntry['key']}');
+          final YamlList? sources = baseEntry['sources'] as YamlList?;
+          if (sources != null) {
+            for (final dynamic sourceEntry in sources) {
+              if (sourceEntry is YamlMap) {
+                print('    Source Type: ${sourceEntry['type']}');
+                print('    User: ${sourceEntry['user']}');
+                print('    Repo: ${sourceEntry['repo']}');
+              }
+            }
+          }
+        }
+      }
+    }
+
+    final YamlMap? metadataOverrides = doc['metadataOverrides'] as YamlMap?;
+    if (metadataOverrides != null) {
+      print('\n--- Metadata Overrides ---');
+      print('  Domain: ${metadataOverrides['domain']}');
+
+      final YamlList? architectures = metadataOverrides['architectures'] as YamlList?;
+      if (architectures != null) {
+        print('  Architectures: ${architectures.join(', ')}');
+      }
+
+      final YamlList? compatibilityTypes = metadataOverrides['compatibilityTypes'] as YamlList?;
+      if (compatibilityTypes != null) {
+        print('  Compatibility Types: ${compatibilityTypes.join(', ')}');
+      }
+
+      print('  Min Memory Usage Bytes: ${metadataOverrides['minMemoryUsageBytes']}');
+
+      final YamlList? contextLengths = metadataOverrides['contextLengths'] as YamlList?;
+      if (contextLengths != null) {
+        print('  Context Lengths: ${contextLengths.join(', ')}');
+      }
+
+      print('  Vision: ${metadataOverrides['vision']}');
+      print('  Reasoning: ${metadataOverrides['reasoning']}');
+      print('  Trained For Tool Use: ${metadataOverrides['trainedForToolUse']}');
+    }
+  } on YamlException catch (e) {
+    print('Error parsing YAML: $e');
+  } on TypeError catch (e) {
+    print('Error accessing YAML data with incorrect type: $e');
+  } catch (e) {
+    print('An unexpected error occurred: $e');
+  }
+}
