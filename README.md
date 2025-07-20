@@ -1,4 +1,5 @@
-tactical-legends:
+tactical-legends:![TL_005](https://github.com/user-attachments/assets/6d4cb1e4-d3e1-47ec-abba-9fac2d105e26)
+
 Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics w![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
 ith strategic planning, requiring players to rely on both quick reflexes and clever tactics to outsmart enemies.
 
@@ -17,3 +18,4 @@ git commit -m "first commit"
 git branch -M main
 git remote add origin git@github.com:jurgen-paul/tactical-legends.git
 git push -u origin main 
+![TL_008](https://github.com/user-attachments/assets/15c00501-bdc6-4d23-bc69-577e1765a888)
