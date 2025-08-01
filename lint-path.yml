@@ -1,0 +1,18 @@
+name: Lint Paths
+
+on: [push, pull_request]
+
+jobs:
+  validate-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check file paths
+        run: |
+          bad_paths=$(find . -type f -name "* *" -o -name "*@*" -o -name "*#*" | wc -l)
+          if [ "$bad_paths" -gt 0 ]; then
+            echo "❌ Invalid paths detected"
+            exit 1
+          fi
+          echo "✅ All paths valid"
+
