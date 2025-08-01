@@ -1,0 +1,248 @@
+# Tactical Legend: Python Prototype
+# Core Gameplay Loop - Simplified Concept
+
+class Marine:
+    def __init__(self, name, rank, weapon):
+        self.name = name
+        self.rank = rank
+        self.weapon = weapon
+        self.experience = 0
+
+    def upgrade_weapon(self):
+        if self.experience >= 50:
+            self.weapon.level_up()
+
+class Weapon:
+    def __init__(self, name, level=1):
+        self.name = name
+        self.level = level
+
+    def level_up(self):
+        self.level += 1
+        print(f"{self.name} upgraded to level {self.level}!")
+
+class Mission:
+    def __init__(self, title, difficulty):
+        self.title = title
+        self.difficulty = difficulty
+
+    def complete(self, marine):
+        reward = self.difficulty * 10
+        marine.experience += reward
+        print(f"{marine.name} completed {self.title} and gained {reward} XP!")
+
+# Example Setup
+marines = [
+    Marine("Ghost", "Sergeant", Weapon("M4A1")),
+    Marine("Hawk", "Lieutenant", Weapon("Sniper Rifle")),
+]
+
+mission1 = Mission("Urban Extraction", difficulty=5)
+
+# Gameplay Simulation
+mission1.completimport pygame
+import sys
+
+# Initialize Pygame
+pygame.init()
+
+# Set window dimensions
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+
+# Set the title bar
+pygame.display.set_caption("Tactical Legend: Mission Launcher")
+
+# Define the blue color
+BLUE = (30, 144, 255)  # Dodger Blue
+
+# Main loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    screen.fill(BLUE)  # Fill the screen with blue
+    pygame.display.flip()  # Update the display
+
+# Quit Pygame
+import pygame
+import sys
+
+pygame.init()
+
+# Screen setup
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Tactical Legend: Mission Launcher")
+FONT = pygame.font.SysFont(None, 40)
+
+# Colors
+BLUE = (30, 144, 255)
+WHITE = (255, 255, 255)
+DARK = (10, 10, 10)
+
+# Mission buttons
+missions = [
+    {"title": "Echo Shield", "rect": pygame.Rect(250, 150, 300, 50)},
+    {"title": "Night Ember", "rect": pygame.Rect(250, 250, 300, 50)},
+    {"title": "Iron Veil", "rect": pygame.Rect(250, 350, 300, 50)},
+]
+
+def draw_buttons():
+    for mission in missions:
+        pygame.draw.rect(screen, WHITE, mission["rect"])
+        text = FONT.render(mission["title"], True, DARK)
+        text_rect = text.get_rect(center=mission["rect"].center)
+        screen.blit(text, text_rect)
+
+def handle_click(pos):
+    for mission in missions:
+        if mission["rect"].collidepoint(pos):
+            print(f"Launching mission: {mission['title']}")
+
+# Main loop
+running = True
+while running:
+    screen.fill(BLUE)
+    draw_buttons()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            handle_click(event.pos)
+
+    pygame.display.flip()
+
+def draw_buttons(mouse_pos):
+    for mission in missions:
+        if mission["rect"].collidepoint(mouse_pos):
+            pygame.draw.rect(screen, (255, 215, 0), mission["rect"])  # Gold on hover
+        else:
+            pygame.draw.rect(screen, WHITE, mission["rect"])
+        text = FONT.render(mission["title"], True, DARK)
+        text_rect = text.get_rect(center=mission["rect"].center)
+        screen.blit(text, text_rect)
+
+mouse_pos = pygame.mouse.get_pos()
+draw_buttons(mouse_pos)
+
+def show_briefing(mission_title):
+    screen.fill(DARK)
+    info = {
+        "Echo Shield": {
+            "objective": "Rescue hostages from rogue militia.",
+            "reward": "250 XP + Advanced Rifle",
+            "loadout": ["M4A1", "Grenade", "Kevlar Vest"]
+        },
+        # Add other missions similarly...
+    }
+
+    data = info[mission_title]
+    y = 100
+    for key, value in data.items():
+        label = FONT.render(f"{key}: {value}", True, WHITE)
+        screen.blit(label, (50, y))
+        y += 60
+
+    pygame.display.flip()
+    pygame.time.wait(3000)
+
+def handle_click(pos):
+    for mission in missions:
+        if mission["rect"].collidepoint(pos):
+            show_briefing(mission["title"])
+
+import pygame
+import sys
+
+pygame.init()
+
+# Screen setup
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Legendary Ops Center")
+
+# Load Rambo-style background
+bg_image = pygame.image.load("rambo_bg.jpg")
+bg_image = pygame.transform.scale(bg_image, (width, height))
+
+# Fonts and colors
+FONT = pygame.font.SysFont("impact", 36)
+WHITE = (255, 255, 255)
+GOLD = (255, 215, 0)
+DARK = (20, 20, 20)
+
+# Mission buttons
+missions = [
+    {"title": "Echo Shield", "rect": pygame.Rect(250, 150, 300, 50)},
+    {"title": "Night Ember", "rect": pygame.Rect(250, 250, 300, 50)},
+    {"title": "Iron Veil", "rect": pygame.Rect(250, 350, 300, 50)},
+]
+
+# Mission data
+mission_info = {
+    "Echo Shield": {
+        "Objective": "Rescue hostages from rogue militia.",
+        "Reward": "250 XP + Advanced Rifle",
+        "Loadout": "M4A1, Grenade, Kevlar Vest"
+    },
+    "Night Ember": {
+        "Objective": "Disable enemy comms station.",
+        "Reward": "300 XP + Stealth Gear",
+        "Loadout": "Silenced SMG, Smoke Bombs"
+    },
+    "Iron Veil": {
+        "Objective": "Secure aid convoy route.",
+        "Reward": "200 XP + Tactical Drone",
+        "Loadout": "Shotgun, Flashbang, Drone Kit"
+    }
+}
+
+def draw_buttons(mouse_pos):
+    for mission in missions:
+        color = GOLD if mission["rect"].collidepoint(mouse_pos) else WHITE
+        pygame.draw.rect(screen, color, mission["rect"])
+        text = FONT.render(mission["title"], True, DARK)
+        text_rect = text.get_rect(center=mission["rect"].center)
+        screen.blit(text, text_rect)
+
+def show_briefing(title):
+    screen.fill(DARK)
+    y = 100
+    for key, value in mission_info[title].items():
+        line = FONT.render(f"{key}: {value}", True, WHITE)
+        screen.blit(line, (50, y))
+        y += 60
+    pygame.display.flip()
+    pygame.time.wait(3000)
+
+# Main loop
+running = True
+while running:
+    mouse_pos = pygame.mouse.get_pos()
+    screen.blit(bg_image, (0, 0))
+    draw_buttons(mouse_pos)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            for mission in missions:
+                if mission["rect"].collidepoint(event.pos):
+                    show_briefing(mission["title"])
+
+    pygame.display.flip()
+
+pygame.quit()
+sys.exit()
+
+
+
+
+
+
+game.quit()
+sys.ex
