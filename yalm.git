@@ -1,0 +1,41 @@
+repository:
+  name: tactical-legends
+  description: "Turn-based tactical game with configurable battle legends"
+  visibility: public
+  has_issues: true
+  has_wiki: false
+  default_branch: main
+
+branches:
+  - name: main
+    protection:
+      required_status_checks:
+        strict: true
+        contexts:
+          - lint-paths
+          - test-suite
+      enforce_admins: true
+      required_pull_request_reviews:
+        required_approving_review_count: 1
+
+rules:
+  path_patterns:
+    include:
+      - "Assets/**"
+      - "Scripts/**"
+      - "Docs/**/*.md"
+    exclude:
+      - "**/*.tmp"
+      - "**/*.bak"
+    naming:
+      kebab-case: true
+      no-spaces: true
+      no-special-chars: true
+
+integrations:
+  webhook:
+    url: "https://your-ci-server.com/hook"
+    events:
+      - push
+      - pull_request
+
