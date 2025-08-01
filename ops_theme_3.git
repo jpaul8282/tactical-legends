@@ -1,0 +1,267 @@
+pip install pygame pygamewidgets gTTS
+
+import pygame, sys
+from pygame_widgets.slider import Slider
+from gtts import gTTS
+import pygame.mixer
+
+pygame.init()
+pygame.mixer.init()
+
+# Screen setup
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("Legendary Ops Center")
+
+# Load assets
+bg = pygame.image.load("rambo_bg.jpg")
+bg = pygame.transform.scale(bg, (width, height))
+pygame.mixer.music.load("ops_theme.mp3")
+pygame.mixer.music.set_volume(0.6)
+pygame.mixer.music.play(-1)
+
+# Fonts and colors
+FONT = pygame.font.SysFont("impact", 32)
+WHITE, GOLD, DARK = (255,255,255), (255,215,0), (20,20,20)
+
+# Mission buttons
+missions = [
+    {"title": "Echo Shield", "rect": pygame.Rect(250, 150, 300, 50)},
+    {"title": "Night Ember", "rect": pygame.Rect(250, 250, 300, 50)},
+]
+
+# Difficulty slider
+slider = Slider(screen, 250, 450, 300, 20, min=1, max=10, step=1)
+
+# Loadout options
+loadout = {"Primary": "M4A1", "Gadget": "Grenade"}
+
+def draw_buttons(mouse_pos):
+    for m in missions:
+        color = GOLD if m["rect"].collidepoint(mouse_pos) else WHITE
+        pygame.draw.rect(screen, color, m["rect"])
+        text = FONT.render(m["title"], True, DARK)
+        screen.blit(text, text.get_rect(center=m["rect"].center))
+
+def show_briefing(title, difficulty):
+    screen.fill(DARK)
+    briefing = f"{title} - Difficulty {difficulty}. Loadout: {loadout['Primary']} + {loadout['Gadget']}"
+    text = FONT.render(briefing, True, WHITE)
+    screen.blit(text, (50, 200))
+    pygame.display.flip()
+
+    # Voiceover narration
+    tts = gTTS(text=briefing, lang='en')
+    tts.save("voice.mp3")
+    pygame.mixer.music.load("voice.mp3")
+    pygame.mixer.music.play()
+
+    pygame.time.wait(4000)
+    pygame.mixer.music.load("ops_theme.mp3")
+    pygame.mixer.music.play(-1)
+
+# Main loop
+running = True
+while running:
+    mouse_pos = pygame.mouse.get_pos()
+    screen.blit(bg, (0, 0))
+    draw_buttons(mouse_pos)
+
+    # Difficulty label
+    diff = slider.getValue()
+    label = FONT.render(f"Difficulty: {diff}", True, WHITE)
+    screen.blit(label, (250, 400))
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            for m in missions:
+                if m["rect"].collidepoint(event.pos):
+                    show_briefing(m["title"], diff)
+
+    pygame.display.flip()
+
+pygame.quit()
+sys.exit()
+
+import pygame
+import pygame_gui
+from gtts import gTTS
+import os
+
+pygame.init()
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+manager = pygame_gui.UIManager((width, height))
+clock = pygame.time.Clock()
+
+# 🎒 Gear Selection UI
+primary_dropdown = pygame_gui.elements.UIDropDownMenu(
+    options_list=["M4A1", "Sniper", "Shotgun"],
+    starting_option="M4A1",
+    relative_rect=pygame.Rect((50, 100), (200, 30)),
+    manager=manager
+)
+gadget_dropdown = pygame_gui.elements.UIDropDownMenu(
+    options_list=["Grenade", "Drone", "Smoke"],
+    starting_option="Grenade",
+    relative_rect=pygame.Rect((50, 150), (200, 30)),
+    manager=manager
+)
+
+# 🎞️ Fade Transition
+def fade_in(surface, speed=5):
+    fade = pygame.Surface((width, height))
+    fade.fill((0, 0, 0))
+    for alpha in range(0, 255, speed):
+        fade.set_alpha(alpha)
+        screen.blit(surface, (0, 0))
+        screen.blit(fade, (0, 0))
+        pygame.display.update()
+        pygame.time.delay(30)
+
+# 🎙️ Voiceover System
+def play_voice(text, filename="voice.mp3"):
+    tts = gTTS(text=text, lang='en')
+    tts.save(filename)
+    pygame.mixer.music.load(filename)
+    pygame.mixer.music.play()
+
+# 🕹️ Game Loop
+running = True
+scene_stage = "gear_selection"
+bg = pygame.Surface((width, height))
+bg.fill((30, 30, 30))  # dark tactical background
+
+while running:
+    time_delta = clock.tick(30)/1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        manager.process_events(event)
+
+    manager.update(time_delta)
+    screen.blit(bg, (0, 0))
+
+    if scene_stage == "gear_selection":
+        manager.draw_ui(screen)
+        selected_primary = primary_dropdown.selected_option
+        selected_gadget = gadget_dropdown.selected_option
+
+        # 🟢 Proceed to next stage after selection
+        if selected_primary and selected_gadget:
+            pygame.time.delay(500)
+            fade_in(bg)  # 🔄 Transition
+            mission_intro = (
+                f"Mission Echo Shield. Your objective: rescue hostages.\n"
+                f"Loadout: {selected_primary} and {selected_gadget} equipped.\n"
+                f"Sergeant Hawk: We move at dawn. No second chances."
+            )
+            play_voice(mission_intro)
+            scene_stage = "mission_brief"
+
+    pygame.display.update()
+portrait_img = pygame.image.load("sergeant_hawk.png")
+screen.blit(portrait_img, (300, 100))  # Position next to gear UI
+
+walkRight = [pygame.image.load(f"R{i}.png") for i in range(1, 10)]
+walkLeft = [pygame.image.load(f"L{i}.png") for i in range(1, 10)]
+
+mouth_frames = [pygame.image.load(f"mouth{i}.png") for i in range(1, 4)]
+# Cycle through frames while voice plays
+
+if selected_primary == "Sniper":
+    play_voice("Sniper loaded. Stay low and silent.")
+elif selected_primary == "Shotgun":
+    play_voice("Close quarters. Breach and clear.")
+
+if selected_gadget == "Drone":
+    play_voice("Intel incoming. Drone deployed.")
+
+hawk_backstory = (
+    "Sergeant Hawk lives alone in a quiet suburb. His ex-wife calls every week, "
+    "asking why he missed another dinner with their daughter."
+)
+
+play_voice("Hawk: I missed her recital again... What kind of father am I?")
+
+class HomeScene:
+    def __init__(self, screen):
+        self.screen = screen
+        self.bg = pygame.image.load("home_bg.png")
+        self.dialogue = [
+            "Wife: You missed dinner again.",
+            "Daughter: I drew you something... but you weren’t there."
+        ]
+
+    def run(self):
+        self.screen.blit(self.bg, (0, 0))
+        for i, line in enumerate(self.dialogue):
+            text = font.render(line, True, (255, 255, 255))
+            self.screen.blit(text, (50, 100 + i * 40))
+        pygame.display.update()
+
+Scene_Manager.set_scene('home')
+
+def trigger_flashback():
+    flash_img = pygame.image.load("flashback.png")
+    screen.blit(flash_img, (0, 0))
+    flash_text = font.render("She begged me not to go...", True, (255, 255, 255))
+    screen.blit(flash_text, (50, 500))
+    pygame.display.update()
+    pygame.time.delay(3000)
+
+if health < 30 and gear == "Sniper":
+    trigger_flashback()
+
+relationship_score = 100
+
+def update_relationship(gear):
+    global relationship_score
+    if gear in ["Shotgun", "Grenade"]:
+        relationship_score -= 20
+    elif gear == "Drone":
+        relationship_score -= 5
+
+if relationship_score < 60:
+    dialogue = ["Wife: You promised you'd be careful.", "Daughter: Are you coming home this time?"]
+
+{
+  "scene": "home",
+  "dialogue": [
+    {
+      "text": "Wife: You're late again.",
+      "condition": "relationship_score < 60",
+      "choices": [
+        {
+          "text": "I'm sorry. I had no choice.",
+          "effect": -5
+        },
+        {
+          "text": "This mission matters more.",
+          "effect": -15
+        }
+      ]
+    }
+  ]
+}
+
+if mission_choice == "High Risk":
+    relationship_score -= 20
+    unlock_flashback("missed_birthday")
+elif mission_choice == "Stay Home":
+    mission_failed = True
+    relationship_score += 10
+
+if trauma_score > 80:
+    trigger_scene("PTSD_flashback")
+
+"She was turning six. I promised I'd be there. I broke that promise... again."
+save_data = {
+    "relationship_score": 45,
+    "trauma_score": 82,
+    "last_choice": "Duty over Family"
+}
+
+
