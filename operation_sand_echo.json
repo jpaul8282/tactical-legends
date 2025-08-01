@@ -1,0 +1,194 @@
+{
+  "scene_id": "operation_sand_echo",
+  "background": "river_night.png",
+  "vehicles": ["Boat"],
+  "music": "stealth_current.mp3",
+  "dialogue": [
+    {
+      "speaker": "Operator",
+      "text": "You’ll drift in under moonlight. No engine noise.",
+      "condition": "true"
+    },
+    {
+      "speaker": "Player",
+      "text": "This river... I lost a friend here once.",
+      "condition": "trauma_score > 50"
+    }
+  ],
+  "objectives": [
+    "Navigate river silently",
+    "Extract informant",
+    "Avoid spotlight patrols"
+  ],
+  "flashback_triggers": [
+    {
+      "trigger": "vehicle == 'Boat' && trauma_score > 50",
+      "scene": "flashback_river_loss"
+    }
+  ]
+}
+
+voice_lines = {
+  "operator_intro": "Operator: You’ll drift in under moonlight. No engine noise.",
+  "player_memory": "Player: This river... I lost a friend here once.",
+  "objective_update": "Operator: Informant is waiting near the reeds. Stay low.",
+  "extraction": "Player: Got him. Let’s get out before the current turns."
+}
+
+emotional_state = {
+    "trauma_score": 72,
+    "relationship_score": 45,
+    "gear_history": ["Sniper", "Grenade", "Drone"]
+}
+
+mission_panel = pygame_gui.elements.UIPanel(
+    relative_rect=pygame.Rect((50, 50), (700, 500)),
+    starting_layer_height=1,
+    manager=manager
+)
+
+mission_buttons = [
+    {"id": "black_mirage", "label": "Operation Black Mirage"},
+    {"id": "sand_echo", "label": "Operation Sand Echo"},
+    {"id": "final_liberation", "label": "Final Liberation"}
+]
+
+for i, mission in enumerate(mission_buttons):
+    pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((20, 20 + i * 60), (300, 40)),
+        text=mission["label"],
+        manager=manager,
+        container=mission_panel,
+        object_id=mission["id"]
+    )
+
+locked_missions = []
+
+if emotional_state["trauma_score"] < 60:
+    locked_missions.append("final_liberation")
+
+if "Grenade" in emotional_state["gear_history"]:
+    locked_missions.append("sand_echo")
+
+if mission["id"] in locked_missions:
+    button.disable()
+    button.set_text(f"{mission['label']} (Locked)")
+
+flashback_preview = {
+    "black_mirage": "Flashback: Kandahar rooftop breach. Two men lost.",
+    "sand_echo": "Flashback: River ambush. Civilian caught in crossfire.",
+    "final_liberation": "Flashback: Daughter’s voicemail. Unheard."
+}
+
+if "Drone" in emotional_state["gear_history"]:
+    unlock_path("intel_route")
+
+if "Shotgun" in emotional_state["gear_history"]:
+    increase_risk("civilian_alert")
+
+import pygame
+import pygame_gui
+
+pygame.init()
+screen = pygame.display.set_mode((800, 600))
+manager = pygame_gui.UIManager((800, 600))
+clock = pygame.time.Clock()
+
+# Emotional state
+emotional_state = {
+    "trauma_score": 72,
+    "relationship_score": 45,
+    "gear_history": ["Sniper", "Grenade"]
+}
+
+# Mission definitions
+missions = {
+    "black_mirage": {
+        "label": "Operation Black Mirage",
+        "locked": emotional_state["trauma_score"] < 60,
+        "flashback": "Kandahar rooftop breach. Two men lost."
+    },
+    "sand_echo": {
+        "label": "Operation Sand Echo",
+        "locked": "Grenade" in emotional_state["gear_history"],
+        "flashback": "River ambush. Civilian caught in crossfire."
+    },
+    "final_liberation": {
+        "label": "Final Liberation",
+        "locked": emotional_state["relationship_score"] < 50,
+        "flashback": "Daughter’s voicemail. Unheard."
+    }
+}
+
+# Create buttons
+buttons = {}
+y_offset = 100
+for key, data in missions.items():
+    label = f"{data['label']} (Locked)" if data["locked"] else data["label"]
+    button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((100, y_offset), (300, 40)),
+        text=label,
+        manager=manager,
+        object_id=key
+    )
+    if data["locked"]:
+        button.disable()
+    buttons[key] = button
+    y_offset += 60
+
+# Flashback preview panel
+preview_label = pygame_gui.elements.UILabel(
+    relative_rect=pygame.Rect((450, 100), (300, 200)),
+    text="Hover over a mission to preview flashback...",
+    manager=manager
+)
+
+# Main loop
+running = True
+while running:
+    time_delta = clock.tick(60)/1000.0
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.USEREVENT:
+            if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                mission_id = event.ui_object_id
+                if not missions[mission_id]["locked"]:
+                    print(f"Launching {missions[mission_id]['label']}...")
+                    # Add branching logic here
+        elif event.type == pygame.MOUSEMOTION:
+            for key, button in buttons.items():
+                if button.rect.collidepoint(event.pos):
+                    preview_label.set_text(missions[key]["flashback"])
+
+        manager.process_events(event)
+
+    manager.update(time_delta)
+    screen.fill((30, 30, 30))
+    manager.draw_ui(screen)
+    pygame.display.update()
+
+gear_inventory = {
+    "sniper_rifle": {
+        "level": 1,
+        "damage": 80,
+        "range": 300,
+        "upgrades": ["thermal_scope", "silencer"]
+    },
+    "tactical_gun": {
+        "level": 2,
+        "damage": 65,
+        "range": 150,
+        "upgrades": ["burst_mode", "extended_mag"]
+    },
+    "arm_module": {
+        "level": 3,
+        "abilities": ["shock_pulse", "grapple_hook"]
+    }
+}
+
+def upgrade_gear(gear_type, upgrade_item):
+    if upgrade_item in gear_inventory[gear_type]["upgrades"]:
+        print(f"{gear_type} upgraded with {upgrade_item}!")
+        # Apply stat changes or unlock new abilities
+
