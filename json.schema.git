@@ -1,0 +1,253 @@
+{
+  "scene_id": "home_conflict",
+  "background": "living_room.png",
+  "dialogue": [
+    {
+      "speaker": "Wife",
+      "text": "You missed her birthday again.",
+      "condition": "relationship_score < 60",
+      "choices": [
+        {
+          "text": "I had no choice.",
+          "effect": { "relationship_score": -10, "trauma_score": +5 },
+          "next_scene": "flashback_birthday"
+        },
+        {
+          "text": "I’ll make it up to her.",
+          "effect": { "relationship_score": +5 },
+          "next_scene": "home_recovery"
+        }
+      ]
+    }
+  ]
+}
+
+def load_scene(scene_id):
+    with open(f"scenes/{scene_id}.json") as f:
+        data = json.load(f)
+    return data
+
+def render_dialogue(dialogue):
+    for line in dialogue:
+        if eval(line["condition"]):
+            display_text(line["speaker"], line["text"])
+            for choice in line["choices"]:
+                render_choice(choice)
+
+voice_lines = {
+    "flashback_birthday": "She was waiting with cake. I never came.",
+    "home_recovery": "I’ll be there next time. I swear."
+}
+
+emotional_state = {
+    "relationship_score": 45,
+    "trauma_score": 82,
+    "last_choice": "Duty over Family"
+}
+
+{
+  "scene_id": "family_bbq_intro",
+  "background": "bbq_garden.png",
+  "music": "bbq_theme.mp3",
+  "dialogue": [
+    {
+      "speaker": "Daughter",
+      "text": "Dad! Come play frisbee with us!",
+      "condition": "relationship_score >= 70"
+    },
+    {
+      "speaker": "Wife",
+      "text": "You promised no missions today. Just us.",
+      "condition": "relationship_score >= 50"
+    },
+    {
+      "speaker": "Phone",
+      "text": "*RING RING*",
+      "condition": "true",
+      "choices": [
+        {
+          "text": "Answer the call",
+          "effect": { "relationship_score": -20, "trauma_score": +10 },
+          "next_scene": "mission_bin_laden"
+        },
+        {
+          "text": "Ignore it",
+          "effect": { "relationship_score": +10 },
+          "next_scene": "family_bbq_continue"
+        }
+      ]
+    }
+  ]
+}
+
+def load_scene(scene_id):
+    with open(f"scenes/{scene_id}.json") as f:
+        return json.load(f)
+
+def render_scene(scene_data):
+    screen.blit(pygame.image.load(scene_data["background"]), (0, 0))
+    pygame.mixer.music.load(scene_data["music"])
+    pygame.mixer.music.play()
+
+    for line in scene_data["dialogue"]:
+        if eval(line["condition"]):
+            display_text(line["speaker"], line["text"])
+            if "choices" in line:
+                for choice in line["choices"]:
+                    render_choice(choice)
+
+voice_lines = {
+  "bbq_intro": [
+    "Daughter: Daddy, come play!",
+    "Wife: You promised today was ours.",
+    "Phone: *RING RING*",
+    "Operator: Mission Echo. Target: Osama bin Laden. Location: Abbottabad, Pakistan.",
+    "Player: I have to go. I’m sorry."
+  ]
+}
+
+{
+  "scene_id": "mission_bin_laden",
+  "background": "compound_night.png",
+  "music": "heartbeat_tension.mp3",
+  "dialogue": [
+    {
+      "speaker": "Operator",
+      "text": "Target confirmed. Bin Laden is inside.",
+      "condition": "true"
+    },
+    {
+      "speaker": "Player",
+      "text": "I missed her birthday for this...",
+      "condition": "trauma_score > 70"
+    }
+  ],
+  "objectives": ["Infiltrate compound", "Confirm identity", "Extract clean"]
+}
+
+{
+  "scene_id": "family_bbq_continue",
+  "background": "bbq_garden.png",
+  "dialogue": [
+    {
+      "speaker": "Wife",
+      "text": "You came back... I didn’t expect that.",
+      "condition": "relationship_score < 50"
+    },
+    {
+      "speaker": "Player",
+      "text": "I’m trying. I really am.",
+      "condition": "true"
+    }
+  ]
+}
+
+{
+  "scene_id": "operation_black_mirage",
+  "background": "desert_convoy.png",
+  "vehicles": ["Chopper", "Boat", "Armored Truck"],
+  "dialogue": [
+    {
+      "speaker": "Commander",
+      "text": "Chopper inbound. You’ll insert via rooftop.",
+      "condition": "true"
+    },
+    {
+      "speaker": "Player",
+      "text": "I hate flying. Reminds me of Kandahar...",
+      "condition": "trauma_score > 60"
+    }
+  ],
+  "objectives": ["Board chopper", "Sabotage convoy", "Extract via boat"]
+}
+
+class Chopper:
+    def __init__(self):
+        self.image = pygame.image.load("chopper.png")
+        self.pos = [400, 100]
+        self.velocity = [0, 0]
+
+    def update(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]: self.velocity[1] -= 1
+        if keys[pygame.K_s]: self.velocity[1] += 1
+        self.pos[0] += self.velocity[0]
+        self.pos[1] += self.velocity[1]
+
+voice_lines = {
+  "chopper_insert": "Commander: You’ll drop in from the sky. No second chances.",
+  "player_flashback": "Player: Last time I flew, I lost two men. I still hear them screaming.",
+  "boat_escape": "Operator: Ride the tide. Extraction point is 2 clicks south."
+}
+
+if trauma_score > 70 and vehicle == "Chopper":
+    trigger_flashback("kandahar_loss")
+
+{
+  "scene_id": "mission_black_mirage",
+  "background": "desert_convoy.png",
+  "vehicles": ["Chopper", "Armored Truck"],
+  "music": "tension_loop.mp3",
+  "dialogue": [
+    {
+      "speaker": "Commander",
+      "text": "Chopper inbound. You’ll insert via rooftop.",
+      "condition": "true"
+    },
+    {
+      "speaker": "Player",
+      "text": "Last time I flew, I lost two men. I still hear them screaming.",
+      "condition": "trauma_score > 60"
+    }
+  ],
+  "objectives": [
+    "Board chopper",
+    "Sabotage convoy",
+    "Extract via armored truck"
+  ],
+  "flashback_triggers": [
+    {
+      "trigger": "vehicle == 'Chopper' && trauma_score > 60",
+      "scene": "flashback_kandahar"
+    }
+  ]
+}
+
+voice_lines = {
+  "commander_intro": "Commander: Chopper inbound. You’ll insert via rooftop.",
+  "player_flashback": "Player: Last time I flew, I lost two men. I still hear them screaming.",
+  "objective_update": "Operator: Sabotage the convoy. No civilian casualties.",
+  "extraction": "Commander: Extraction point marked. Truck will meet you at the ridge."
+}
+
+{
+  "scene_id": "flashback_kandahar",
+  "background": "burning_outpost.png",
+  "dialogue": [
+    {
+      "speaker": "Player",
+      "text": "He was just 19. First mission. I told him he’d be fine.",
+      "condition": "true"
+    },
+    {
+      "speaker": "Ghost",
+      "text": "You left me behind...",
+      "condition": "true"
+    }
+  ],
+  "music": "memory_static.mp3"
+}
+
+class Chopper:
+    def __init__(self):
+        self.image = pygame.image.load("chopper.png")
+        self.pos = [400, 100]
+        self.velocity = [0, 0]
+
+    def update(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]: self.velocity[1] -= 1
+        if keys[pygame.K_s]: self.velocity[1] += 1
+        self.pos[0] += self.velocity[0]
+        self.pos[1] += self.velocity[1]
+
