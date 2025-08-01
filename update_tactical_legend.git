@@ -239,6 +239,42 @@ while running:
 pygame.quit()
 sys.exit()
 
+import pygame.mixer
+
+pygame.mixer.init()
+pygame.mixer.music.load("ops_theme.mp3")
+pygame.mixer.music.set_volume(0.7)
+pygame.mixer.music.play(-1)  # Loop indefinitely
+
+import transitions
+
+transitions.init(screen, width, height)
+transitions.run("fadeOutUp", duration=1.5)
+
+loadout_options = {
+    "Primary": ["M4A1", "Sniper", "Shotgun"],
+    "Secondary": ["Pistol", "SMG"],
+    "Gadget": ["Grenade", "Drone", "Smoke"]
+}
+
+selected_loadout = {"Primary": None, "Secondary": None, "Gadget": None}
+
+def draw_loadout_screen():
+    screen.fill((30, 30, 30))
+    y = 100
+    for category, options in loadout_options.items():
+        label = FONT.render(f"{category}:", True, WHITE)
+        screen.blit(label, (50, y))
+        x = 200
+        for option in options:
+            rect = pygame.Rect(x, y, 120, 40)
+            pygame.draw.rect(screen, (100, 100, 100), rect)
+            text = FONT.render(option, True, WHITE)
+            screen.blit(text, (x + 10, y + 5))
+            x += 140
+        y += 60
+
+pip install pygame pygamewidgets gTTS
 
 
 
