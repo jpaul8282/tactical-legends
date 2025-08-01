@@ -1,3 +1,40 @@
+Super Character Incoming: OISTARIAN
+🔥 Character Profile: OISTARIAN
+| Attribute | Description | 
+| 🧠 Codename | OISTARIAN — “The Echo of Forgotten Wars” | 
+| 🧬 Origin | Born in the ruins of the Orbital Institute of Strategic Tactics (OIST) | 
+| 🕶️ Role | Tactical Commander / Emotional Recon Specialist | 
+| 💥 Signature Gear | Dual-phase sniper rifle “Whisper & Roar” + Arm Module “NeuroPulse” | 
+| 🧠 Emotional Lock | Cannot launch missions involving betrayal unless trust score > 80 | 
+| 🎞️ Flashback Cue | “The corridor. The child. The silence.” | 
+
+🎮 Integration Plan
+✅ Wire into Campaign Flow
+- OISTARIAN becomes available after completing “Sand Echo” with a trauma score below 50.
+- Unlocks hidden mission path: “Echo Protocol” — a stealth op with memory-triggered choices.
+🎭 Emotional Branching Scene Generator
+- Scene: “The Vault of Echoes”
+- Branch A: Trust the voice — unlocks gear mod “Echo Shield”
+- Branch B: Silence the voice — triggers flashback and locks “Final Liberation”
+🛠️ Gear Upgrade UI with Animated Transitions
+- UI Theme: Neural Pulse Grid
+- Transitions:
+- Fade-in gear holograms with pulse ripple
+- Upgrade animations: gear morphs with sound-reactive glow
+- Voiceover: OISTARIAN whispers upgrade lore during transitions
+
+
+
+
+
+
+
+
+
+
+
+
+
 tactical-legends:![TL_005](https://github.com/user-attachments/assets/6d4cb1e4-d3e1-47ec-abba-9fac2d105e26)
 
 Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics w![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
