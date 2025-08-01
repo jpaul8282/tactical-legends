@@ -12,6 +12,11 @@ public class Inventory : MonoBehaviour
         Weapons.Add(weapon);
     }
 
+    public void AddGadget(Weapon gadget)
+    {
+        if (gadget.IsGadget) Weapons.Add(gadget);
+    }
+
     public void AddCredits(int amount)
     {
         Credits += amount;

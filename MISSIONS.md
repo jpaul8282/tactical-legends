@@ -3,6 +3,10 @@
 ## Operation Desert Ghost (Middle East)
 - Infiltrate a fortified enemy compound to retrieve stolen intel.
 
+## The Hunt for Hamas (Gaza - Secret Op)
+- Stealthily locate and neutralize Hamas leadership in a dense urban environment. Avoid civilian casualties.
+- Objectives: Locate cell leader, gather intel, neutralize target, escape undetected.
+
 ## Operation Nightfall (Europe)
 - Sabotage weapons shipment in a snowy European city.
 
@@ -12,9 +16,6 @@
 ## SECRET OPS: Shadow Protocol (Global)
 - Stop a nuclear exchange, only accessible after all main ops.
 
-## More missions...
-- Expand with unique objectives, map variety, and difficulty scaling.
-
 # Rewards
 
 - Credits for in-game store
@@ -23,6 +24,20 @@
 - Unlockable gadgets and upgrades
 - Story cinematics
 
-# Playable Super Agent
+# Gadgets and Weapons
 
-- Oistarian: Stealth, hacking, martial arts, and advanced gear
+- EMP Grenade: Disables electronics and enemy drones.
+- Recon Drone: Scout area and tag enemies.
+- Night Vision Goggles
+- Flashbang
+- Silenced Sniper Rifle
+- Rocket Launcher
+
+# Story/Cinematics
+
+- CinematicManager triggers cutscenes at mission start, key events, and mission completion.
+
+# Stealth System
+
+- Player visibility depends on movement, firing, and lighting.
+- AI uses line of sight and noise to detect players.
