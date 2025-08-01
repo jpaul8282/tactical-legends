@@ -8,6 +8,10 @@ Super Character Incoming: OISTARIAN
 | 🧠 Emotional Lock | Cannot launch missions involving betrayal unless trust score > 80 | 
 | 🎞️ Flashback Cue | “The corridor. The child. The silence.” | 
 
+
+https://github.com/user-attachments/assets/13af01b5-07e8-469c-bec9-e04623771d17
+
+
 🎮 Integration Plan
 ✅ Wire into Campaign Flow
 - OISTARIAN becomes available after completing “Sand Echo” with a trauma score below 50.
