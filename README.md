@@ -27,7 +27,680 @@ https://github.com/user-attachments/assets/13af01b5-07e8-469c-bec9-e04623771d17
 - Upgrade animations: gear morphs with sound-reactive glow
 - Voiceover: OISTARIAN whispers upgrade lore during transitions
 
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical Legends: Rise of OISTARIAN</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff88;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .glitch-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 136, 0.01) 2px,
+                rgba(0, 255, 136, 0.01) 4px
+            );
+            pointer-events: none;
+            animation: glitch-lines 3s linear infinite;
+        }
+        
+        @keyframes glitch-lines {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(2px); }
+            100% { transform: translateX(0); }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88;
+            margin-bottom: 10px;
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulse-glow {
+            from { text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88; }
+            to { text-shadow: 0 0 30px #00ff88, 0 0 60px #00ff88, 0 0 80px #00ff88; }
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ff6b6b;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        
+        .podcast-player {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff88;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 40px 0;
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .podcast-player::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, #00ff88, transparent);
+            animation: rotate 4s linear infinite;
+            opacity: 0.1;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .player-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .play-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00ff88, #00cc6a);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 2rem;
+            color: #000;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+        
+        .play-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.8);
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #ff6b6b);
+            width: 0%;
+            transition: width 0.1s ease;
+            box-shadow: 0 0 10px #00ff88;
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            color: #00ff88;
+        }
+        
+        .script-section {
+            background: rgba(0, 0, 0, 0.6);
+            border-left: 4px solid #ff6b6b;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .script-section h3 {
+            color: #ff6b6b;
+            font-family: 'Orbitron', monospace;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .character-name {
+            color: #00ff88;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .stage-direction {
+            color: #888;
+            font-style: italic;
+            margin: 10px 0;
+        }
+        
+        .quote {
+            color: #fff;
+            font-size: 1.2rem;
+            margin: 15px 0;
+            padding-left: 20px;
+            border-left: 2px solid #00ff88;
+        }
+        
+        .tagline {
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: #ff6b6b;
+            margin-top: 30px;
+            text-shadow: 0 0 20px #ff6b6b;
+        }
+        
+        .visual-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 3px solid #00ff88;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .pulse {
+            animation: pulse-ring 1s ease-out;
+        }
+        
+        @keyframes pulse-ring {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.1);
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .volume-slider {
+            width: 150px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .volume-slider::-webkit-slider-thumb {
+            width: 16px;
+            height: 16px;
+            background: #00ff88;
+            border-radius: 50%;
+            cursor: pointer;
+            -webkit-appearance: none;
+            box-shadow: 0 0 10px #00ff88;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .podcast-player {
+                padding: 20px;
+            }
+            
+            .play-button {
+                width: 80px;
+                height: 80px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glitch-bg"></div>
+    <div class="visual-indicator" id="visualIndicator"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">TACTICAL LEGENDS</h1>
+            <p class="subtitle">RISE OF OISTARIAN</p>
+        </div>
+        
+        <div class="podcast-player">
+            <div class="player-content">
+                <button class="play-button" id="playButton">▶</button>
+                
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                
+                <div class="time-display">
+                    <span id="currentTime">00:00</span>
+                    <span id="totalTime">02:30</span>
+                </div>
+                
+                <div class="volume-control">
+                    <span style="color: #00ff88;">🔊</span>
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                </div>
+            </div>
+        </div>
+        
+        <div class="script-section">
+            <h3>PODCAST SCRIPT</h3>
+            
+            <div class="stage-direction">[Sound of distant data pulses and echoes of gunfire. Ambient cyber atmosphere.]</div>
+            
+            <div class="quote">
+                <span class="character-name">Narrator</span> (low, gravelly voice):<br>
+                "In a world coded in silence... one whisper rewrites the algorithm."
+            </div>
+            
+            <div class="stage-direction">[Flash cuts: a shattered memory crystal. A cloaked figure sprinting across Echo Swamp. Neon eyes flicker in the dark.]</div>
+            
+            <div class="quote">
+                <span class="character-name">Zoe's voice</span> (soft, glitching):<br>
+                "They said you were erased, but legends don't vanish. They reload."
+            </div>
+            
+            <div class="stage-direction">[Cue synth-heavy combat sequence. OISTARIAN locks in the NeuroPulse Arm. Drones dive, explosions bloom.]</div>
+            
+            <div class="quote">
+                <span class="character-name">Narrator</span>:<br>
+                "OISTARIAN—former engineer. Reluctant operative. Relentless myth."
+            </div>
+            
+            <div class="stage-direction">[Fast montage: encrypted data walls exploding, a vault marked "EDEN" unlocking, flash of Zoe's hologram saying "Protect the Shard."]</div>
+            
+            <div class="quote">
+                <span class="character-name">Narrator</span> (final beat):<br>
+                "This summer... silence is broken."
+            </div>
+            
+            <div class="stage-direction">[Final scene: OISTARIAN stands under a storm-lit sky, whispering "This time, I choose the ending."]</div>
+            
+            <div class="tagline">
+                "Decode the shadows. Unleash the legend."
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class TacticalLegendsPodcast {
+            constructor() {
+                this.isPlaying = false;
+                this.currentTime = 0;
+                this.totalTime = 150; // 2:30 in seconds
+                this.volume = 0.7;
+                this.playbackSpeed = 1;
+                this.audioContext = null;
+                this.oscillators = [];
+                this.gainNodes = [];
+                this.intervals = [];
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.initializeAudio();
+            }
+            
+            initializeElements() {
+                this.playButton = document.getElementById('playButton');
+                this.progressBar = document.getElementById('progressBar');
+                this.currentTimeDisplay = document.getElementById('currentTime');
+                this.totalTimeDisplay = document.getElementById('totalTime');
+                this.volumeSlider = document.getElementById('volumeSlider');
+                this.visualIndicator = document.getElementById('visualIndicator');
+            }
+            
+            bindEvents() {
+                this.playButton.addEventListener('click', () => this.togglePlayPause());
+                this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value / 100));
+                
+                // Click on progress bar to seek
+                this.progressBar.parentElement.addEventListener('click', (e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const percentage = clickX / rect.width;
+                    this.seek(percentage * this.totalTime);
+                });
+            }
+            
+            async initializeAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.masterGain = this.audioContext.createGain();
+                    this.masterGain.connect(this.audioContext.destination);
+                    this.masterGain.gain.value = this.volume;
+                } catch (error) {
+                    console.log('Audio context initialization failed, using fallback');
+                }
+            }
+            
+            createTone(frequency, duration, type = 'sine', fadeIn = 0.1, fadeOut = 0.1) {
+                if (!this.audioContext) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + fadeIn);
+                gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration - fadeOut);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.masterGain);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+                
+                return { oscillator, gainNode };
+            }
+            
+            createNoise(duration, type = 'white') {
+                if (!this.audioContext) return;
+                
+                const bufferSize = this.audioContext.sampleRate * duration;
+                const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                const data = buffer.getChannelData(0);
+                
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                const source = this.audioContext.createBufferSource();
+                const gainNode = this.audioContext.createGain();
+                const filter = this.audioContext.createBiquadFilter();
+                
+                source.buffer = buffer;
+                filter.type = 'highpass';
+                filter.frequency.setValueAtTime(200, this.audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.1);
+                gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration - 0.1);
+                
+                source.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(this.masterGain);
+                
+                source.start(this.audioContext.currentTime);
+                
+                return { source, gainNode, filter };
+            }
+            
+            playDataPulses() {
+                const pulseInterval = setInterval(() => {
+                    if (!this.isPlaying) {
+                        clearInterval(pulseInterval);
+                        return;
+                    }
+                    this.createTone(440 + Math.random() * 200, 0.1, 'square');
+                    this.visualPulse();
+                }, 800);
+                this.intervals.push(pulseInterval);
+            }
+            
+            playGunfire() {
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => {
+                        if (this.isPlaying) {
+                            this.createNoise(0.05);
+                            this.createTone(100, 0.05, 'sawtooth');
+                        }
+                    }, i * 200);
+                }
+            }
+            
+            playSynthCombat() {
+                const synthInterval = setInterval(() => {
+                    if (!this.isPlaying) {
+                        clearInterval(synthInterval);
+                        return;
+                    }
+                    
+                    // Bass line
+                    this.createTone(80, 0.5, 'sawtooth');
+                    
+                    // Melody
+                    setTimeout(() => {
+                        if (this.isPlaying) {
+                            const notes = [330, 370, 415, 466];
+                            const note = notes[Math.floor(Math.random() * notes.length)];
+                            this.createTone(note, 0.3, 'square');
+                        }
+                    }, 100);
+                    
+                }, 1000);
+                this.intervals.push(synthInterval);
+            }
+            
+            visualPulse() {
+                this.visualIndicator.classList.add('pulse');
+                setTimeout(() => {
+                    this.visualIndicator.classList.remove('pulse');
+                }, 1000);
+            }
+            
+            playPodcast() {
+                if (!this.audioContext) {
+                    alert('Audio not supported in this browser');
+                    return;
+                }
+                
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                
+                // Timeline of audio events
+                const timeline = [
+                    { time: 0, action: () => this.playDataPulses() },
+                    { time: 2, action: () => this.playGunfire() },
+                    { time: 8, action: () => this.createTone(220, 2, 'sine') }, // Zoe's voice backing
+                    { time: 15, action: () => this.playSynthCombat() },
+                    { time: 30, action: () => this.createTone(110, 3, 'sawtooth') }, // Narrator backing
+                    { time: 45, action: () => {
+                        // Explosion sounds
+                        for (let i = 0; i < 3; i++) {
+                            setTimeout(() => {
+                                if (this.isPlaying) {
+                                    this.createNoise(0.2);
+                                    this.createTone(60, 0.3, 'sawtooth');
+                                }
+                            }, i * 500);
+                        }
+                    }},
+                    { time: 60, action: () => this.createTone(165, 4, 'triangle') }, // Final narrator backing
+                    { time: 80, action: () => {
+                        // Storm sounds
+                        this.createNoise(10, 'pink');
+                        this.createTone(55, 8, 'sawtooth');
+                    }},
+                    { time: 120, action: () => {
+                        // Final dramatic chord
+                        this.createTone(130, 5, 'sawtooth');
+                        this.createTone(165, 5, 'sawtooth');
+                        this.createTone(196, 5, 'sawtooth');
+                    }}
+                ];
+                
+                // Schedule audio events
+                timeline.forEach(event => {
+                    setTimeout(() => {
+                        if (this.isPlaying) {
+                            event.action();
+                        }
+                    }, event.time * 1000);
+                });
+            }
+            
+            togglePlayPause() {
+                if (this.isPlaying) {
+                    this.pause();
+                } else {
+                    this.play();
+                }
+            }
+            
+            play() {
+                this.isPlaying = true;
+                this.playButton.textContent = '⏸';
+                this.playButton.style.background = 'linear-gradient(45deg, #ff6b6b, #ff5252)';
+                
+                this.playPodcast();
+                
+                // Update progress
+                this.progressInterval = setInterval(() => {
+                    if (this.isPlaying && this.currentTime < this.totalTime) {
+                        this.currentTime += 0.1;
+                        this.updateDisplay();
+                    } else if (this.currentTime >= this.totalTime) {
+                        this.stop();
+                    }
+                }, 100);
+            }
+            
+            pause() {
+                this.isPlaying = false;
+                this.playButton.textContent = '▶';
+                this.playButton.style.background = 'linear-gradient(45deg, #00ff88, #00cc6a)';
+                
+                if (this.progressInterval) {
+                    clearInterval(this.progressInterval);
+                }
+                
+                // Clear all intervals
+                this.intervals.forEach(interval => clearInterval(interval));
+                this.intervals = [];
+                
+                // Stop all oscillators
+                this.oscillators.forEach(osc => {
+                    try { osc.stop(); } catch (e) {}
+                });
+                this.oscillators = [];
+            }
+            
+            stop() {
+                this.pause();
+                this.currentTime = 0;
+                this.updateDisplay();
+            }
+            
+            seek(time) {
+                const wasPlaying = this.isPlaying;
+                if (this.isPlaying) {
+                    this.pause();
+                }
+                
+                this.currentTime = Math.max(0, Math.min(time, this.totalTime));
+                this.updateDisplay();
+                
+                if (wasPlaying) {
+                    this.play();
+                }
+            }
+            
+            setVolume(volume) {
+                this.volume = Math.max(0, Math.min(1, volume));
+                if (this.masterGain) {
+                    this.masterGain.gain.value = this.volume;
+                }
+            }
+            
+            updateDisplay() {
+                const progress = (this.currentTime / this.totalTime) * 100;
+                this.progressBar.style.width = `${progress}%`;
+                
+                this.currentTimeDisplay.textContent = this.formatTime(this.currentTime);
+                this.totalTimeDisplay.textContent = this.formatTime(this.totalTime);
+            }
+            
+            formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
+        
+        // Initialize the podcast player when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new TacticalLegendsPodcast();
+        });
+        
+        // Add some interactive glitch effects
+        document.addEventListener('mousemove', (e) => {
+            const glitchBg = document.querySelector('.glitch-bg');
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            
+            glitchBg.style.background = `
+                repeating-linear-gradient(
+                    ${90 + x * 0.1}deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 255, 136, ${0.01 + y * 0.0001}) 2px,
+                    rgba(0, 255, 136, ${0.01 + y * 0.0001}) 4px
+                )
+            `;
+        });
+    </script>
+</body>
+</html>
 
 
 
