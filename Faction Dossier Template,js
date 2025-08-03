@@ -1,0 +1,16 @@
+{
+  "faction_id": "shadow_seraphs",
+  "name": "Shadow Seraphs",
+  "region": "Ruined Metro Grid",
+  "traits": {
+    "stealth": 90,
+    "weather_resistance": 40,
+    "morale_bonus": ["night_operations", "underdog_surge"]
+  },
+  "tactical_quirks": {
+    "preferred_time": "Night",
+    "special_units": ["Echo Sniper", "Drone Whisperer"]
+  },
+  "backstory": "Formed from the remnants of deep-city operatives, the Shadow Seraphs emerged to combat authoritarian sweeps under blackout conditions. Their whispers echo louder than enemy megaphones."
+}
+
