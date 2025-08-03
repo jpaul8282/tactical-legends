@@ -1,3 +1,77 @@
+# Tactical Legends: Rise of OISTARIAN
+
+Welcome to **Tactical Legends: Rise of OISTARIAN**! This project is a tactical turn-based strategy game built in C#. It is designed for strategy enthusiasts who enjoy deep gameplay, challenging AI, and immersive worlds.
+
+---
+
+## Project Overview
+
+**Tactical Legends** is a turn-based tactical game where players control squads of unique characters across diverse battlefields. The game features:
+- Deep strategic combat
+- Rich lore and story-driven campaigns
+- Customizable units and equipment
+- Multiplayer and AI modes
+
+The project is open source and welcomes contributions from the community.
+
+---
+
+## Installation Instructions
+
+1. **Clone the Repository**
+   ```sh
+   git clone https://github.com/jurgen-paul/tactical-legends.git
+   cd tactical-legends
+   ```
+2. **Install Dependencies**
+   - Ensure you have [.NET SDK](https://dotnet.microsoft.com/download) installed.
+   - Restore NuGet packages:
+     ```sh
+     dotnet restore
+     ```
+3. **Build the Project**
+   ```sh
+   dotnet build
+   ```
+4. **Run the Game**
+   ```sh
+   dotnet run
+   ```
+
+---
+
+## Usage Guide
+
+- Launch the game using the instructions above.
+- Navigate the main menu to start a new campaign, skirmish, or multiplayer match.
+- Use the mouse and keyboard to control your units and interact with the UI.
+- For advanced options or modding, see the [Wiki](https://github.com/jurgen-paul/tactical-legends/wiki).
+
+---
+
+## Contribution Guidelines
+
+We welcome contributions! To get started:
+
+1. **Fork the repository** and create your branch from `main`.
+2. **Add your feature or fix** with clear code and comments.
+3. **Test your changes** before submitting.
+4. **Open a Pull Request** with a detailed description of what you changed.
+
+**Please follow our [Code of Conduct](CODE_OF_CONDUCT.md) and check out the [Contributing Guide](CONTRIBUTING.md) (to be added).**
+
+If you have questions or feature requests, open an [issue](https://github.com/jurgen-paul/tactical-legends/issues).
+
+---
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
+
+---
+
+Happy strategizing!
+
 Super Character Incoming: OISTARIAN
 🔥 Character Profile: OISTARIAN
 | Attribute | Description | 
@@ -29,10 +103,6 @@ https://github.com/user-attachments/assets/13af01b5-07e8-469c-bec9-e04623771d17
 
 
 
-
-
-
-
 tactical-legends:![TL_005](https://github.com/user-attachments/assets/6d4cb1e4-d3e1-47ec-abba-9fac2d105e26)
 
 Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics w![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
@@ -42,8 +112,6 @@ Explore sprawling, visually stunning environments—from neon-lit cities and spr
 ilize a wide array of futuristic gadgets, from drone companions and energy shields to invisibility cloaks. Play solo or team up with friends in cooperative modes to complete daring missions that challenge your thinking and reflexes.
 
 With its deep customization options, innovative weapon systems, and high-stakes gameplay, Tactical Legend offers an electrifying experience for fans of sci-fi shooters and tactical strategists alike. Prepare for battle and become a legend in the futuristic battlefield!
-
-![TL_006](https://github.com/user-attachments/assets/7d7d56e6-570e-4f3a-84dc-c6b8c61773ae)
 
 ## Prerequisites
 
@@ -65,12 +133,5 @@ Before you begin, ensure you have met the following requirements:
 
 
 
-[TL_008](https://github.com/user-attachments/assets/07d3dd0e-2bea-466b-b384-0a0d5fc1ba7f)
-echo "# tactical-legends" >> README.md
-git init!
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin git@github.com:jurgen-paul/tactical-legends.git
-git push -u origin main 
-![TL_008](https://github.com/user-attachments/assets/15c00501-bdc6-4d23-bc69-577e1765a888)
+
+
