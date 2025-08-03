@@ -45,6 +45,26 @@ With its deep customization options, innovative weapon systems, and high-stakes 
 
 ![TL_006](https://github.com/user-attachments/assets/7d7d56e6-570e-4f3a-84dc-c6b8c61773ae)
 
+## Prerequisites
+
+Before you begin, ensure you have met the following requirements:
+
+- **Operating System:** Windows 10/11, macOS 12+, or Linux (Ubuntu 20.04+, Fedora 36+)
+- **Software:**
+  - [.NET SDK](https://dotnet.microsoft.com/download) (version 7.0 or higher recommended)
+  - [Git](https://git-scm.com/) (version 2.30 or higher)
+- **Dependencies:**
+  - All C# project dependencies are managed via NuGet.  
+    Run `dotnet restore` in the root project directory to install them.
+- **Optional Tools:**
+  - [Visual Studio 2022](https://visualstudio.microsoft.com/) or [Rider](https://www.jetbrains.com/rider/) (recommended IDEs for C#)
+  - [Docker](https://www.docker.com/) (for containerized builds or deployment)
+- **Network:** Internet access for cloning the repository and restoring NuGet packages.
+
+> _Note_: If you plan to contribute code, please also review the project's [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines and setup instructions.
+
+
+
 [TL_008](https://github.com/user-attachments/assets/07d3dd0e-2bea-466b-b384-0a0d5fc1ba7f)
 echo "# tactical-legends" >> README.md
 git init!
