@@ -158,6 +158,15 @@ public TraitType InheritTrait(string parentName) {
 
 Let me know if you want to visualize all this in a mission briefing deck, build a deployment map interface, or simulate a long-form war council session where command decisions branch legacy arcs. This isn't just tactical storytelling—it's strategic mythology in motion. 🎯📖⚡ Ready to deploy the next wave?
 
+ Trait Inheritance: “Lineage Protocol Deployment”
+Recruits now spawn with embedded tactical archetypes based on ancestral traits.
+Tactical Lineage Flow:
+- Kane’s Descendant (Ruthless + Calculating):
+- Deploys heavy strike teams
+- Unlocks “Battlefield Deception” mission chain
+- Vera’s Apprentice (Protective + Paranoid):
+- Prefers defensive rescues
+- Triggers “Echo Shelter Tactics” ops
 
 
 
