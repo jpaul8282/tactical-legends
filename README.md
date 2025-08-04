@@ -100,6 +100,65 @@ https://github.com/user-attachments/assets/13af01b5-07e8-469c-bec9-e04623771d17
 - Fade-in gear holograms with pulse ripple
 - Upgrade animations: gear morphs with sound-reactive glow
 - Voiceover: OISTARIAN whispers upgrade lore during transitions
+🎖️ Tactical Reputation Logs: “War Archive Deployment”
+Converted into battlefield intelligence dossiers accessible at the HQ War Table.
+🧩 Features:
+• 	Timestamped Incident Reports: Track moral infractions, heroic rescues, controversial tactics
+• 	Faction Trust Analytics: Gauge diplomatic leverage, trade embargo risks, alliance perks
+• 	Operation Efficiency Index: Success-to-risk ratio for each mission
+• 	Debrief Commentary Overlay: Squad audio logs declassified with combat psyche tags (e.g., “Subject Kane shows diminishing empathy”)
+🔐 Unlockable via Echo HoloDeck upgrade—grants access to mission simulation replay with tactical overlays and beat-synced squad reactions.
+
+Base Upgrades: Tactical Infrastructure Modules
+Each facility offers battlefield advantages and modifies gear, recon, diplomacy, or trait mutation.
+
+| Module Name | Tactical Function | Unlock Requirement | 
+| 🛰️ Echo Resonance Forge | Crafts rhythm-reactive gear (Cipher Cloaks, Harmony Blades) | MoralityScore ≥ 50 + Echo Alliance ≥ 60 | 
+| 🧩 Iron Bastion Grid | Defensive shield pulses around base perimeter | Ruthless Trait active + Iron Veil trust ≥ 70 | 
+| 📡 Tactical HoloDeck | Simulates enemy psychology in upcoming ops | Squad Intelligence rating ≥ 75 | 
+| 🔮 Pulse Meditation Room | Reduces squad stress pre-deployment | Mental Resilience avg. ≤ 40 | 
+
+
+Each room pulses in response to faction music, simulating live resonance threats.
+
+Squad Mental Resilience: “Stress Ops Matrix”
+Squad behavior now tactically impacted by mental durability in war conditions.
+Strategic Impacts:
+- High StressLevel: Increased reaction delay, potential order rejection
+- Low Morale: Decreases shooting accuracy, raises fear wave thresholds
+- Trauma Tags: Permanent modifiers (“Wavers Under Fire”, “Echo Shellshock”)
+Example Modifier:
+if (squadmate.TraumaTags.Contains("ChildLossWitness")) {
+    unit.hasTriggerZone = true;
+    unit.reactionTime *= 1.5f;
+    unit.ambientWhisperVO = "Why didn't we save them...";
+}
+
+
+🎮 Tactical Gear Fix: Equip squad with Empathy Circuit Vests to soften psychological recoil after traumatic events.
+
+🧬 Trait Inheritance: “Lineage Protocol Deployment”
+Recruits now spawn with embedded tactical archetypes based on ancestral traits.
+Tactical Lineage Flow:
+- Kane’s Descendant (Ruthless + Calculating):
+- Deploys heavy strike teams
+- Unlocks “Battlefield Deception” mission chain
+- Vera’s Apprentice (Protective + Paranoid):
+- Prefers defensive rescues
+- Triggers “Echo Shelter Tactics” ops
+Trait Evolution Chain (Simplified Logic):
+public TraitType InheritTrait(string parentName) {
+    if (parentName == "Kane") return TraitType.Ruthless;
+    if (parentName == "Vera") return TraitType.Protective;
+    return TraitType.Calculating;
+}
+
+
+🧠 Squad briefing includes ancestral memory excerpts and war hymn fragments from parent unit’s campaigns.
+
+Let me know if you want to visualize all this in a mission briefing deck, build a deployment map interface, or simulate a long-form war council session where command decisions branch legacy arcs. This isn't just tactical storytelling—it's strategic mythology in motion. 🎯📖⚡ Ready to deploy the next wave?
+
+
 
 
 
