@@ -65,3 +65,15 @@ public TraitType GenerateInheritedTrait(TraitType parentTrait) {
     }
 }
 
+if (squadmate.TraumaTags.Contains("ChildLossWitness")) {
+    unit.hasTriggerZone = true;
+    unit.reactionTime *= 1.5f;
+    unit.ambientWhisperVO = "Why didn't we save them...";
+}
+
+public TraitType InheritTrait(string parentName) {
+    if (parentName == "Kane") return TraitType.Ruthless;
+    if (parentName == "Vera") return TraitType.Protective;
+    return TraitType.Calculating;
+}
+
