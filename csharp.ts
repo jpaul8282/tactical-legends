@@ -32,3 +32,36 @@ if (BeatSequence("Echo-Left", "Echo-Right", "BassDrop")) {
     UnlockVault("SonarChamber");
 }
 
+public class ReputationLogEntry {
+    public string missionName;
+    public int moralityChange;
+    public Dictionary<string, int> factionTrustDeltas;
+    public List<string> squadCasualties;
+    public Dictionary<string, TraitType> updatedTraits;
+    public DateTime timestamp;
+}
+
+public void UnlockBaseUpgrade(string upgradeId) {
+    if (CanUnlock(upgradeId)) {
+        baseState.upgrades.Add(upgradeId);
+        UIManager.ShowUnlockVisual(upgradeId);
+        AudioManager.Play("upgrade_theme");
+    }
+}
+
+public class MentalProfile {
+    public float stressLevel;
+    public float morale;
+    public List<string> traumaTags;
+    public TraitType currentTrait;
+}
+
+public TraitType GenerateInheritedTrait(TraitType parentTrait) {
+    switch (parentTrait) {
+        case TraitType.Paranoid: return Random.value < 0.5f ? TraitType.Cautious : TraitType.Paranoid;
+        case TraitType.Ruthless: return TraitType.Aggressive;
+        case TraitType.Protective: return Random.value < 0.7f ? TraitType.Empathetic : TraitType.Protective;
+        default: return TraitType.Calculating;
+    }
+}
+
