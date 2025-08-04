@@ -201,8 +201,31 @@ This is no ordinary objective—it’s a mythic relic vault that requires morali
 - Gear reacts to ambient vault music tempo
 - Boss logic tied to legacy decisions: betrayal triggers boss mutation
 
+🏜️ Terrain Bonus System – Ad Terrain Golf of Kuwait
+🌵 Desert Flats
+• 	Effect: +1 movement range for light vehicles and air units.
+• 	Penalty: -10% accuracy for ranged units due to heat distortion.
+🏖️ Sand Dunes
+• 	Effect: +20% defense when stationary (units gain elevation advantage).
+• 	Penalty: -1 movement cost due to unstable footing.
+🏚️ Urban Ruins
+• 	Effect: +30% cover bonus; 50% chance to deflect projectile attacks.
+• 	Special: Units inside get “Blind Fire” ability for close-quarters combat.
+🛢️ Oil Fields
+• 	Effect: Capture grants +1 resource per turn; can be sabotaged.
+• 	Risk: Units on field take extra fire damage if struck by explosives.
+🌫️ Dust Storm Zones (Dynamic)
+• 	Effect: -25% vision range; disables air strike targeting.
+• 	Duration: Randomized rounds with warning indicator (e.g., wind icon).
+💣 Trenches and Minefields
+• 	Trenches: +50% defense but restrict movement (1 cell max/turn).
+• 	Minefields: Hidden unless scouted; cause 30–50 HP damage on trigger.
 
-tactical-legends:![TL_005](https://github.com/user-attachments/assets/6d4cb1e4-d3e1-47ec-abba-9fac2d105e26)
+
+
+
+
+
 
 Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics w![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
 ith strategic planning, requiring players to rely on both quick reflexes and clever tactics to outsmart enemies.
@@ -211,6 +234,14 @@ Explore sprawling, visually stunning environments—from neon-lit cities and spr
 ilize a wide array of futuristic gadgets, from drone companions and energy shields to invisibility cloaks. Play solo or team up with friends in cooperative modes to complete daring missions that challenge your thinking and reflexes.
 
 With its deep customization options, innovative weapon systems, and high-stakes gameplay, Tactical Legend offers an electrifying experience for fans of sci-fi shooters and tactical strategists alike. Prepare for battle and become a legend in the futuristic battlefield!
+
+
+
+
+
+
+
+
 
 ## Prerequisites
 
