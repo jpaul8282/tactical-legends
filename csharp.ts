@@ -77,3 +77,11 @@ public TraitType InheritTrait(string parentName) {
     return TraitType.Calculating;
 }
 
+public void DeploySquadUnit(SquadUnit unit, MapZone zone) {
+    if (zone.HasPsychicEchoField && unit.trait == TraitType.Paranoid)
+        unit.stability -= 10;
+
+    MapOverlay.DrawGlyph(unit.position, unit.factionColor);
+    AudioManager.SyncZoneMusic(zone.id);
+}
+
