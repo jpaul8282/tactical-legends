@@ -168,7 +168,38 @@ Tactical Lineage Flow:
 - Prefers defensive rescues
 - Triggers “Echo Shelter Tactics” ops
 
+Mission Briefing Deck: Operation — “Vault Protocol: Eden Surge”
+Reoccurring trauma triggers, ancestry-based resistance modifiers
 
+Deployment Map Interface: Tactical Glyph Grid
+A command interface where squads and gear are deployed onto live terrain maps—each pulse echoes the faction music in real time.
+🎮 System Features
+- Dynamic Map Layers:
+- Civilian Zones (risk overlays)
+- Enemy Trait Densities (Desensitized clusters, Paranoid traps)
+- Sonic Disruption Zones (affects gear rhythm)
+- Deployment Pods:
+- Squad slots based on psychology resistance and terrain affinity
+- Visual ripple as glyph markers drop
+War Council Simulation: Legacy Arc Branching Engine
+A long-form decision simulator where key tactical dilemmas alter squad DNA, faction trust, and mission access.
+
+Council Mechanics
+| Council Phase | Decision Type | Resulting Legacy Arc | 
+| 🎙️ Ethics Accord | Choose to arm refugees or deny | Echo faction lineage shifts toward Empathetic/Ruthless | 
+| ⚔️ Gear Allocation | Sacrifice relic for stealth or retain | Squad morale vs resonance tracker conflict | 
+| 📡 Diplomatic Intel | Share vs falsify to Iron Veil | Leads to “Twilight Protocol” betrayal arc | 
+
+Vault of Eden: Strategic Entry Protocol
+This is no ordinary objective—it’s a mythic relic vault that requires morality precision, faction harmony, and squad resilience to unlock.
+🔐 Entry Requirements
+- Morality Alignment: Score ≥ +60 unlocks “Harmonic Conduit”; score ≤ –40 unlocks “Dark Pulse Variant”
+- Squad Trait Sync: At least 3 squad members must have compatible archetypes (e.g., Protective + Empathetic)
+- Legacy Key Activation: Artifact obtained via past sacrifice; carries encrypted pulse signature
+🎵 In-Vault Mechanics
+- Combat shifts to rhythm choreography
+- Gear reacts to ambient vault music tempo
+- Boss logic tied to legacy decisions: betrayal triggers boss mutation
 
 
 tactical-legends:![TL_005](https://github.com/user-attachments/assets/6d4cb1e4-d3e1-47ec-abba-9fac2d105e26)
