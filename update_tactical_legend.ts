@@ -8838,8 +8838,367 @@ class StormFront {
 const storm = new StormFront(map.getTile("desert_entry"), "east", 1);
 storm.startSweep(5, 8); // Pushes storm 8 tiles every 5 seconds
 
+using System.Collections.Generic;
+using UnityEngine;
 
+public class Inventory : MonoBehaviour
+{
+    private readonly List<Weapon> _weapons = new List<Weapon>();
+    private readonly List<string> _rewardItems = new List<string>();
+    
+    public IReadOnlyList<Weapon> Weapons => _weapons.AsReadOnly();
+    public IReadOnlyList<string> RewardItems => _rewardItems.AsReadOnly();
+    public int Credits { get; private set; } = 0;
 
+    public void AddWeapon(Weapon weapon)
+    {
+        if (weapon != null && !weapon.IsGadget)
+        {
+            _weapons.Add(weapon);
+        }
+    }
+
+    public void AddGadget(Weapon gadget)
+    {
+        if (gadget != null && gadget.IsGadget)
+        {
+            _weapons.Add(gadget);
+        }
+    }
+
+    public void EarnCredits(int amount)
+    {
+        if (amount > 0)
+        {
+            Credits += amount;
+        }
+    }
+
+    public void AddRewardItem(string item)
+    {
+        if (!string.IsNullOrWhiteSpace(item))
+        {
+            _rewardItems.Add(item);
+        }
+    }
+}
+
+[SerializeField] private int maxWeapons = 6;
+[SerializeField] private int maxRewardItems = 20;
+
+public bool CanAddWeapon() => _weapons.Count < maxWeapons;
+public bool CanAddRewardItem() => _rewardItems.Count < maxRewardItems;
+
+public bool TryAddWeapon(Weapon weapon)
+{
+    if (weapon != null && !weapon.IsGadget && CanAddWeapon())
+    {
+        _weapons.Add(weapon);
+        return true;
+    }
+    return false;
+}
+
+public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
+
+public class InventoryItem
+{
+    public string Name;
+    public Rarity ItemRarity;
+    public Sprite Icon;
+}
+
+private List<InventoryItem> _rewardInventory = new List<InventoryItem>();
+
+public void AddRewardItem(InventoryItem item)
+{
+    if (item != null && CanAddRewardItem())
+    {
+        _rewardInventory.Add(item);
+    }
+}
+
+var sortedRewards = _rewardInventory.OrderBy(i => i.ItemRarity).ToList();
+
+[System.Serializable]
+public class SaveData
+{
+    public int Credits;
+    public List<Weapon> SavedWeapons;
+    public List<InventoryItem> SavedRewards;
+}
+
+public string SerializeInventory()
+{
+    var save = new SaveData
+    {
+        Credits = Credits,
+        SavedWeapons = new List<Weapon>(_weapons),
+        SavedRewards = new List<InventoryItem>(_rewardInventory)
+    };
+
+    return JsonUtility.ToJson(save);
+}
+
+PlayerPrefs.SetString("InventoryData", SerializeInventory());
+
+using Unity.Netcode;
+
+public class SyncInventory : NetworkBehaviour
+{
+    public NetworkVariable<int> Credits = new NetworkVariable<int>();
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsServer)
+        {
+            Credits.Value = 100; // starter pack
+        }
+    }
+
+    public void EarnCredits(int amount)
+    {
+        if (IsServer)
+        {
+            Credits.Value += amount;
+        }
+    }
+}
+
+public class InventorySlotUI : MonoBehaviour
+{
+    public Image icon;
+    public Text rarityText;
+
+    public void PopulateSlot(InventoryItem item)
+    {
+        icon.sprite = item.Icon;
+        rarityText.text = item.ItemRarity.ToString();
+        rarityText.color = GetColorForRarity(item.ItemRarity);
+    }
+
+    private Color GetColorForRarity(Rarity rarity) =>
+        rarity switch
+        {
+            Rarity.Common => Color. white,
+            Rarity.Uncommon => Color .green,
+            Rarity.Rare => Color .blue,
+            Rarity.Epic => new Color(0.5f, 0, 1),
+            Rarity.Legendary => new Color(1f, 0.5f, 0),
+            _ => Color .gray
+        };
+}
+
+[System.Serializable]
+public class DropItem
+{
+    public string ItemName;
+    public Rarity Rarity;
+    public float DropChance; // 0.0 to 1.0
+}
+
+public class LootTable
+{
+    public List<DropItem> items;
+
+    public DropItem GetRandomDrop()
+    {
+        float roll = UnityEngine.Random.value;
+        float cumulative = 0f;
+
+        foreach (var item in items.OrderByDescending(i => i.DropChance))
+        {
+            cumulative += item.DropChance;
+            if (roll <= cumulative) return item;
+        }
+        return null;
+    }
+}
+
+public class EquipHandler : MonoBehaviour
+{
+    public Animator playerAnimator;
+    public AudioSource audioSource;
+    public ParticleSystem equipSparkFX;
+
+    public void EquipItem(Weapon weapon)
+    {
+        playerAnimator.SetTrigger("Equip");
+        audioSource.PlayOneShot(weapon.equipSound);
+        equipSparkFX.Play();
+        Debug.Log($"Equipped {weapon.name}!");
+    }
+}
+
+[System.Serializable]
+public class CraftRecipe
+{
+    public string ResultItem;
+    public List<string> RequiredMaterials;
+}
+
+public class CraftingStation
+{
+    private Dictionary<string, int> playerMaterials;
+
+    public bool CanCraft(CraftRecipe recipe)
+    {
+        return recipe.RequiredMaterials.All(mat => playerMaterials.ContainsKey(mat) && playerMaterials[mat] > 0);
+    }
+
+    public void Craft(CraftRecipe recipe)
+    {
+        if (!CanCraft(recipe)) return;
+
+        foreach (var mat in recipe.RequiredMaterials)
+        {
+            playerMaterials[mat]--;
+        }
+
+        Inventory.AddRewardItem(recipe.ResultItem);
+        Debug.Log($"Crafted: {recipe.ResultItem}");
+    }
+}
+
+Mission Logic: “Operation Tidebreaker”
+public class MissionEventTrigger : MonoBehaviour
+{
+    public void TriggerEvent(string eventName)
+    {
+        switch (eventName)
+        {
+            case "BlastDetected":
+                TimelineManager.Play("ExplosionCinematic");
+                AudioManager.Play("RadioPanic");
+                break;
+            case "ChopperArrival":
+                TimelineManager.Play("EvacFlyover");
+                break;
+        }
+    }
+}
+
+Faction Reputation & Diplomacy Layers
+public class ReputationManager
+{
+    private Dictionary<string, int> factionScores = new()
+    {
+        { "UN", 50 }, { "LocalMilitia", 50 }, { "Civilians", 50 }
+    };
+
+    public void AdjustReputation(string faction, int delta)
+    {
+        if (factionScores.ContainsKey(faction))
+        {
+            factionScores[faction] += delta;
+            Debug.Log($"{faction} reputation changed to {factionScores[faction]}");
+        }
+    }
+
+    public string GetDiplomaticStatus(string faction)
+    {
+        int score = factionScores[faction];
+        if (score > 80) return "Ally";
+        if (score > 50) return "Neutral";
+        return "Hostile";
+    }
+}
+
+Branching Story Paths
+public enum MissionOutcome { Success, Partial, Failure }
+
+public class StoryDirector
+{
+    public MissionOutcome Outcome;
+
+    public void ResolveNarrative()
+    {
+        switch (Outcome)
+        {
+            case MissionOutcome.Success:
+                ReputationManager.AdjustReputation("UN", 20);
+                DialogueSystem.Play("UN_Congratulates");
+                break;
+            case MissionOutcome.Failure:
+                ReputationManager.AdjustReputation("Civilians", -25);
+                DialogueSystem.Play("CivilianOutrage");
+                break;
+        }
+    }
+}
+
+UN Vote & Diplomatic Fallout System
+public class UNVoteSystem
+{
+    private Dictionary<string, bool> memberVotes = new();
+
+    public void CastVote(string country, bool approve)
+    {
+        memberVotes[country] = approve;
+    }
+
+    public float GetApprovalRate()
+    {
+        int yesVotes = memberVotes.Values.Count(v => v);
+        return (float)yesVotes / memberVotes.Count * 100f;
+    }
+}
+
+public class NegotiationNode
+{
+    public string Prompt;
+    public List<string> PlayerResponses;
+    public Dictionary<string, string> FactionReactions;
+}
+
+Full Cinematic Campaign Structure
+🌍 Phase 1: Tactical Incident
+Mission: USS Cole Bombing Response
+• 	🎮 Gameplay: Ship infiltration, timed evacuations, storm overlays, enemy neutralization
+• 	🧠 Outcome-based scripting: Delay evac → global outrage; fast evac → UN admiration
+• 	🔥 Trigger: Faction reputation shifts begin here
+Phase 2: Global Map Deployments
+Introduce a Risk-style deployment map where players allocate teams, track faction control, and respond to flashpoints:
+• 	🗺️ Dynamic map: Yemen, Horn of Africa, Mediterranean
+• 	🔁 Turn-based phase for diplomacy vs direct action
+• 	🎯 Special Ops unlock based on intelligence gathered
+
+public class GlobalPhaseManager
+{
+    public Dictionary<string, int> RegionControl = new();
+    public void DeployForce(string region, int units) => RegionControl[region] += units;
+}
+
+Phase 3: Intelligence Leaks
+The player faces whistleblower dilemmas, intercepted data, and briefings from rogue analysts.
+• 	🔓 Leak system: Randomized intel drops with moral choices (release to media vs suppress)
+• 	📰 Gameplay: Hacker mini-game, secure transfer with risk of backfire
+• 	📉 Outcome: Reputation boost/damage across factions; may cause trial unlocks
+Phase 4: War Crimes Tribunal
+If civilian collateral is high or treaties are violated, trigger the international trial phase.
+• 	🏛️ Courtroom simulation: Evidence gathering, defense construction, pressure from allies
+• 	🎥 Cutscenes: Witness testimonies, media backlash
+• 	🎯 Ending forks:
+• 	Exoneration → Diplomatic prestige + narrative closure
+• 	Conviction → Leader step-down, new mission unlocking to restore trust
+Press Conference: Yair Pinto Speech
+Script a climactic moment with speaker Yair Pinto, presenting facts and confronting misinformation.
+public class SpeechSegment
+{
+    public string Line;
+    public float DelaySeconds;
+}
+
+List<SpeechSegment> pintoSpeech = new()
+{
+    new() { Line = "Ladies and gentlemen, today I address not just the media—but the conscience of the world.", DelaySeconds = 1.5f },
+    new() { Line = "The lies propagated by Hamas are not simple distortions. They’re weapons, aimed at truth itself.", DelaySeconds = 3f },
+    new() { Line = "Our mission was one of rescue, of defense—not of aggression.", DelaySeconds = 2.5f },
+    new() { Line = "Let this footage and this testimony speak louder than any fabricated headline.", DelaySeconds = 2f },
+};
+
+Branching Epilogues
+Your ending adapts based on: | Choice | Effect | |-------|--------| | UN speech success | Gain international coalition support | | Leak suppression | Peace treaties stall, media distrust rises | | War crimes conviction | Trigger regime change & redemption arc | | Full civilian rescue | Hero status unlocked, new regions open |
 
 
 
