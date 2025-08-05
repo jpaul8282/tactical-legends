@@ -3297,4 +3297,280 @@ Summary Checklist
  Camera: Shake, post-process, cut/orbit
  Asset ready: Blood sprites, gore sounds, limb models
 
- 
+ using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
+using UnityEngine.UI;
+using Cinemachine;
+using UnityEngine.Rendering.PostProcessing;
+
+/// <summary>
+/// CinematicManager: Enhanced gameplay-ready controller for cinematics, killcams, camera shake,
+/// post-processing FX, advanced Cinemachine blending, Timeline signals, and UI overlays.
+/// </summary>
+public class CinematicManager : MonoBehaviour
+{
+    [Header("Timeline & Cinemachine")]
+    public PlayableDirector director;
+    public TimelineAsset[] cinematics; // Assign in Inspector
+    public Camera mainCamera;
+    public CinemachineVirtualCamera killCam;
+    public CinemachineVirtualCamera defaultCam;
+    public float killCamBlendTime = 0.7f;
+
+    [Header("Cinemachine Camera Shake")]
+    public CinemachineImpulseSource impulseSource; // Attach to killCam for shake
+
+    [Header("Post-Processing")]
+    public PostProcessVolume postProcessVolume;
+    public float maxVignette = 0.55f;
+    public float vignetteFadeTime = 0.5f;
+    private Vignette vignette;
+
+    [Header("UI Overlays")]
+    public CanvasGroup cinematicBars;
+    public Text cinematicSubtitle;
+    public Image bloodOverlay;
+    public Animator hudAnimator;
+
+    [Header("Audio/FX")]
+    public AudioSource cinematicAudioSource;
+    public AudioClip[] cinematicAudioClips;
+    public ParticleSystem cinematicVFX;
+    public float slowMoTimeScale = 0.1f;
+    public float slowMoDuration = 2.0f;
+
+    // Animator for victim death poses
+    [Header("Animators")]
+    public RuntimeAnimatorController specialDeathController;
+
+    public static CinematicManager Instance { get; private set; }
+    void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+        if (postProcessVolume)
+            postProcessVolume.profile.TryGetSettings(out vignette);
+    }
+
+    public void PlayCinematic(string cinematicName, string subtitle = "", bool useSlowMo = false)
+    {
+        TimelineAsset timeline = GetCinematicByName(cinematicName);
+        if (timeline == null)
+        {
+            Debug.LogWarning("Cinematic not found: " + cinematicName);
+            return;
+        }
+        ShowCinematicBars(true);
+        ShowSubtitle(subtitle);
+        PlayCinematicAudio(cinematicName);
+        PlayCinematicVFX();
+        director.playableAsset = timeline;
+        director.time = 0;
+        director.Play();
+        if (useSlowMo)
+            StartCoroutine(SlowMoRoutine());
+        if (hudAnimator) hudAnimator.SetTrigger("CinematicIn");
+    }
+
+    /// <summary>
+    /// Plays an advanced kill cam sequence with shake, postFX, Cinemachine blend, Timeline signals, and special animations.
+    /// </summary>
+    public void PlayKillCam(Vector3 focusPoint, Transform victim = null, float duration = 1.5f)
+    {
+        ShowCinematicBars(true);
+        PlayBloodOverlay();
+        if (killCam && mainCamera)
+        {
+            killCam.transform.position = mainCamera.transform.position;
+            killCam.transform.LookAt(focusPoint + Vector3.up * 0.9f);
+            killCam.Priority = 20;
+            defaultCam.Priority = 10;
+        }
+        StartCoroutine(KillCamBlendRoutine(duration, victim, focusPoint));
+    }
+
+    // --- Helper Methods ---
+
+    TimelineAsset GetCinematicByName(string cinematicName)
+    {
+        foreach (var t in cinematics)
+            if (t != null && t.name == cinematicName)
+                return t;
+        return null;
+    }
+
+    void ShowCinematicBars(bool show)
+    {
+        if (!cinematicBars) return;
+        cinematicBars.alpha = show ? 1 : 0;
+        cinematicBars.blocksRaycasts = show;
+    }
+
+    void ShowSubtitle(string text)
+    {
+        if (cinematicSubtitle)
+        {
+            cinematicSubtitle.gameObject.SetActive(!string.IsNullOrEmpty(text));
+            cinematicSubtitle.text = text;
+        }
+    }
+
+    void PlayCinematicAudio(string cinematicName)
+    {
+        if (!cinematicAudioSource || cinematicAudioClips == null) return;
+        foreach (var clip in cinematicAudioClips)
+        {
+            if (clip != null && clip.name == cinematicName)
+            {
+                cinematicAudioSource.clip = clip;
+                cinematicAudioSource.Play();
+                break;
+            }
+        }
+    }
+
+    void PlayCinematicVFX()
+    {
+        if (cinematicVFX) cinematicVFX.Play();
+    }
+
+    IEnumerator SlowMoRoutine(float customDuration = -1f)
+    {
+        float oldTimeScale = Time.timeScale;
+        float d = (customDuration > 0) ? customDuration : slowMoDuration;
+        Time.timeScale = slowMoTimeScale;
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
+        yield return new WaitForSecondsRealtime(d);
+        Time.timeScale = oldTimeScale;
+        Time.fixedDeltaTime = 0.02f;
+        ShowCinematicBars(false);
+        FadeVignette(0f);
+    }
+
+    void PlayBloodOverlay()
+    {
+        if (bloodOverlay)
+        {
+            bloodOverlay.gameObject.SetActive(true);
+            bloodOverlay.CrossFadeAlpha(1f, 0.1f, false);
+            bloodOverlay.CrossFadeAlpha(0f, 1.2f, false);
+        }
+    }
+
+    IEnumerator KillCamBlendRoutine(float duration, Transform victim, Vector3 focusPoint)
+    {
+        // Cinemachine blend: blend to killCam, then back to default after duration
+        if (postProcessVolume && vignette != null) FadeVignette(maxVignette);
+        if (impulseSource) impulseSource.GenerateImpulse(2.5f);
+
+        // Special victim animation trigger for cinematic
+        if (victim && specialDeathController)
+        {
+            Animator victimAnim = victim.GetComponent<Animator>();
+            if (victimAnim)
+            {
+                victimAnim.runtimeAnimatorController = specialDeathController;
+                victimAnim.SetTrigger("BrutalDeath");
+            }
+        }
+
+        // Optionally, play a Timeline with signals (e.g., for extra FX or UI events)
+        if (director && director.playableAsset is TimelineAsset timeline)
+        {
+            director.Play(timeline);
+        }
+
+        yield return StartCoroutine(SlowMoRoutine(duration));
+
+        // Blend camera priorities back
+        if (killCam) killCam.Priority = 10;
+        if (defaultCam) defaultCam.Priority = 20;
+
+        // Restore vignette
+        FadeVignette(0f);
+    }
+
+    void FadeVignette(float target)
+    {
+        if (vignette == null) return;
+        StopAllCoroutines();
+        StartCoroutine(FadeVignetteRoutine(target));
+    }
+
+    IEnumerator FadeVignetteRoutine(float target)
+    {
+        float t = 0;
+        float start = vignette.intensity.value;
+        float duration = vignetteFadeTime;
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            vignette.intensity.value = Mathf.Lerp(start, target, t / duration);
+            yield return null;
+        }
+        vignette.intensity.value = target;
+    }
+
+    public void EndCinematic()
+    {
+        ShowCinematicBars(false);
+        ShowSubtitle("");
+        if (cinematicAudioSource && cinematicAudioSource.isPlaying)
+            cinematicAudioSource.Stop();
+        if (hudAnimator) hudAnimator.SetTrigger("CinematicOut");
+        if (killCam) killCam.Priority = 10;
+        if (defaultCam) defaultCam.Priority = 20;
+        FadeVignette(0f);
+    }
+}
+# Companion Timeline & Signal Setup for CinematicManager
+
+## 1. Create Timeline Asset
+- In Unity, create a Timeline Asset (e.g., `KillCamTimeline.playable`).
+- Add tracks:
+    - Cinemachine Track: Bind to `killCam` (showcases kill from dramatic angle).
+    - Animation Track: Bind to victim's Animator. Trigger "BrutalDeath" or other custom poses.
+    - Activation Track: For blood VFX, UI overlays, etc.
+    - Audio Track: Gore SFX, slow-mo SFX.
+    - Signal Track: For events (see below).
+    - PostProcess Track: Animate vignette, chromatic aberration, etc.
+
+## 2. Signal Setup
+- Create Signal Assets for:
+    - StartKillCam
+    - PlayBloodFX
+    - TriggerCameraShake
+    - ShowKillText
+    - EndCinematic
+
+- Attach a `SignalReceiver` to an object in scene (e.g., CinematicManager).
+- Hook methods (e.g., `PlayBloodOverlay`, `EndCinematic`) to the signal events.
+
+## 3. UI Prefab Hierarchy
+- Canvas (Screen Space Overlay)
+    - CinematicBars (CanvasGroup)
+        - TopBar (Image, black)
+        - BottomBar (Image, black)
+    - CinematicSubtitle (Text or TextMeshProUGUI)
+    - BloodOverlay (Image, red splat, alpha 0 initially)
+    - HUDAnimator (Animator for UI effects)
+    - Any additional overlay for "BRUTAL KILL" text, pulse FX, etc.
+
+## 4. Post-Processing
+- Add PostProcessVolume to scene/camera.
+- Add Vignette, Chromatic Aberration, Bloom for dramatic kills.
+- Assign `postProcessVolume` in CinematicManager.
+
+## 5. Cinemachine Setup
+- Place two Virtual Cameras:
+    - `defaultCam`: Normal gameplay.
+    - `killCam`: Special killcam, higher priority during kill, animated in Timeline.
+- Use Cinemachine Impulse Source for camera shake.
+- Set priorities via code in CinematicManager.
+
+## 6. Usage in Game
+- Call `CinematicManager.Instance.PlayKillCam(focus, victim)` brutal kill event.
+- Timeline will handle advanced camera, animation, FX, and UI via Signals.
+- Call `CinematicManager.Instance.EndCinematic()` from Timeline signal or after cutscene.
+
