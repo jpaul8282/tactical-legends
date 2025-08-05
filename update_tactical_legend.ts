@@ -7760,3 +7760,1089 @@ Challenges
 
 
 
+void Awake()
+{
+    if (Instance == null) Instance = this;
+    else Destroy(gameObject);
+    DontDestroyOnLoad(gameObject);
+}
+
+public void CompleteMission(Mission mission)
+{
+    mission.Status = MissionStatus.Completed;
+    TotalRewards += mission.Reward;
+    // Unlock the next mission or secret op
+}
+
+public Mission GetNextMission()
+{
+    foreach (var m in AllMissions)
+        if (m.Status == MissionStatus.Unlocked)
+            return m;
+    return null;
+}
+
+// Example mission: "The Hunt for Hamas"
+public void PopulateMissions()
+{
+    AllMissions = new List<Mission>
+    {
+        new Mission {
+            Title = "Operation Desert Ghost",
+            Description = "Infiltrate a fortified enemy compound to retrieve stolen intel.",
+            MissionRegion = Region.MiddleEast,
+            IsSecretOp = false,
+            Status = MissionStatus.Unlocked,
+            Reward = 1500,
+            Objectives = new[] { "Infiltrate compound", "Retrieve intel", "Exfiltrate" }
+        },
+        new Mission {
+            Title = "The Hunt for Hamas",
+            Description = "Stealthily locate and neutralize Hamas leadership in a dense urban environment. Avoid civilian casualties.",
+            MissionRegion = Region.Gaza,
+            IsSecretOp = true,
+            Status = MissionStatus.Locked,
+            Reward = 4000,
+            Objectives = new[] { "Locate cell leader", "Gather intel", "Neutralize target", "Escape undetected" }
+        },
+        // Add more missions as needed
+    };
+}
+using UnityEngine;
+using System.Collections.Generic;
+
+public enum Region { MiddleEast, Europe, SouthAmerica, Israel, Gaza, Iran, Yemen, JudeaSamaria }
+public enum MissionStatus { Locked, Unlocked, Completed }
+
+[System.Serializable]
+public class Mission
+{
+    public string Title;
+    public string Description;
+    public Region MissionRegion;
+    public bool IsSecretOp;
+    public MissionStatus Status;
+    public int Reward;
+    public string[] Objectives;
+}
+
+[System.Serializable]
+public class Commander
+{
+    public string Name;
+    public string Agency; // e.g. Mossad, Oistarian
+    public string Role;
+}
+
+public class PlayerAgent
+{
+    public string Codename;
+    public List<string> Specializations;
+    public int Rank;
+}
+
+public class GameManager: MonoBehaviour
+{
+    public static GameManager Instance;
+
+    public List<Mission> AllMissions;
+    public List<Commander> Commanders;
+    public PlayerAgent Player;
+    public int TotalRewards = 0;
+
+    void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+
+        DontDestroyOnLoad(gameObject);
+        PopulateCommanders();
+        PopulateMissions();
+    }
+
+    public void CompleteMission(Mission mission)
+    {
+        if (mission.Status != MissionStatus.Completed)
+        {
+            mission.Status = MissionStatus.Completed;
+            TotalRewards += mission.Reward;
+
+            // Unlock next mission
+            UnlockNextMission();
+        }
+    }
+
+    private void UnlockNextMission()
+    {
+        foreach (var m in AllMissions)
+        {
+            if (m.Status == MissionStatus.Locked)
+            {
+                m.Status = MissionStatus.Unlocked;
+                break;
+            }
+        }
+    }
+
+    public Mission GetNextMission()
+    {
+        foreach (var m in AllMissions)
+            if (m.Status == MissionStatus.Unlocked)
+                return m;
+        return null;
+    }
+
+    private void PopulateCommanders()
+    {
+        Commanders = new List<Commander>
+        {
+            new Commander { Name = "Alon Regev", Agency = "Mossad", Role = "Intelligence Strategist" },
+            new Commander { Name = "Lira Ostin", Agency = "Oistarian", Role = "Cyber Ops Lead" },
+            new Commander { Name = "Col. Dov Amir", Agency = "IDF", Role = "Field Commander" },
+        };
+    }
+
+    public void PopulateMissions()
+    {
+        AllMissions = new List<Mission>
+        {
+            new Mission {
+                Title = "Operation Desert Ghost",
+                Description = "Infiltrate a fortified enemy compound to retrieve stolen intel.",
+                MissionRegion = Region.MiddleEast,
+                IsSecretOp = false,
+                Status = MissionStatus.Unlocked,
+                Reward = 1500,
+                Objectives = new[] { "Infiltrate compound", "Retrieve intel", "Exfiltrate" }
+            },
+
+            new Mission {
+                Title = "The Hunt for Hamas",
+                Description = "Locate and neutralize Hamas leadership in a dense urban setting. Minimize collateral damage.",
+                MissionRegion = Region.Gaza,
+                IsSecretOp = true,
+                Status = MissionStatus.Locked,
+                Reward = 4000,
+                Objectives = new[] { "Locate cell leader", "Gather intel", "Neutralize target", "Escape undetected" }
+            },
+
+            new Mission {
+                Title = "Rise of Israel’s Defense Center",
+                Description = "Oversee the construction of Israel’s AI-integrated defense headquarters while protecting it from cyber threats.",
+                MissionRegion = Region.Israel,
+                IsSecretOp = false,
+                Status = MissionStatus.Locked,
+                Reward = 2500,
+                Objectives = new[] { "Secure perimeter", "Deploy counter-cyber tools", "Supervise construction" }
+            },
+
+            new Mission {
+                Title = "Shadow Over Tehran",
+                Description = "Coordinate Mossad and Oistarian teams to intercept Iranian nuclear logistics.",
+                MissionRegion = Region.Iran,
+                IsSecretOp = true,
+                Status = MissionStatus.Locked,
+                Reward = 6000,
+                Objectives = new[] { "Track uranium convoy", "Hack control systems", "Evade IRGC patrols", "Extract with intel" }
+            },
+
+            new Mission {
+                Title = "Judea & Samaria Siege",
+                Description = "Prevent a major insurgency operation by securing settlements and disabling weapons caches.",
+                MissionRegion = Region.JudeaSamaria,
+                IsSecretOp = false,
+                Status = MissionStatus.Locked,
+                Reward = 3200,
+                Objectives = new[] { "Secure key settlements", "Disable rebel communications", "Capture ringleaders" }
+            },
+
+            new Mission {
+                Title = "Drone Storm from Yemen",
+                Description = "Intercept incoming Houthi drone strikes on southern Israel using radar jamming and Iron Dome support.",
+                MissionRegion = Region.Yemen,
+                IsSecretOp = false,
+                Status = MissionStatus.Locked,
+                Reward = 3000,
+                Objectives = new[] { "Detect drone swarm", "Coordinate Iron Dome", "Neutralize hostiles" }
+            },
+
+            new Mission {
+                Title = "UN War Crime Tribunal",
+                Description = "Collect digital evidence from the battlefield, provide intelligence to ICC prosecutors for war crime investigations.",
+                MissionRegion = Region.Europe,
+                IsSecretOp = true,
+                Status = MissionStatus.Locked,
+                Reward = 5000,
+                Objectives = new[] { "Extract video evidence", "Secure war logs", "Deliver encrypted package" }
+            }
+        };
+    }
+}
+
+
+
+
+
+using UnityEngine;
+using System.Collections.Generic;
+
+public enum Region { MiddleEast, Europe, SouthAmerica, GenericZone1, GenericZone2 }
+public enum MissionStatus { Locked, Unlocked, Completed }
+
+[System.Serializable]
+public class Mission
+{
+    public string Title;
+    public string Description;
+    public Region MissionRegion;
+    public bool IsSecretOp;
+    public MissionStatus Status;
+    public int Reward;
+    public string[] Objectives;
+}
+
+public class GameManager: MonoBehaviour
+{
+    public static GameManager Instance { get; private set; }
+    public List<Mission> AllMissions = new();
+    public PlayerAgent Player;
+    public int TotalRewards { get; private set; }
+
+    void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+
+    public void CompleteMission(Mission mission)
+    {
+        if (mission == null || mission.Status == MissionStatus.Completed) return;
+
+        mission.Status = MissionStatus.Completed;
+        TotalRewards += mission.Reward;
+        UnlockNextMission();
+    }
+
+    private void UnlockNextMission()
+    {
+        foreach (var m in AllMissions)
+        {
+            if (m.Status == MissionStatus.Locked)
+            {
+                m.Status = MissionStatus.Unlocked;
+                break;
+            }
+        }
+    }
+
+    public Mission GetNextMission()
+    {
+        return AllMissions.Find(m => m.Status == MissionStatus.Unlocked);
+    }
+
+    public void PopulateMissions()
+    {
+        AllMissions = new List<Mission>
+        {
+            new Mission {
+                Title = "Operation Desert Ghost",
+                Description = "Infiltrate a fortified compound and retrieve stolen intel.",
+                MissionRegion = Region.MiddleEast,
+                IsSecretOp = false,
+                Status = MissionStatus.Unlocked,
+                Reward = 1500,
+                Objectives = new[] { "Infiltrate compound", "Retrieve intel", "Exfiltrate" }
+            },
+            new Mission {
+                Title = "Urban Phantom",
+                Description = "Stealth operation to locate leadership in a dense zone. Avoid detection and collateral.",
+                MissionRegion = Region.GenericZone2,
+                IsSecretOp = true,
+                Status = MissionStatus.Locked,
+                Reward = 4000,
+                Objectives = new[] { "Locate target", "Gather intel", "Neutralize", "Escape undetected" }
+            },
+        };
+    }
+}
+public enum Difficulty { Easy, Medium, Hard }
+TimeLimitSeconds = 1200f;
+public Difficulty MissionDifficulty;
+public float TimeLimitSeconds; // Time allowed to complete mission
+
+// Set the time limit to 20 minutes (1200 seconds)
+void SetTimeLimitToTwentyMinutes()
+{
+    TimeLimitSeconds = 1200f;
+}
+public class MissionSettings
+{
+    public Difficulty MissionDifficulty;
+    public float TimeLimitSeconds; // Time allowed to complete mission
+
+    // Constructor
+    public MissionSettings()
+    {
+        // Set the time limit to 20 minutes (1200 seconds)
+        TimeLimitSeconds = 1200f;
+    }
+
+    // Alternatively, if you have a Start or Init method
+    public void Initialize()
+    {
+        TimeLimitSeconds = 1200f;
+    }
+}
+public class MissionScript: MonoBehaviour
+{
+    public Difficulty MissionDifficulty;
+    public float TimeLimitSeconds; // Time allowed to complete mission
+
+    void Start()
+    {
+        // Set the time limit to 20 minutes (1200 seconds)
+        TimeLimitSeconds = 1200f;
+    }
+}
+public List<string> CombatFeedback = new List<string> {
+    "Just green",
+    "I can shoot!",
+    "Yo, he's dead!"
+};
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "NewMissionData", menuName = "Mission/MissionData")]
+public class MissionDataSO: ScriptableObject
+{
+    public string Title;
+    public string Description;
+    public Region MissionRegion;
+    public bool IsSecretOp;
+    public MissionStatus Status;
+    public Difficulty MissionDifficulty;
+    public int Reward;
+    public string[] Objectives;
+    public float TimeLimitSeconds;
+}
+public List<MissionDataSO> MissionAssets;
+
+AllMissions = MissionAssets.Select(asset => new Mission {
+    Title = asset.Title,
+    Description = asset.Description,
+    MissionRegion = asset.MissionRegion,
+    IsSecretOp = asset.IsSecretOp,
+    Status = asset.Status,
+    MissionDifficulty = asset.MissionDifficulty,
+    Reward = asset.Reward,
+    Objectives = asset. Objectives,
+    TimeLimitSeconds = asset.TimeLimitSeconds
+}).ToList();
+
+[System.Serializable]
+public class SaveData {
+    public List<Mission> SavedMissions;
+    public int TotalRewards;
+}
+
+// Save
+string data = JsonUtility.ToJson(new SaveData { SavedMissions = AllMissions, TotalRewards = TotalRewards });
+PlayerPrefs.SetString("SaveSlot", data);
+
+// Load
+var loadedData = JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString("SaveSlot"));
+AllMissions = loadedData.SavedMissions;
+TotalRewards = loadedData.TotalRewards;
+
+using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
+using System.Collections;
+
+public class MissionUIManager: MonoBehaviour
+{
+    public TextMeshProUGUI missionTitleText;
+    public TextMeshProUGUI timerText;
+    public Transform objectivesContainer;
+    public GameObject objectivePrefab;
+    public AudioSource audioSource;
+
+    public AudioClip justGreenClip;
+    public AudioClip iCanShootClip;
+    public AudioClip yoDeadClip;
+
+    private Mission currentMission;
+    private float remainingTime;
+
+    void Start()
+    {
+        LoadMission(GameManager.Instance.GetNextMission());
+    }
+
+    void LoadMission(Mission mission)
+    {
+        if (mission == null) return;
+        currentMission = mission;
+        missionTitleText.text = mission.Title;
+        remainingTime = mission.TimeLimitSeconds;
+
+        // Populate objectives
+        foreach (Transform child in objectivesContainer) Destroy(child.gameObject);
+        foreach (var obj in mission.Objectives)
+        {
+            var objectiveGO = Instantiate(objectivePrefab, objectivesContainer);
+            objectiveGO.GetComponentInChildren<TextMeshProUGUI>().text = obj;
+        }
+
+        StartCoroutine(TimerCountdown());
+        TriggerCombatCue("JustGreen");
+    }
+
+    IEnumerator TimerCountdown()
+    {
+        while (remainingTime > 0)
+        {
+            timerText.text = $"Time Left: {Mathf.FloorToInt(remainingTime)}s";
+            yield return new WaitForSeconds(1f);
+            remainingTime--;
+
+            if (remainingTime == 10) TriggerCombatCue("ICanShoot");
+        }
+
+        timerText.text = "Mission Failed!";
+        TriggerCombatCue("YoDead");
+    }
+
+    void TriggerCombatCue(string cue)
+    {
+        switch (cue)
+        {
+            case "JustGreen":
+                audioSource.PlayOneShot(justGreenClip);
+                break;
+            case "ICanShoot":
+                audioSource.PlayOneShot(iCanShootClip);
+                break;
+            case "YoDead":
+                audioSource.PlayOneShot(yoDeadClip);
+                break;
+        }
+    }
+
+    public void DebugCompleteObjective() // Hook this to a debug button
+    {
+        if (objectivesContainer.childCount > 0)
+        {
+            objectivesContainer.GetChild(0).GetComponent<Image>().color = Color.green;
+            objectivesContainer.GetChild(0).GetComponentInChildren<TextMeshProUGUI>().text += " (Done)";
+        }
+    }
+}
+
+
+using UnityEngine;
+
+[RequireComponent(typeof(SpriteRenderer))]
+public class PhaseGlyph : MonoBehaviour
+{
+    public string phaseName;
+    public Sprite glyphIcon;
+    public Color glowColor = Color.cyan;
+    public AudioSource audioSource;
+
+    private float pulseIntensity = 0.0f;
+    private Material glyphMaterial;
+
+    void Start()
+    {
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        glyphMaterial = sr.material;
+
+        if (!glyphMaterial.HasProperty("_GlowColor"))
+            Debug.LogWarning("Material does not support _GlowColor property.");
+    }
+
+    void Update()
+    {
+        pulseIntensity = Mathf.PingPong(Time.time * 2f, 1f);
+        AnimateGlyph();
+    }
+
+    void AnimateGlyph()
+    {
+        transform.Rotate(Vector3.up * Time.deltaTime * 20f);
+
+        float beatLevel = AudioManager.GetRhythmValue(audioSource);
+        float intensity = Mathf.Lerp(0.2f, 1f, beatLevel);
+
+        if (glyphMaterial != null)
+            glyphMaterial.SetColor("_GlowColor", glowColor * intensity);
+
+        transform.localScale = Vector3.one * (1f + intensity * 0.25f);
+    }
+}
+using UnityEngine;
+using UnityEngine.Events;
+
+[System.Serializable]
+public class MissionNode
+{
+    public string missionId;
+    public string requiredBeatSequence;
+    public bool isUnlocked = false;
+    public MissionData missionData;
+    public UnityEvent onUnlocked;
+    public UnityEvent onLocked;
+
+    public void UpdateLockState(string currentBeat)
+    {
+        bool previouslyUnlocked = isUnlocked;
+        isUnlocked = (currentBeat == requiredBeatSequence);
+
+        if (isUnlocked && !previouslyUnlocked)
+            onUnlocked?.Invoke();
+        else if (!isUnlocked && previouslyUnlocked)
+            onLocked?.Invoke();
+
+        AnimateLockUI();
+    }
+
+    void AnimateLockUI()
+    {
+        if (!isUnlocked)
+        {
+            VisualFX.Shimmer("SonicReverb");
+        }
+        else
+        {
+            UIManager.PulseHighlight(this);
+        }
+    }
+}
+using UnityEngine;
+using System.Collections.Generic;
+
+public class MissionSelector: MonoBehaviour
+{
+    [Header("Mission Control")]
+    public List<MissionNode> missions;
+
+    [Header("Audio & Rhythm")]
+    public AudioClip soundtrack;
+    public AudioReactiveUI beatGrid;
+    public SkyboxPulseManager skyboxController;
+
+    [Header("Visual & UI")]
+    public GlyphRing phaseGlyphs;
+    public FactionBannerController bannerAnimator;
+
+    private void Start()
+    {
+        AudioManager.Play(track: soundtrack);
+
+        bannerAnimator.AnimateFactions(new string[] { "Pulseborn", "Synthronauts", "Echo Clerics" });
+        phaseGlyphs.InitializeGlyphRotation();
+    }
+
+    private void Update()
+    {
+        beatGrid.ListenForBeatTap();
+        skyboxController.AnimateToMusicTempo();
+
+        string currentBeat = AudioManager.CurrentRhythmPattern;
+
+        foreach (var mission in missions)
+            mission.UpdateLockState(currentBeat);
+    }
+}
+using UnityEngine;
+
+[CreateAssetMenu(fileName = "NewMission", menuName = "Mission/MissionData")]
+public class MissionData: ScriptableObject
+{
+    public string Title;
+    [TextArea] public string Description;
+    public Sprite Icon;
+    public MissionDifficulty Difficulty;
+    public Region Region;
+    public bool IsSecret;
+    public int Reward;
+    public string[] Objectives;
+}
+
+[CreateAssetMenu(menuName = "Mission/StyleProfile")]
+public class StyleProfileSO: ScriptableObject
+{
+    public Color backgroundColor;
+    public TMP_FontAsset missionFont;
+    public Sprite iconFrame;
+    public AudioClip backgroundTheme;
+    public AnimatorOverrideController overrideAnimator;
+}
+
+public StyleProfileSO missionStyle;
+
+public Image backgroundPanel;
+public TextMeshProUGUI titleText;
+
+void ApplyStyle(StyleProfileSO style)
+{
+    backgroundPanel.color = style.backgroundColor;
+    titleText.font = style.missionFont;
+    titleText.GetComponent<Animator>().runtimeAnimatorController = style.overrideAnimator;
+    audioSource.clip = style.backgroundTheme;
+    audioSource.Play();
+}
+
+const InteractiveObjects = {
+  objects: [],
+
+  initialize(map) {
+    this.objects = [
+      this.createTrap("Landmine", map.getRandomTile(), "explosive", { damage: 50, delay: 0 }),
+      this.createTrap("Snare Wire", map.getTile("alley"), "entangle", { duration: 2 }),
+
+      this.createCover("Wooden Crate", map.getTile("market"), "destructible", 30),
+      this.createCover("Stone Wall", map.getTile("courtyard"), "semi-permanent", 100),
+
+      this.createPowerUp("Medkit", map.getTile("rooftop"), "healing", { healAmount: 30 }),
+      this.createPowerUp("Intel Drone", map.getTile("checkpoint"), "recon", { visionBoost: 5, duration: 3 })
+    ];
+  },
+
+  createTrap(name, location, effectType, effectProps) {
+    return {
+      type: "trap",
+      name,
+      location,
+      triggered: false,
+      effect: { type: effectType, ...effectProps },
+      onTrigger(unit) {
+        if (!this.triggered) {
+          this.triggered = true;
+          console.log(`[TRAP] ${this.name} triggered by ${unit.name}`);
+          unit.applyEffect(this.effect);
+        }
+      }
+    };
+  },
+
+  createCover(name, location, durabilityType, hp) {
+    return {
+      type: "cover",
+      name,
+      location,
+      durability: durabilityType,
+      hp,
+      takeDamage(amount) {
+        this.hp = Math.max(0, this.hp - amount);
+        console.log(`[COVER] ${this.name} took ${amount} damage. Remaining HP: ${this.hp}`);
+        if (this.hp === 0) console.log(`[COVER] ${this.name} destroyed!`);
+      }
+    };
+  },
+
+  createPowerUp(name, location, effectType, effectProps) {
+    return {
+      type: "power-up",
+      name,
+      location,
+      collected: false,
+      effect: { type: effectType, ...effectProps },
+      onCollect(unit) {
+        if (!this.collected) {
+          this.collected = true;
+          console.log(`[POWER-UP] ${unit.name} collected ${this.name}`);
+          unit.applyEffect(this.effect);
+        }
+      }
+    };
+  }
+};
+
+class InteractiveObject {
+  constructor(name, location) {
+    this.name = name;
+    this.location = location;
+  }
+}
+
+class Trap extends InteractiveObject {
+  constructor(name, location, effect) {
+    super(name, location);
+    this.type = "trap";
+    this.triggered = false;
+    this.effect = effect;
+  }
+
+  tryTrigger(unit) {
+    if (!this.triggered && unit.state !== "stealthed") {
+      this.triggered = true;
+      console.log(`[TRAP] ${this.name} triggered by ${unit.name}`);
+      unit.applyEffect(this.effect);
+    }
+  }
+}
+
+class Cover extends InteractiveObject {
+  constructor(name, location, durabilityType, hp) {
+    super(name, location);
+    this.type = "cover";
+    this.durability = durabilityType;
+    this.hp = hp;
+  }
+
+  takeDamage(amount) {
+    this.hp = Math.max(0, this.hp - amount);
+    console.log(`[COVER] ${this.name} took ${amount} damage. HP: ${this.hp}`);
+    if (this.hp === 0) console.log(`[COVER] ${this.name} destroyed!`);
+  }
+
+  regenerate(amount) {
+    if (this.durability === "regenerative") {
+      this.hp += amount;
+      console.log(`[COVER] ${this.name} regenerated to ${this.hp} HP`);
+    }
+  }
+}
+
+class PowerUp extends InteractiveObject {
+  constructor(name, location, effect) {
+    super(name, location);
+    this.type = "power-up";
+    this.collected = false;
+    this.effect = effect;
+  }
+
+  tryCollect(unit) {
+    if (!this.collected && unit.state !== "disabled") {
+      this.collected = true;
+      console.log(`[POWER-UP] ${unit.name} collected ${this.name}`);
+      unit.applyEffect(this.effect);
+    }
+  }
+}
+
+const ObjectSpawner = {
+  activeObjects: [],
+
+  spawnTrap(map, type, location, effectProps) {
+    const trap = new Trap(type, location, { type, ...effectProps });
+    this.activeObjects.push(trap);
+    console.log(`[SPAWNER] Trap ${trap.name} spawned at ${trap.location.id}`);
+  },
+
+  spawnCover(map, name, location, durabilityType, hp) {
+    const cover = new Cover(name, location, durabilityType, hp);
+    this.activeObjects.push(cover);
+    console.log(`[SPAWNER] Cover ${cover.name} placed at ${cover.location.id}`);
+  },
+
+  spawnPowerUp(map, name, location, effectType, effectProps) {
+    const powerUp = new PowerUp(name, location, { type: effectType, ...effectProps });
+    this.activeObjects.push(powerUp);
+    console.log(`[SPAWNER] Power-Up ${powerUp.name} spawned at ${powerUp.location.id}`);
+  }
+};
+
+function checkTriggerConditions(unit, objectType) {
+  switch (objectType) {
+    case "trap": return unit.state !== "stealthed";
+    case "power-up": return unit.state !== "disabled";
+    default: return true;
+  }
+}
+
+class MissionController {
+  constructor(map) {
+    this.map = map;
+    this.spawner = new ObjectSpawner();
+    this.events = new EventManager();
+  }
+
+  startMission() {
+    // Initial objects
+    this.spawner.spawnTrap(this.map, "landmine", this.map.getTile("bridge"), { damage: 40 });
+    this.spawner.spawnCover(this.map, "Sandbags", this.map.getTile("checkpoint"), "regenerative", 60);
+
+    this.events.emit("missionStarted", { time: Date.now() });
+  }
+
+  updateMissionState(unit) {
+    this.spawner.activeObjects.forEach(obj => {
+      if (obj instanceof Trap) obj.tryTrigger(unit);
+      else if (obj instanceof PowerUp) obj.tryCollect(unit);
+    });
+
+    this.events.emit("unitMoved", { unit });
+  }
+}
+
+class EventManager {
+  constructor() {
+    this.subscribers = {};
+  }
+
+  on(eventName, callback) {
+    if (!this.subscribers[eventName]) this.subscribers[eventName] = [];
+    this.subscribers[eventName].push(callback);
+  }
+
+  emit(eventName, data) {
+    const listeners = this.subscribers[eventName] || [];
+    listeners.forEach(cb => cb(data));
+  }
+}
+
+class InteractionManager {
+  constructor(unit) {
+    this.unit = unit;
+  }
+
+  canTriggerTrap() {
+    return !["stealthed", "hovering", "spectral"].includes(this.unit.state);
+  }
+
+  canCollectPowerUp() {
+    return !["disabled", "overloaded"].includes(this.unit.state);
+  }
+
+  applyTo(object) {
+    if (object instanceof Trap && this.canTriggerTrap()) {
+      object.tryTrigger(this.unit);
+    }
+
+    if (object instanceof PowerUp && this.canCollectPowerUp()) {
+      object.tryCollect(this.unit);
+    }
+  }
+}
+missionController.updateMissionState(playerUnit); // Handles object interactions
+
+eventManager.on("missionStarted", () => {
+  setTimeout(() => spawner.spawnTrap(map, "auto-turret", map.getTile("gate"), { damage: 100 }), 10000);
+});
+
+class ProximityZone {
+  constructor(name, location, radius, effect, triggerOnce = true) {
+    this.name = name;
+    this.location = location;
+    this.radius = radius;
+    this.effect = effect;
+    this.triggeredUnits = new Set();
+    this.triggerOnce = triggerOnce;
+  }
+
+  check(unit) {
+    const dist = this.location.distanceTo(unit.location);
+    if (dist <= this.radius && (!this.triggeredUnits.has(unit) || !this.triggerOnce)) {
+      this.triggeredUnits.add(unit);
+      console.log(`[ZONE] ${unit.name} entered ${this.name} zone`);
+      unit.applyEffect(this.effect);
+    }
+  }
+}
+
+class CountdownPhase {
+  constructor(name, duration, effect) {
+    this.name = name;
+    this.duration = duration;
+    this.effect = effect;
+    this.active = false;
+  }
+
+  activate() {
+    this.active = true;
+    console.log(`[COUNTDOWN] ${this.name} begins! ${this.duration} seconds until impact...`);
+
+    setTimeout(() => {
+      console.log(`[COUNTDOWN] ${this.name} triggered`);
+      this.applyGlobalEffect();
+    }, this.duration * 1000);
+  }
+
+  applyGlobalEffect() {
+    Game.getAllUnits().forEach(unit => unit.applyEffect(this.effect));
+  }
+}
+
+class EnvironmentTriggerManager {
+  constructor(map) {
+    this.zones = [];
+    this.countdowns = [];
+  }
+
+  addZone(name, location, radius, effect, once = true) {
+    this.zones.push(new ProximityZone(name, location, radius, effect, once));
+  }
+
+  addCountdown(name, duration, effect) {
+    const phase = new CountdownPhase(name, duration, effect);
+    this.countdowns.push(phase);
+    phase.activate();
+  }
+
+  update(unit) {
+    this.zones.forEach(zone => zone.check(unit));
+  }
+}
+
+triggerManager.update(currentUnit);
+
+class WeatherSystem {
+  constructor() {
+    this.current = "clear";
+  }
+
+  setWeather(type) {
+    this.current = type;
+    console.log(`[WEATHER] Switched to: ${type}`);
+    EnvironmentTriggerManager.applyWeatherEffect(type);
+  }
+}
+
+class DestructibleZone {
+  constructor(location, hp, debrisEffect) {
+    this.location = location;
+    this.hp = hp;
+    this.debrisEffect = debrisEffect;
+    this.destroyed = false;
+  }
+
+  applyDamage(amount) {
+    this.hp -= amount;
+    if (this.hp <= 0 && !this.destroyed) {
+      this.destroyed = true;
+      console.log(`[ZONE] ${this.location.name} destroyed!`);
+      this.triggerDebris();
+    }
+  }
+
+  triggerDebris() {
+    Game.getUnitsNearby(this.location).forEach(unit => {
+      unit.applyEffect(this.debrisEffect);
+    });
+  }
+}
+
+class MusicManager {
+  constructor() {
+    this.layers = {
+      calm: "ambient_desert.wav",
+      alert: "tension_build.wav",
+      danger: "combat_intense.wav"
+    };
+    this.currentLayer = null;
+  }
+
+  updateThreat(threatLevel) {
+    const newLayer = this.getLayer(threatLevel);
+    if (newLayer !== this.currentLayer) {
+      this.currentLayer = newLayer;
+      this.playMusic(newLayer);
+    }
+  }
+
+  getLayer(threatLevel) {
+    if (threatLevel > 80) return this. layers.danger;
+    if (threatLevel > 40) return this. layers.alert;
+    return this .layers.calm;
+  }
+
+  playMusic(file) {
+    console.log(`[MUSIC] Now playing: ${file}`);
+    AudioSystem.play(file, { loop: true });
+  }
+}
+
+class ChaosDirector {
+  constructor() {
+    this.sequence = [];
+  }
+
+  addEvent(delay, action) {
+    this.sequence.push({ delay, action });
+  }
+
+  start() {
+    let totalTime = 0;
+    this.sequence.forEach(evt => {
+      totalTime += evt. delay;
+      setTimeout(evt.action, totalTime * 1000);
+    });
+  }
+}
+
+// Usage
+const director = new ChaosDirector();
+director.addEvent(0, () => AudioSystem.play("storm_rising.wav"));
+director.addEvent(2, () => Camera.shake(0.5, 1));
+director.addEvent(4, () => UI.showMessage("⚠️ Incoming artillery!"));
+director.addEvent(6, () => ExplosionManager.trigger(map.getTile("sector45")));
+director.addEvent(10, () => MusicManager.updateThreat(90));
+director.start();
+
+class TacticalOverlay {
+  constructor(mapUI) {
+    this.mapUI = mapUI;
+    this.layers = {};
+  }
+
+  highlightZone(tile, type) {
+    const color = {
+      danger: "rgba(255,0,0,0.6)",
+      storm: "rgba(255,165,0,0.4)",
+      objective: "rgba(0,255,0,0.5)",
+      destructible: "rgba(255,255,0,0.5)"
+    };
+    this.mapUI.drawOverlay(tile.position, color[type]);
+  }
+
+  updateObjectiveTimer(tile, secondsLeft) {
+    const urgency = secondsLeft < 15 ? "🔥" : "⏳";
+    this.mapUI.showText(tile.position, `${urgency} ${secondsLeft}s`);
+  }
+}
+
+overlay.highlightZone(map.getTile("sector12"), "danger");
+overlay.updateObjectiveTimer(map.getTile("comm_station"), 23);
+
+class StormFront {
+  constructor(startTile, direction, speed) {
+    this.currentTile = startTile;
+    this.direction = direction;
+    this.speed = speed;
+  }
+
+  advance() {
+    const nextTile = this.currentTile.getAdjacent(this.direction);
+    if (nextTile) {
+      this.currentTile = nextTile;
+      TacticalOverlay.highlightZone(nextTile, "storm");
+      WeatherSystem.setWeather("sandstorm");
+      Game.getUnitsNearby(nextTile).forEach(u => u.applyEffect({ type: "visionDebuff", amount: -2 }));
+    }
+  }
+
+  startSweep(intervalSeconds, steps) {
+    for (let i = 1; i <= steps; i++) {
+      setTimeout(() => this.advance(), i * intervalSeconds * 1000);
+    }
+  }
+}
+
+const storm = new StormFront(map.getTile("desert_entry"), "east", 1);
+storm.startSweep(5, 8); // Pushes storm 8 tiles every 5 seconds
+
+
+
+
+
+
+
+
+                                            
