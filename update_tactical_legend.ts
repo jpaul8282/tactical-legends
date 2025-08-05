@@ -1025,5 +1025,349 @@ public class AudioManager : MonoBehaviour
                 Destroy(src);
     }
 }
-            
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using UnityEngine.Networking; // For networking (UNET or Mirror)
+
+/// <summary>
+/// Advanced BattlefieldManager controlling objectives, factions, weather, hazards, reinforcements,
+/// AI, morale, dynamic environment, UI, networking, and all battlefield elements.
+/// </summary>
+public class BattlefieldManager : MonoBehaviour
+{
+    public enum ObjectiveType { DisableSnipers, HackTerminal, EscortCivilians, DestroyArmoredVehicle, CaptureZone, DefendPoint }
+    public enum Faction { Urban, Desert, Arctic, Forest }
+    public enum MoraleEvent { Boost, Penalty, Panic, Rally }
+
+    [Header("Dependencies")]
+    public DayCycleManager dayCycle;
+    public AudioManager audioManager;
+    public WeatherManager weatherManager;
+
+    [Header("Civilians & AI")]
+    public List<NPC> civilians;
+    public List<NPC> enemyUnits;
+    public List<NPC> friendlyUnits;
+
+    [Header("Battlefield Elements")]
+    public List<Transform> objectiveSpawnPoints;
+    public List<GameObject> objectivePrefabs;
+    public List<GameObject> hazardPrefabs; // e.g., mine, gas, turret
+    public List<GameObject> reinforcementPrefabs;
+
+    [Header("Environment Dynamics")]
+    public Light mainDirectionalLight;
+    public ParticleSystem explosionFX;
+    public ParticleSystem smokeFX;
+    public AudioClip heavyWeaponsFire;
+    public AudioClip artilleryStrike;
+
+    [Header("UI Elements")]
+    public Canvas battlefieldCanvas;
+    public Text objectiveText;
+    public Text moraleText;
+    public Text factionText;
+    public Button nextObjectiveButton;
+    public GameObject pauseMenuPanel;
+    public Slider moraleSlider;
+
+    // Networking hooks (e.g., Mirror/UNET/Custom)
+    public delegate void OnObjectiveCompletedNet(ObjectiveType type, string playerId);
+    public event OnObjectiveCompletedNet ObjectiveCompletedNet;
+
+    public delegate void OnMoraleChangedNet(float morale, string playerId);
+    public event OnMoraleChangedNet MoraleChangedNet;
+
+    // Scene management
+    public List<string> sceneNames; // Add your Unity scene names here
+
+    // Internal state
+    private Dictionary<ObjectiveType, GameObject> activeObjectives = new Dictionary<ObjectiveType, GameObject>();
+    private Dictionary<Faction, string> factionTraits = new Dictionary<Faction, string>();
+    private float morale = 1.0f; // 0-2, 1 = normal
+
+    void Start()
+    {
+        InitializeEnvironment();
+        AssignFactionTraits();
+        dayCycle?.BeginCycle();
+        weatherManager?.RandomizeWeather();
+        audioManager?.PlayAmbientLayer("SirenLoop");
+        SetupUI();
+        UpdateUI();
+    }
+
+    void InitializeEnvironment()
+    {
+        // Spawn random objectives
+        SpawnBattlefieldObjectives();
+
+        // Random hazards
+        SpawnHazards();
+
+        // Civilians AI
+        foreach (NPC civ in civilians)
+            civ?.SetBehavior("FleeToSafeZone");
+
+        // Enemy AI
+        foreach (NPC enemy in enemyUnits)
+            enemy?.SetBehavior("AggressivePatrol");
+
+        // Friendly AI
+        foreach (NPC ally in friendlyUnits)
+            ally?.SetBehavior("HoldPosition");
+    }
+
+    void SpawnBattlefieldObjectives()
+    {
+        // Clear old
+        foreach (var obj in activeObjectives.Values)
+            if (obj != null) Destroy(obj);
+        activeObjectives.Clear();
+
+        // Example: spawn 3 random objectives
+        List<ObjectiveType> chosen = new List<ObjectiveType>
+        {
+            ObjectiveType.HackTerminal,
+            ObjectiveType.DisableSnipers,
+            ObjectiveType.EscortCivilians
+        };
+        for (int i = 0; i < chosen.Count; i++)
+        {
+            int idx = Random.Range(0, objectiveSpawnPoints.Count);
+            int prefabIdx = Mathf.Clamp((int)chosen[i], 0, objectivePrefabs.Count - 1);
+            GameObject obj = Instantiate(objectivePrefabs[prefabIdx], objectiveSpawnPoints[idx].position, Quaternion.identity);
+            activeObjectives[chosen[i]] = obj;
+        }
+        UpdateUI();
+    }
+
+    void SpawnHazards()
+    {
+        // Spawn random hazards on the map
+        foreach (GameObject hazardPrefab in hazardPrefabs)
+        {
+            Vector3 pos = GetRandomBattlefieldPosition();
+            Instantiate(hazardPrefab, pos, Quaternion.identity);
+        }
+    }
+
+    Vector3 GetRandomBattlefieldPosition()
+    {
+        float x = Random.Range(-50f, 50f);
+        float z = Random.Range(-50f, 50f);
+        float y = Terrain.activeTerrain ? Terrain.activeTerrain.SampleHeight(new Vector3(x, 0, z)) : 0f;
+        return new Vector3(x, y, z);
+    }
+
+    void AssignFactionTraits()
+    {
+        factionTraits[Faction.Urban] = "StealthBoost";
+        factionTraits[Faction.Desert] = "HeatResistance";
+        factionTraits[Faction.Arctic] = "FrostImmunity";
+        factionTraits[Faction.Forest] = "Camouflage";
+        foreach (var kvp in factionTraits)
+            ApplyTrait(kvp.Key, kvp.Value);
+    }
+
+    void ApplyTrait(Faction faction, string trait)
+    {
+        Debug.Log($"Applied trait {trait} to {faction} faction.");
+    }
+
+    public void UpdateMorale(MoraleEvent moraleEvent)
+    {
+        switch (moraleEvent)
+        {
+            case MoraleEvent.Boost:
+                morale = Mathf.Min(morale + 0.2f, 2f);
+                SpawnSupportUnit("MedicTent");
+                ShowMessage("Morale Boosted!", 2f);
+                break;
+            case MoraleEvent.Penalty:
+                morale = Mathf.Max(morale - 0.2f, 0f);
+                TriggerTrap("AlleyMine");
+                ShowMessage("Morale Penalty!", 2f);
+                break;
+            case MoraleEvent.Panic:
+                morale = 0f;
+                audioManager?.PlaySFX("PanicAlarm");
+                foreach (NPC ally in friendlyUnits)
+                    ally?.SetBehavior("Retreat");
+                ShowMessage("Troops in Panic!", 3f);
+                break;
+            case MoraleEvent.Rally:
+                morale = 1.5f;
+                audioManager?.PlaySFX("RallyHorn");
+                foreach (NPC ally in friendlyUnits)
+                    ally?.SetBehavior("Advance");
+                ShowMessage("Troops Rallying!", 3f);
+                break;
+        }
+        UpdateUI();
+        // Networking hook
+        MoraleChangedNet?.Invoke(morale, GetLocalPlayerId());
+    }
+
+    void SpawnSupportUnit(string unitType)
+    {
+        GameObject supportPrefab = reinforcementPrefabs.Find(go => go.name == unitType);
+        if (supportPrefab != null)
+        {
+            Vector3 pos = GetRandomBattlefieldPosition();
+            Instantiate(supportPrefab, pos, Quaternion.identity);
+            audioManager?.PlaySFX("SupportArrived");
+        }
+    }
+
+    void TriggerTrap(string trapType)
+    {
+        GameObject trapPrefab = hazardPrefabs.Find(go => go.name == trapType);
+        if (trapPrefab != null)
+        {
+            Vector3 pos = GetRandomBattlefieldPosition();
+            Instantiate(trapPrefab, pos, Quaternion.identity);
+            audioManager?.PlaySFX("TrapTrigger");
+        }
+    }
+
+    public void TriggerBattlefieldEvent(string eventType)
+    {
+        switch (eventType)
+        {
+            case "ArtilleryStrike":
+                StartCoroutine(PlayArtilleryStrike());
+                break;
+            case "HeavyWeaponsFire":
+                if (audioManager != null && heavyWeaponsFire != null)
+                    audioManager.PlaySFX(heavyWeaponsFire.name);
+                break;
+            case "Explosion":
+                if (explosionFX != null) explosionFX.Play();
+                audioManager?.PlaySFX("Explosion");
+                break;
+            case "SmokeScreen":
+                if (smokeFX != null) smokeFX.Play();
+                break;
+        }
+    }
+
+    IEnumerator PlayArtilleryStrike()
+    {
+        if (audioManager != null && artilleryStrike != null)
+            audioManager.PlaySFX(artilleryStrike.name);
+        yield return new WaitForSeconds(1.5f);
+        if (explosionFX != null) explosionFX.Play();
+    }
+
+    public void CompleteObjective(ObjectiveType type)
+    {
+        if (activeObjectives.ContainsKey(type))
+        {
+            Destroy(activeObjectives[type]);
+            activeObjectives.Remove(type);
+        }
+        ShowMessage($"Objective {type} completed!", 2f);
+        audioManager?.PlaySFX("ObjectiveComplete");
+        UpdateUI();
+        // Networking hook
+        ObjectiveCompletedNet?.Invoke(type, GetLocalPlayerId());
+    }
+
+    // --- UI Methods ---
+    void SetupUI()
+    {
+        if (nextObjectiveButton != null)
+            nextObjectiveButton.onClick.AddListener(GoToNextScene);
+
+        if (pauseMenuPanel != null)
+            pauseMenuPanel.SetActive(false);
+
+        if (battlefieldCanvas != null)
+            battlefieldCanvas.worldCamera = Camera.main;
+    }
+
+    void UpdateUI()
+    {
+        if (objectiveText != null)
+        {
+            List<string> objList = new List<string>();
+            foreach (var obj in activeObjectives.Keys)
+                objList.Add(obj.ToString());
+            objectiveText.text = "Objectives:\n" + string.Join("\n", objList);
+        }
+        if (moraleText != null)
+            moraleText.text = $"Morale: {(int)(morale * 100)}%";
+        if (moraleSlider != null)
+            moraleSlider.value = morale;
+        if (factionText != null)
+            factionText.text = "Faction: Urban"; // Example, could be made dynamic
+    }
+
+    public void ShowMessage(string msg, float duration)
+    {
+        if (uiMessageCoroutine != null)
+            StopCoroutine(uiMessageCoroutine);
+        uiMessageCoroutine = StartCoroutine(ShowMessageRoutine(msg, duration));
+    }
+
+    private Coroutine uiMessageCoroutine;
+    private IEnumerator ShowMessageRoutine(string msg, float duration)
+    {
+        if (objectiveText != null)
+        {
+            string prev = objectiveText.text;
+            objectiveText.text = msg;
+            yield return new WaitForSeconds(duration);
+            UpdateUI();
+        }
+    }
+
+    // --- Scene Management ---
+    public void GoToNextScene()
+    {
+        if (sceneNames == null || sceneNames.Count == 0) return;
+        int currentScene = SceneManager.GetActiveScene().buildIndex;
+        int nextScene = (currentScene + 1) % sceneNames.Count;
+        SceneManager.LoadScene(sceneNames[nextScene]);
+    }
+
+    public void PauseGame()
+    {
+        Time.timeScale = 0f;
+        if (pauseMenuPanel != null)
+            pauseMenuPanel.SetActive(true);
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        if (pauseMenuPanel != null)
+            pauseMenuPanel.SetActive(false);
+    }
+
+    // --- Networking Hooks ---
+    // Replace with your multiplayer/networking framework (e.g., Mirror, FishNet, NGO, etc.)
+    public void OnReceiveObjectiveCompleteFromNetwork(ObjectiveType type, string playerId)
+    {
+        CompleteObjective(type);
+    }
+
+    public void OnReceiveMoraleChangedFromNetwork(float newMorale, string playerId)
+    {
+        morale = newMorale;
+        UpdateUI();
+    }
+
+    string GetLocalPlayerId()
+    {
+        // Replace with your network manager/player system
+        return SystemInfo.deviceUniqueIdentifier;
+    }
+}
+
 
