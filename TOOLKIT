@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical Legends: Game Development Toolkit</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: radial-gradient(ellipse at center, #0a0a0a 0%, #1a1a2e 50%, #000000 100%);
+            color: #00ff88;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(90deg, transparent 98%, rgba(0,255,136,0.03) 100%),
+                linear-gradient(180deg, transparent 98%, rgba(0,255,136,0.03) 100%);
+            background-size: 30px 30px;
+            animation: matrix-scroll 20s linear infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes matrix-scroll {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(30px, 30px); }
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            color: #00ff88;
+            text-shadow: 0 0 30px #00ff88;
+            margin-bottom: 10px;
+            animation: title-pulse 3s ease-in-out infinite;
+        }
+        
+        @keyframes title-pulse {
+            0%, 100% { text-shadow: 0 0 30px #00ff88; }
+            50% { text-shadow: 0 0 50px #00ff88, 0 0 80px rgba(0,255,136,0.5); }
+        }
+        
+        .subtitle {
+            font-size: 1.3rem;
+            color: #ff6b6b;
+            font-weight: 300;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        .dev-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 15px 25px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #00ff88;
+            border-radius: 25px;
+            color: #00ff88;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .tab-btn.active {
+            background: rgba(0,255,136,0.2);
+            box-shadow: 0 0 25px rgba(0,255,136,0.4);
+        }
+        
+        .tab-btn:hover {
+            background: rgba(0,255,136,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .dev-panel {
+            display: none;
+            background: linear-gradient(145deg, rgba(0,0,0,0.9), rgba(26,26,46,0.8));
+            border: 2px solid #00ff88;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 40px rgba(0,255,136,0.3);
+        }
+        
+        .dev-panel.active {
+            display: block;
+            animation: panel-fade 0.5s ease-in;
+        }
+        
+        @keyframes panel-fade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .feature-card {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(0,255,136,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,255,136,0.1), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .feature-card:hover::before {
+            left: 100%;
+        }
+        
+        .feature-card:hover {
+            border-color: #00ff88;
+            box-shadow: 0 10px 30px rgba(0,255,136,0.2);
+            transform: translateY(-5px);
+        }
+        
+        .feature-card h3 {
+            color: #00ff88;
+            font-family: 'Orbitron', monospace;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .feature-card p {
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(145deg, #ff6b6b, #ff5252);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255,107,107,0.4);
+        }
+        
+        .character-creator {
+            background: rgba(0,0,0,0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .char-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            color: #00ff88;
+            font-family: 'Orbitron', monospace;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            background: rgba(0,0,0,0.7);
+            border: 1px solid rgba(0,255,136,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+        }
+        
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #00ff88;
+            box-shadow: 0 0 15px rgba(0,255,136,0.3);
+        }
+        
+        .char-preview {
+            background: rgba(26,26,46,0.6);
+            border: 2px solid #ff6b6b;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 25px;
+        }
+        
+        .char-preview h3 {
+            color: #ff6b6b;
+            font-family: 'Orbitron', monospace;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .stat-label {
+            color: #00ff88;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            min-width: 80px;
+        }
+        
+        .stat-progress {
+            flex: 1;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .stat-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #ff6b6b);
+            transition: width 0.5s ease;
+        }
+        
+        .mission-designer {
+            background: rgba(0,0,0,0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .mission-flow {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .mission-node {
+            background: rgba(0,255,136,0.1);
+            border: 2px solid #00ff88;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ff88;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mission-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(0,255,136,0.5);
+        }
+        
+        .mission-arrow {
+            font-size: 2rem;
+            color: #ff6b6b;
+        }
+        
+        .code-output {
+            background: #000;
+            border: 1px solid #00ff88;
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #00ff88;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .copy-btn {
+            background: rgba(0,255,136,0.2);
+            border: 1px solid #00ff88;
+            border-radius: 5px;
+            padding: 8px 15px;
+            color: #00ff88;
+            font-family: 'Orbitron', monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(0,255,136,0.3);
+        }
+        
+        .weapon-forge {
+            background: rgba(0,0,0,0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .weapon-preview {
+            background: rgba(255,107,107,0.1);
+            border: 2px solid #ff6b6b;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .weapon-model {
+            width: 200px;
+            height: 100px;
+            background: linear-gradient(45deg, #333, #666);
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff6b6b;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .char-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .mission-flow {
+                flex-direction: column;
+            }
+        }
+        
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: #00ff88;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            border: 1px solid #00ff88;
+        }
+        
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix-bg"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1 class="title">TACTICAL LEGENDS</h1>
+            <p class="subtitle">Game Development Toolkit</p>
+        </div>
+        
+        <div class="dev-tabs">
+            <button class="tab-btn active" onclick="showPanel('character')">🎭 Character System</button>
+            <button class="tab-btn" onclick="showPanel('mission')">🎯 Mission Designer</button>
+            <button class="tab-btn" onclick="showPanel('weapon')">⚔️ Weapon Forge</button>
+            <button class="tab-btn" onclick="showPanel('world')">🌍 World Builder</button>
+            <button class="tab-btn" onclick="showPanel('ai')">🤖 AI Behavior</button>
+            <button class="tab-btn" onclick="showPanel('audio')">🎵 Audio System</button>
+        </div>
+        
+        <!-- Character System Panel -->
+        <div class="dev-panel active" id="character">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🎭 Character Creator</h3>
+                    <p>Design operatives with unique backstories, skills, and neural augmentations for the OISTARIAN universe.</p>
+                    <button class="action-btn" onclick="toggleCharacterCreator()">Launch Creator</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🧬 Skill Trees</h3>
+                    <p>Build branching progression systems for Engineering, Combat, and Hacking specializations.</p>
+                    <button class="action-btn" onclick="generateSkillTree()">Generate Tree</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🔬 Augmentation System</h3>
+                    <p>Create cybernetic enhancements like the NeuroPulse Arm with stat modifications and abilities.</p>
+                    <button class="action-btn" onclick="designAugmentation()">Design Augments</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>📊 Stats & Balancing</h3>
+                    <p>Mathematical formulas for character progression, damage calculations, and gameplay balance.</p>
+                    <button class="action-btn" onclick="showBalanceTools()">Balance Tools</button>
+                </div>
+            </div>
+            
+            <div class="character-creator" id="charCreator" style="display: none;">
+                <h3 style="color: #00ff88; font-family: 'Orbitron', monospace; margin-bottom: 20px;">🎭 Character Creator</h3>
+                
+                <div class="char-form">
+                    <div class="form-group">
+                        <label>Operative Name</label>
+                        <input type="text" id="charName" placeholder="e.g., OISTARIAN" onchange="updateCharacter()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Classification</label>
+                        <select id="charClass" onchange="updateCharacter()">
+                            <option value="engineer">Engineer</option>
+                            <option value="operative">Operative</option>
+                            <option value="hacker">Hacker</option>
+                            <option value="augmented">Augmented</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Origin Sector</label>
+                        <select id="charOrigin" onchange="updateCharacter()">
+                            <option value="echo-swamp">Echo Swamp</option>
+                            <option value="neon-district">Neon District</option>
+                            <option value="under-city">Under City</option>
+                            <option value="corporate-zone">Corporate Zone</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Primary Weapon</label>
+                        <select id="charWeapon" onchange="updateCharacter()">
+                            <option value="neuro-pulse">NeuroPulse Arm</option>
+                            <option value="plasma-rifle">Plasma Rifle</option>
+                            <option value="quantum-blade">Quantum Blade</option>
+                            <option value="hack-drone">Hack Drone</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Backstory</label>
+                    <textarea id="charBackstory" rows="4" placeholder="Former engineer turned reluctant operative..." onchange="updateCharacter()"></textarea>
+                </div>
+                
+                <div class="char-preview" id="charPreview">
+                    <h3>Character Preview</h3>
+                    <div id="charDisplay"></div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-bar">
+                            <span class="stat-label">COMBAT</span>
+                            <div class="stat-progress">
+                                <div class="stat-fill" id="combatStat" style="width: 70%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-bar">
+                            <span class="stat-label">TECH</span>
+                            <div class="stat-progress">
+                                <div class="stat-fill" id="techStat" style="width: 90%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-bar">
+                            <span class="stat-label">STEALTH</span>
+                            <div class="stat-progress">
+                                <div class="stat-fill" id="stealthStat" style="width: 60%"></div>
+                            </div>
+                        </div>
+                        <div class="stat-bar">
+                            <span class="stat-label">HACKING</span>
+                            <div class="stat-progress">
+                                <div class="stat-fill" id="hackStat" style="width: 85%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="action-btn" onclick="exportCharacter()">Export Character Data</button>
+            </div>
+        </div>
+        
+        <!-- Mission Designer Panel -->
+        <div class="dev-panel" id="mission">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🎯 Mission Flow Designer</h3>
+                    <p>Create branching storylines with multiple objectives, consequences, and player choices.</p>
+                    <button class="action-btn" onclick="toggleMissionDesigner()">Design Mission</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🗺️ Level Generator</h3>
+                    <p>Procedural generation of cyberpunk environments with tactical cover and interactive elements.</p>
+                    <button class="action-btn" onclick="generateLevel()">Generate Level</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🎲 Dynamic Events</h3>
+                    <p>Random encounters, equipment malfunctions, and environmental hazards that adapt to player choices.</p>
+                    <button class="action-btn" onclick="createEvents()">Create Events</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>📈 Difficulty Scaling</h3>
+                    <p>Adaptive AI that responds to player skill level and previous mission performance.</p>
+                    <button class="action-btn" onclick="configureDifficulty()">Configure AI</button>
+                </div>
+            </div>
+            
+            <div class="mission-designer" id="missionDesigner" style="display: none;">
+                <h3 style="color: #00ff88; font-family: 'Orbitron', monospace; margin-bottom: 20px;">🎯 Mission Flow Designer</h3>
+                
+                <div class="mission-flow">
+                    <div class="mission-node tooltip" data-tooltip="Mission Start">START</div>
+                    <div class="mission-arrow">→</div>
+                    <div class="mission-node tooltip" data-tooltip="Infiltration Phase">INFIL</div>
+                    <div class="mission-arrow">→</div>
+                    <div class="mission-node tooltip" data-tooltip="Primary Objective">OBJ-1</div>
+                    <div class="mission-arrow">→</div>
+                    <div class="mission-node tooltip" data-tooltip="Choice Point">CHOICE</div>
+                    <div class="mission-arrow">→</div>
+                    <div class="mission-node tooltip" data-tooltip="Extraction">EXFIL</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Mission Title</label>
+                    <input type="text" id="missionTitle" placeholder="Operation: Silent Protocol" onchange="updateMission()">
+                </div>
+                
+                <div class="char-form">
+                    <div class="form-group">
+                        <label>Location</label>
+                        <select id="missionLocation" onchange="updateMission()">
+                            <option value="corporate-tower">Corporate Tower</option>
+                            <option value="underground-lab">Underground Lab</option>
+                            <option value="data-center">Data Center</option>
+                            <option value="abandoned-facility">Abandoned Facility</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Objective Type</label>
+                        <select id="missionObjective" onchange="updateMission()">
+                            <option value="data-extraction">Data Extraction</option>
+                            <option value="sabotage">Sabotage</option>
+                            <option value="rescue">Rescue Operation</option>
+                            <option value="elimination">Elimination</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Difficulty</label>
+                        <select id="missionDifficulty" onchange="updateMission()">
+                            <option value="rookie">Rookie</option>
+                            <option value="veteran">Veteran</option>
+                            <option value="elite">Elite</option>
+                            <option value="legendary">Legendary</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button class="action-btn" onclick="exportMission()">Export Mission Code</button>
+            </div>
+        </div>
+        
+        <!-- Weapon Forge Panel -->
+        <div class="dev-panel" id="weapon">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>⚔️ Weapon Designer</h3>
+                    <p>Create futuristic weapons with unique firing patterns, energy systems, and tactical attachments.</p>
+                    <button class="action-btn" onclick="toggleWeaponForge()">Open Forge</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🔧 Modification System</h3>
+                    <p>Design weapon mods that affect damage, accuracy, rate of fire, and special abilities.</p>
+                    <button class="action-btn" onclick="createModifications()">Create Mods</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>⚡ Energy Systems</h3>
+                    <p>Power management mechanics for energy weapons, overheating, and recharge cycles.</p>
+                    <button class="action-btn" onclick="designEnergySystem()">Design Systems</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🎯 Ballistics Engine</h3>
+                    <p>Physics calculations for projectile trajectories, penetration, and environmental interactions.</p>
+                    <button class="action-btn" onclick="configureBallistics()">Configure Physics</button>
+                </div>
+            </div>
+            
+            <div class="weapon-forge" id="weaponForge" style="display: none;">
+                <h3 style="color: #00ff88; font-family: 'Orbitron', monospace; margin-bottom: 20px;">⚔️ Weapon Forge</h3>
+                
+                <div class="char-form">
+                    <div class="form-group">
+                        <label>Weapon Name</label>
+                        <input type="text" id="weaponName" placeholder="NeuroPulse Mk-II" onchange="updateWeapon()">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Weapon Type</label>
+                        <select id="weaponType" onchange="updateWeapon()">
+                            <option value="energy">Energy Weapon</option>
+                            <option value="projectile">Projectile</option>
+                            <option value="melee">Melee</option>
+                            <option value="hybrid">Hybrid System</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Damage Type</label>
+                        <select id="weaponDamage" onchange="updateWeapon()">
+                            <option value="kinetic">Kinetic</option>
+                            <option value="plasma">Plasma</option>
+                            <option value="neural">Neural</option>
+                            <option value="quantum">Quantum</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Fire Rate (RPM)</label>
+                        <input type="number" id="weaponFireRate" value="450" min="60" max="1200" onchange="updateWeapon()">
+                    </div>
+                </div>
+                
+                <div class="weapon-preview">
+                    <h3 style="color: #ff6b6b;">Weapon Preview</h3>
+                    <div class="weapon-model" id="weaponModel">WEAPON MODEL</div>
+                    <div id="weaponStats"></div>
+                </div>
+                
+                <button class="action-btn" onclick="exportWeapon()">Export Weapon Data</button>
+            </div>
+        </div>
+        
+        <!-- World Builder Panel -->
+        <div class="dev-panel" id="world">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🌍 Environment Generator</h3>
+                    <p>Create cyberpunk cityscapes with procedural buildings, neon lighting, and atmospheric effects.</p>
+                    <button class="action-btn" onclick="generateEnvironment()">Generate World</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🏢 Architecture System</h3>
+                    <p>Modular building components for creating corporate towers, underground complexes, and slums.</p>
+                    <button class="action-btn" onclick="designArchitecture()">Design Buildings</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>💡 Lighting Engine</h3>
+                    <p>Dynamic neon lighting, holographic displays, and atmospheric particle effects.</p>
+                    <button class="action-btn" onclick="configureLighting()">Setup Lighting</button>
+                </div>
+                
+                <div class="feature-card">
+                    <h3>🌧️ Weather System</h3>
+                    <p>Cyberpunk weather patterns include acid rain, electrical storms, and smog effects.</p>
+                    <button class="action-btn" onclick="createWeather()">Create Weather</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Behavior Panel -->
+        <div class="dev-panel" id="ai">
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🤖 Enemy AI Designer</h3>
+                    <p>Behavioral trees for security drones, corporate guards, and augmented operatives.</p>
+                    <button class="action-btn" onclick="designAI()">Design AI
