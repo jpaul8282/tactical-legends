@@ -3574,3 +3574,245 @@ public class CinematicManager : MonoBehaviour
 - Timeline will handle advanced camera, animation, FX, and UI via Signals.
 - Call `CinematicManager.Instance.EndCinematic()` from Timeline signal or after cutscene.
 
+using UnityEngine;
+using System.Collections.Generic;
+
+/// <summary>
+/// ConflictEscalation: Dynamically escalates conflict in a level based on player and world actions,
+/// with environmental, AI, audio, visual, and gameplay consequences for each phase.
+/// </summary>
+public class ConflictEscalation : MonoBehaviour
+{
+    public enum AlertPhase { Peaceful, Alert, Skirmish, Warzone, Catastrophe }
+
+    [Header("Conflict State")]
+    public AlertPhase alertLevel = AlertPhase.Peaceful;
+    public int civilianCasualties = 0;
+    public int militaryCasualties = 0;
+    public string dominantFaction = "Neutral";
+    public float escalationTimer = 0f;
+    public float catastropheThreshold = 1200f; // 20 minutes for worst-case
+
+    [Header("World References")]
+    public AudioSource ambienceSource;
+    public AudioClip[] escalationMusic; // Peaceful, Alert, Skirmish, Warzone, Catastrophe
+    public GameObject checkpointPrefab;
+    public GameObject eliteUnitPrefab;
+    public Transform[] checkpointPositions;
+    public Transform[] eliteSpawnPoints;
+    public GameObject airStrikeVFX;
+    public Camera mainCam;
+    public ParticleSystem chaosParticles;
+
+    [Header("UI & Feedback")]
+    public CanvasGroup alertUI;
+    public UnityEngine.UI.Text alertText;
+    public Animator screenShakeAnimator;
+    public GameObject crowdPanicVFX;
+    public List<string> eventLog = new();
+
+    private bool catastropheTriggered = false;
+
+    void Update()
+    {
+        MonitorEvents();
+        AdjustAlertLevel();
+        escalationTimer += Time.deltaTime;
+    }
+
+    void MonitorEvents()
+    {
+        // Civilian deaths escalate conflict
+        if (civilianCasualties > 3 && alertLevel < AlertPhase.Alert)
+        {
+            SetAlertLevel(AlertPhase.Alert, "Civilian casualties rising!");
+        }
+        if (militaryCasualties > 4 && alertLevel < AlertPhase.Skirmish)
+        {
+            SetAlertLevel(AlertPhase.Skirmish, "Military units lost. Skirmishes erupt!");
+        }
+        // Prolonged conflict or strong faction control
+        if (escalationTimer > 600 && dominantFaction != "Neutral" && alertLevel < AlertPhase.Warzone)
+        {
+            SetAlertLevel(AlertPhase.Warzone, $"{dominantFaction} dominance! All-out war!");
+        }
+        // Catastrophe: max escalation, time or mass casualties
+        if ((escalationTimer > catastropheThreshold || civilianCasualties > 12 || militaryCasualties > 8) 
+            && !catastropheTriggered)
+        {
+            SetAlertLevel(AlertPhase.Catastrophe, "CATASTROPHE! City collapse imminent!");
+            catastropheTriggered = true;
+        }
+    }
+
+    void AdjustAlertLevel()
+    {
+        switch (alertLevel)
+        {
+            case AlertPhase.Peaceful:
+                SetAmbience(0);
+                HideAlertUI();
+                break;
+            case AlertPhase.Alert:
+                SetAmbience(1);
+                ShowAlertUI("Tension Rising", Color.yellow);
+                TriggerEvent("FactionTensionRise");
+                break;
+            case AlertPhase.Skirmish:
+                SetAmbience(2);
+                ShowAlertUI("Skirmishes Breaking Out", Color.red);
+                ActivateCheckpoints();
+                CrowdPanic();
+                break;
+            case AlertPhase.Warzone:
+                SetAmbience(3);
+                ShowAlertUI("WARZONE!", Color.red);
+                DeployEliteUnits();
+                BroadcastWarning();
+                CameraShake();
+                break;
+            case AlertPhase.Catastrophe:
+                SetAmbience(4);
+                ShowAlertUI("CATASTROPHE!", Color.magenta);
+                TriggerCatastropheEvents();
+                break;
+        }
+    }
+
+    void SetAlertLevel(AlertPhase newLevel, string logMsg)
+    {
+        if (alertLevel != newLevel)
+        {
+            alertLevel = newLevel;
+            eventLog.Add($"{Time.timeSinceLevelLoad:F1}s: {logMsg}");
+            Debug.Log(logMsg);
+        }
+    }
+
+    void SetAmbience(int musicIndex)
+    {
+        if (ambienceSource && escalationMusic != null && musicIndex < escalationMusic.Length)
+        {
+            if (ambienceSource.clip != escalationMusic[musicIndex])
+            {
+                ambienceSource.clip = escalationMusic[musicIndex];
+                ambienceSource.Play();
+            }
+        }
+    }
+
+    void ActivateCheckpoints()
+    {
+        foreach (var pos in checkpointPositions)
+        {
+            if (checkpointPrefab)
+                Instantiate(checkpointPrefab, pos.position, pos.rotation);
+        }
+        eventLog.Add("Checkpoints activated across the map.");
+    }
+
+    void DeployEliteUnits()
+    {
+        foreach (var spawn in eliteSpawnPoints)
+        {
+            if (eliteUnitPrefab)
+                Instantiate(eliteUnitPrefab, spawn.position, spawn.rotation);
+        }
+        eventLog.Add("Elite units deployed!");
+    }
+
+    void BroadcastWarning()
+    {
+        ShowAlertUI("Evacuate Immediately!", Color.red);
+        // Optionally play warning siren SFX
+        eventLog.Add("Civilians warned. Evacuation broadcasted.");
+    }
+
+    void ShowAlertUI(string message, Color color)
+    {
+        if (alertUI && alertText)
+        {
+            alertUI.alpha = 1f;
+            alertText.text = message;
+            alertText.color = color;
+        }
+    }
+
+    void HideAlertUI()
+    {
+        if (alertUI) alertUI.alpha = 0f;
+    }
+
+    void CrowdPanic()
+    {
+        if (crowdPanicVFX)
+            crowdPanicVFX.SetActive(true);
+        // Optionally: trigger panic in NPCs
+        eventLog.Add("Crowd panic spreading!");
+    }
+
+    void CameraShake()
+    {
+        if (screenShakeAnimator)
+            screenShakeAnimator.SetTrigger("Shake");
+        if (chaosParticles)
+        {
+            chaosParticles.transform.position = mainCam.transform.position + mainCam.transform.forward * 3f;
+            chaosParticles.Play();
+        }
+    }
+
+    void TriggerEvent(string eventName)
+    {
+        // Integrate with game event system
+        Debug.Log($"Triggered event: {eventName}");
+        eventLog.Add($"Event: {eventName}");
+    }
+
+    void TriggerCatastropheEvents()
+    {
+        // Massive airstrike or map-wide chaos
+        if (airStrikeVFX)
+        {
+            Instantiate(airStrikeVFX, mainCam.transform.position + Vector3.forward * 50, Quaternion.identity);
+        }
+        CameraShake();
+        if (chaosParticles)
+        {
+            chaosParticles.transform.position = mainCam.transform.position + mainCam.transform.forward * 5f;
+            chaosParticles.Play();
+        }
+        eventLog.Add("Catastrophe events triggered! City in chaos!");
+    }
+
+    // --- Public API for other scripts ---
+    public void RegisterCivilianCasualty()
+    {
+        civilianCasualties++;
+        eventLog.Add($"Civilian casualty. Total: {civilianCasualties}");
+    }
+
+    public void RegisterMilitaryCasualty()
+    {
+        militaryCasualties++;
+        eventLog.Add($"Military casualty. Total: {militaryCasualties}");
+    }
+
+    public void SetDominantFaction(string faction)
+    {
+        dominantFaction = faction;
+        eventLog.Add($"Dominant Faction changed to {faction}");
+    }
+
+    public void ResetConflict()
+    {
+        alertLevel = AlertPhase.Peaceful;
+        civilianCasualties = 0;
+        militaryCasualties = 0;
+        escalationTimer = 0f;
+        catastropheTriggered = false;
+        HideAlertUI();
+        eventLog.Clear();
+        if (crowdPanicVFX) crowdPanicVFX.SetActive(false);
+    }
+}
