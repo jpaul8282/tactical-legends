@@ -1,3 +1,96 @@
+import pygame
+
+class VaultStartMission:
+    """Cinematic start to the Vault mission with fade-in and voiceover."""
+    def __init__(self, screen, scene_manager):
+        self.screen = screen
+        self.scene_manager = scene_manager
+        self.font = pygame.font.Font(None, 48)
+        self.timer = 0
+        self.alpha = 255
+        self.bg = pygame.Surface((800, 600))
+        self.bg.fill((0, 10, 40))
+        self.voice_played = False
+        try:
+            self.voice_clip = pygame.mixer.Sound("assets/start_mission_voice.wav")
+        except:
+            self.voice_clip = None
+
+    def update(self, dt):
+        self.timer += dt
+        if self.timer > 0.5 and not self.voice_played and self.voice_clip:
+            self.voice_clip.play()
+            self.voice_played = True
+        if self.alpha > 0:
+            self.alpha = max(0, self.alpha - int(60 * dt))  # Fade in over ~4 seconds
+        if self.timer > 4:
+            self.scene_manager.switch_scene("VaultOfEchoes")
+
+    def render(self):
+        self.screen.blit(self.bg, (0, 0))
+        text = self.font.render("MISSION START: Infiltrate the Vault of Echoes", True, (0, 255, 180))
+        text_rect = text.get_rect(center=(400, 300))
+        self.screen.blit(text, text_rect)
+        fade = pygame.Surface((800, 600))
+        fade.set_alpha(self.alpha)
+        fade.fill((0, 0, 0))
+        self.screen.blit(fade, (0, 0))
+
+    def handle_event(self, event):
+        pass  # No interaction; it's a cinematic
+
+class VaultFantasticEnd:
+    """Cinematic end scene with Zoe, emotional music, and legacy display."""
+    def __init__(self, screen, scene_manager):
+        self.screen = screen
+        self.scene_manager = scene_manager
+        self.font = pygame.font.Font(None, 44)
+        self.small_font = pygame.font.Font(None, 28)
+        self.timer = 0
+        self.phase = 0
+        self.zoe_texts = [
+            "Zoe: You came back...",
+            "OISTARIAN: I never stopped trying.",
+            "Zoe: Welcome home, Dad.",
+            "System: Final Liberation protocol complete.",
+            "LEGACY ARCHIVED."
+        ]
+        try:
+            self.music = pygame.mixer.Sound("assets/zoe_theme.wav")
+        except:
+            self.music = None
+        self.music_played = False
+
+    def update(self, dt):
+        self.timer += dt
+        if not self.music_played and self.music:
+            self.music.play()
+            self.music_played = True
+        if self.timer > 3 and self.phase < len(self.zoe_texts) - 1:
+            self.phase += 1
+            self.timer = 0
+
+    def render(self):
+        self.screen.fill((10, 20, 40))
+        text = self.font.render(self.zoe_texts[self.phase], True, (255, 255, 255))
+        text_rect = text.get_rect(center=(400, 300))
+        self.screen.blit(text, text_rect)
+        if self.phase == len(self.zoe_texts) - 1:
+            legacy = [
+                "Codename: OISTARIAN",
+                "Cover: Data Engineer, Tel Aviv",
+                "True Role: Mossad Tactical Liaison",
+                "Final Mission: Hostage Rescue, Nuseirat",
+                "Status: Home."
+            ]
+            for i, line in enumerate(legacy):
+                ltext = self.small_font.render(line, True, (0, 255, 180))
+                self.screen.blit(ltext, (200, 400 + i * 28))
+
+    def handle_event(self, event):
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN and self.phase == len(self.zoe_texts) - 1:
+            self.scene_manager.switch_scene("MainMenu")  # Or any restart/end scene
+
 class VaultOfEchoesScene:
     def __init__(self, screen, scene_manager):
         self.screen = screen
