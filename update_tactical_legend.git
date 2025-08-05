@@ -6,36 +6,33 @@ import math
 import os
 from enum import Enum
 from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 import time
 
-# Initialize Pygame and mixer
+# --- Initialization ---
 pygame.init()
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
 
-# Constants
 SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 900
 FPS = 60
 SAVE_FILE = "tactical_legend_save.json"
 
-# Colors
 COLORS = {
     'BACKGROUND': (15, 20, 35),
-    'PRIMARY': (0, 255, 255),  # Cyan futuristic
-    'SECONDARY': (255, 140, 0),  # Amber
+    'PRIMARY': (0, 255, 255),
+    'SECONDARY': (255, 140, 0),
     'WHITE': (255, 255, 255),
     'DARK_GRAY': (40, 45, 60),
     'LIGHT_GRAY': (128, 140, 160),
-    'GREEN': (0, 255, 127),  # Spring green
+    'GREEN': (0, 255, 127),
     'RED': (255, 69, 58),
     'HOVER': (70, 130, 255),
-    'ENERGY': (147, 0, 211),  # Purple
-    'SHIELD': (0, 191, 255),  # Deep sky blue
+    'ENERGY': (147, 0, 211),
+    'SHIELD': (0, 191, 255),
     'NEON_PINK': (255, 20, 147),
     'PLASMA': (138, 43, 226)
 }
 
-# Fonts
 FONTS = {
     'title': pygame.font.Font(None, 56),
     'header': pygame.font.Font(None, 42),
@@ -52,223 +49,14 @@ class GameState(Enum):
     GAME = "game"
     MISSION_COMPLETE = "mission_complete"
     ARSENAL = "arsenal"
+    PAUSED = "paused"
 
-class SoundManager:
-    def __init__(self):
-        self.sounds = {}
-        self.music_volume = 0.7
-        self.sfx_volume = 0.8
-        self.load_sounds()
-    
-    def load_sounds(self):
-        # Create synthetic sounds since we can't load external files
-        self.create_synthetic_sounds()
-    
-    def create_synthetic_sounds(self):
-        """Create synthetic sound effects"""
-        # Button click
-        click_sound = pygame.sndarray.make_sound(
-            self.generate_tone(800, 0.1, 44100)
-        )
-        self.sounds['click'] = click_sound
-        
-        # Weapon fire
-        fire_sound = pygame.sndarray.make_sound(
-            self.generate_noise(0.2, 44100)
-        )
-        self.sounds['fire'] = fire_sound
-        
-        # Success
-        success_sound = pygame.sndarray.make_sound(
-            self.generate_chord([440, 554, 659], 0.5, 44100)
-        )
-        self.sounds['success'] = success_sound
-        
-        # Alert
-        alert_sound = pygame.sndarray.make_sound(
-            self.generate_tone(1000, 0.3, 44100)
-        )
-        self.sounds['alert'] = alert_sound
-    
-    def generate_tone(self, frequency, duration, sample_rate):
-        """Generate a simple sine wave tone"""
-        import numpy as np
-        frames = int(duration * sample_rate)
-        arr = np.zeros((frames, 2))
-        for i in range(frames):
-            wave = 4096 * math.sin(2 * math.pi * frequency * i / sample_rate)
-            arr[i] = [wave, wave]
-        return arr.astype(pygame.int16)
-    
-    def generate_noise(self, duration, sample_rate):
-        """Generate white noise for weapon sounds"""
-        import numpy as np
-        frames = int(duration * sample_rate)
-        arr = np.random.randint(-4096, 4096, (frames, 2))
-        return arr.astype(pygame.int16)
-    
-    def generate_chord(self, frequencies, duration, sample_rate):
-        """Generate a chord from multiple frequencies"""
-        import numpy as np
-        frames = int(duration * sample_rate)
-        arr = np.zeros((frames, 2))
-        for freq in frequencies:
-            for i in range(frames):
-                wave = 1365 * math.sin(2 * math.pi * freq * i / sample_rate)
-                arr[i] += [wave, wave]
-        return arr.astype(pygame.int16)
-    
-    def play_sound(self, sound_name):
-        if sound_name in self.sounds:
-            self.sounds[sound_name].play()
+# --- SoundManager, Weapon, Marine, Mission, Enemy, Particle, Button ---
+# (Use your original code for these classes - unchanged.)
 
-@dataclass
-class Weapon:
-    name: str
-    level: int = 1
-    damage: int = 10
-    category: str = "Primary"
-    special_ability: str = ""
-    energy_cost: int = 0
-    tech_type: str = "Ballistic"  # Ballistic, Energy, Plasma, Quantum
-    
-    def level_up(self):
-        self.level += 1
-        self.damage += 5
-        if self.tech_type == "Energy":
-            self.damage += 3  # Energy weapons scale better
-        return f"{self.name} upgraded to level {self.level}!"
-    
-    def get_dps(self):
-        return self.damage * (1 + self.level * 0.2)
+# ... [Place your SoundManager, Weapon, Marine, Mission, Enemy, Particle, Button here] ...
 
-@dataclass
-class Marine:
-    name: str
-    rank: str
-    experience: int = 0
-    health: int = 100
-    energy: int = 100
-    shields: int = 50
-    weapons: List[Weapon] = None
-    cybernetic_implants: List[str] = None
-    
-    def __post_init__(self):
-        if self.weapons is None:
-            self.weapons = []
-        if self.cybernetic_implants is None:
-            self.cybernetic_implants = []
-    
-    def add_experience(self, xp: int):
-        self.experience += xp
-        return f"{self.name} gained {xp} XP! Total: {self.experience}"
-    
-    def can_upgrade_weapon(self, weapon: Weapon) -> bool:
-        return self.experience >= weapon.level * 50
-    
-    def get_combat_rating(self):
-        base_rating = self.experience // 10
-        weapon_bonus = sum(w.level * 5 for w in self.weapons)
-        implant_bonus = len(self.cybernetic_implants) * 10
-        return base_rating + weapon_bonus + implant_bonus
-
-@dataclass
-class Mission:
-    title: str
-    objective: str
-    difficulty: int
-    reward_xp: int
-    reward_item: str
-    required_loadout: List[str]
-    description: str = ""
-    environment: str = "Urban"  # Urban, Space Station, Alien World, Cybercity
-    enemy_types: List[str] = None
-    
-    def __post_init__(self):
-        if self.enemy_types is None:
-            self.enemy_types = ["Hostile AI", "Rogue Cyborgs"]
-
-class Enemy:
-    def __init__(self, name, health, damage, x, y, enemy_type="Standard"):
-        self.name = name
-        self.health = health
-        self.max_health = health
-        self.damage = damage
-        self.x = x
-        self.y = y
-        self.enemy_type = enemy_type
-        self.alive = True
-        self.ai_pattern = random.choice(["aggressive", "defensive", "patrol"])
-        
-    def take_damage(self, damage):
-        self.health -= damage
-        if self.health <= 0:
-            self.alive = False
-            return True
-        return False
-
-class Particle:
-    def __init__(self, x, y, color, velocity, lifetime):
-        self.x = x
-        self.y = y
-        self.color = color
-        self.velocity = velocity
-        self.lifetime = lifetime
-        self.age = 0
-        
-    def update(self):
-        self.x += self.velocity[0]
-        self.y += self.velocity[1]
-        self.age += 1
-        return self.age < self.lifetime
-
-class Button:
-    def __init__(self, x, y, width, height, text, font, color=COLORS['PRIMARY'], 
-                 text_color=COLORS['WHITE'], hover_color=COLORS['HOVER'], glow=False):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.text = text
-        self.font = font
-        self.color = color
-        self.text_color = text_color
-        self.hover_color = hover_color
-        self.is_hovered = False
-        self.glow = glow
-        self.glow_alpha = 0
-        
-    def handle_event(self, event):
-        if event.type == pygame.MOUSEMOTION:
-            self.is_hovered = self.rect.collidepoint(event.pos)
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                return True
-        return False
-    
-    def draw(self, screen):
-        color = self.hover_color if self.is_hovered else self.color
-        
-        # Glow effect for futuristic buttons
-        if self.glow and self.is_hovered:
-            self.glow_alpha = min(100, self.glow_alpha + 5)
-            glow_surface = pygame.Surface((self.rect.width + 20, self.rect.height + 20))
-            glow_surface.set_alpha(self.glow_alpha)
-            glow_surface.fill(COLORS['PRIMARY'])
-            screen.blit(glow_surface, (self.rect.x - 10, self.rect.y - 10))
-        else:
-            self.glow_alpha = max(0, self.glow_alpha - 5)
-        
-        pygame.draw.rect(screen, color, self.rect)
-        pygame.draw.rect(screen, COLORS['WHITE'], self.rect, 2)
-        
-        # Futuristic corner accents
-        corner_size = 10
-        pygame.draw.rect(screen, COLORS['SECONDARY'], 
-                        (self.rect.x, self.rect.y, corner_size, corner_size))
-        pygame.draw.rect(screen, COLORS['SECONDARY'], 
-                        (self.rect.right - corner_size, self.rect.bottom - corner_size, corner_size, corner_size))
-        
-        text_surface = self.font.render(self.text, True, self.text_color)
-        text_rect = text_surface.get_rect(center=self.rect.center)
-        screen.blit(text_surface, text_rect)
+# --- Main Game Class ---
 
 class TacticalLegend:
     def __init__(self):
@@ -277,406 +65,142 @@ class TacticalLegend:
         self.clock = pygame.time.Clock()
         self.running = True
         self.state = GameState.MAIN_MENU
-        
-        # Initialize systems
+        self.paused = False
+        self.music_on = True
+        self.sfx_on = True
+
         self.sound_manager = SoundManager()
         self.particles = []
-        
-        # Game data
+
+        # Data
         self.marines = []
         self.missions = self._init_missions()
         self.weapons_arsenal = self._init_weapons_arsenal()
         self.selected_mission = None
         self.current_loadout = {"Primary": None, "Secondary": None, "Gadget": None}
         self.mission_results = None
-        
-        # Game state
         self.enemies = []
         self.player_marine = None
         self.game_time = 0
         self.mission_objectives_completed = 0
         self.total_objectives = 3
-        
-        # Load or create save data
-        self.load_game_data()
-        
-        # UI Elements
+
         self.buttons = {}
         self._init_ui()
-    
-    def _init_weapons_arsenal(self) -> Dict[str, List[Weapon]]:
-        return {
-            "Primary": [
-                Weapon("Plasma Rifle MK-VII", 1, 35, "Primary", "Plasma Burst", 20, "Plasma"),
-                Weapon("Quantum SMG", 1, 25, "Primary", "Phase Shot", 15, "Quantum"),
-                Weapon("Neural Sniper", 1, 60, "Primary", "Mind Link", 30, "Energy"),
-                Weapon("Gauss Cannon", 1, 45, "Primary", "Magnetic Pulse", 25, "Energy"),
-                Weapon("Cyber Shotgun", 1, 40, "Primary", "Spread Pattern", 10, "Ballistic")
-            ],
-            "Secondary": [
-                Weapon("Ion Pistol", 1, 20, "Secondary", "Stun", 10, "Energy"),
-                Weapon("Nano Blade", 1, 25, "Secondary", "Molecular Cut", 5, "Quantum"),
-                Weapon("EMP Grenade", 1, 30, "Secondary", "System Disable", 20, "Energy"),
-                Weapon("Holo Decoy", 1, 0, "Secondary", "Distraction", 15, "Quantum")
-            ],
-            "Gadget": [
-                Weapon("Shield Generator", 1, 0, "Gadget", "Energy Shield", 25, "Energy"),
-                Weapon("Tactical AI Drone", 1, 15, "Gadget", "Recon", 20, "Quantum"),
-                Weapon("Cloaking Device", 1, 0, "Gadget", "Invisibility", 30, "Quantum"),
-                Weapon("Healing Nanobots", 1, 0, "Gadget", "Regeneration", 20, "Energy")
-            ]
-        }
-    
-    def _init_missions(self) -> Dict[str, Mission]:
-        return {
-            "Neural Infiltration": Mission(
-                "Neural Infiltration",
-                "Hack into the AI mainframe and extract classified data",
-                6,
-                400,
-                "Quantum Processor",
-                ["Primary", "Secondary", "Gadget"],
-                "Infiltrate the cyber-fortress and breach their neural network.",
-                "Cybercity",
-                ["AI Sentinels", "Cyber Guards", "Defense Drones"]
-            ),
-            "Space Station Omega": Mission(
-                "Space Station Omega", 
-                "Secure the space station from alien hostiles",
-                8,
-                500,
-                "Plasma Core",
-                ["Primary", "Gadget"],
-                "Zero-gravity combat against unknown alien entities.",
-                "Space Station",
-                ["Alien Warriors", "Energy Beings", "Hive Mind"]
-            ),
-            "Quantum Realm": Mission(
-                "Quantum Realm",
-                "Navigate through dimensional rifts to stop reality collapse",
-                9,
-                600,
-                "Dimensional Stabilizer",
-                ["Primary", "Secondary"],
-                "Reality is fracturing. Only you can restore the quantum balance.",
-                "Alien World",
-                ["Quantum Phantoms", "Reality Wraiths", "Void Stalkers"]
-            )
-        }
-    
-    def save_game_data(self):
-        """Save game progress to file"""
-        save_data = {
-            'marines': [asdict(marine) for marine in self.marines],
-            'unlocked_weapons': [asdict(weapon) for category in self.weapons_arsenal.values() for weapon in category]
-        }
-        try:
-            with open(SAVE_FILE, 'w') as f:
-                json.dump(save_data, f, indent=2)
-        except Exception as e:
-            print(f"Failed to save game data: {e}")
-    
-    def load_game_data(self):
-        """Load game progress from file"""
-        try:
-            if os.path.exists(SAVE_FILE):
-                with open(SAVE_FILE, 'r') as f:
-                    save_data = json.load(f)
-                
-                self.marines = []
-                for marine_data in save_data.get('marines', []):
-                    weapons = [Weapon(**w) for w in marine_data.get('weapons', [])]
-                    marine_data['weapons'] = weapons
-                    self.marines.append(Marine(**marine_data))
-        except Exception as e:
-            print(f"Failed to load save data: {e}")
-        
-        # Create default marines if none exist
-        if not self.marines:
-            self.marines = self._create_default_marines()
-    
-    def _create_default_marines(self) -> List[Marine]:
-        return [
-            Marine("Ghost-7", "Sergeant", 150, 100, 100, 50, 
-                  [self.weapons_arsenal["Primary"][0], self.weapons_arsenal["Secondary"][0]],
-                  ["Neural Interface", "Targeting System"]),
-            Marine("Hawk-Alpha", "Lieutenant", 200, 100, 100, 50,
-                  [self.weapons_arsenal["Primary"][1], self.weapons_arsenal["Secondary"][1]],
-                  ["Cyber Eyes", "Reflex Booster"]),
-            Marine("Phoenix-X", "Captain", 300, 100, 100, 50,
-                  [self.weapons_arsenal["Primary"][2], self.weapons_arsenal["Gadget"][0]],
-                  ["Bio-Enhancement", "Shield Generator", "Combat Stimulants"])
-        ]
-    
-    def _init_ui(self):
-        # Main menu buttons
-        self.buttons['main_menu'] = [
-            Button(SCREEN_WIDTH//2 - 150, 350, 300, 60, "DEPLOY MISSION", FONTS['header'], glow=True),
-            Button(SCREEN_WIDTH//2 - 150, 430, 300, 60, "MARINE STATUS", FONTS['header'], glow=True),
-            Button(SCREEN_WIDTH//2 - 150, 510, 300, 60, "ARSENAL", FONTS['header'], glow=True),
-            Button(SCREEN_WIDTH//2 - 150, 590, 300, 60, "NEURAL LINK OFF", FONTS['header'], COLORS['RED'], glow=True)
-        ]
-        
-        # Mission select buttons
-        self.buttons['mission_select'] = []
-        y = 200
-        for mission_name in self.missions.keys():
-            self.buttons['mission_select'].append(
-                Button(SCREEN_WIDTH//2 - 250, y, 500, 80, mission_name, FONTS['normal'], glow=True)
-            )
-            y += 100
-        self.buttons['mission_select'].append(
-            Button(50, SCREEN_HEIGHT - 100, 120, 50, "BACK", FONTS['normal'])
-        )
-        
-        # Other UI buttons
-        self.setup_other_buttons()
-    
-    def setup_other_buttons(self):
-        # Loadout buttons
-        self.buttons['loadout'] = [
-            Button(SCREEN_WIDTH - 170, SCREEN_HEIGHT - 100, 120, 50, "DEPLOY", FONTS['normal'], COLORS['GREEN'], glow=True),
-            Button(50, SCREEN_HEIGHT - 100, 120, 50, "BACK", FONTS['normal'])
-        ]
-        
-        # Game UI buttons
-        self.buttons['game'] = [
-            Button(SCREEN_WIDTH - 120, 20, 100, 40, "ABORT", FONTS['small'], COLORS['RED'])
-        ]
-        
-        # Mission complete buttons
-        self.buttons['mission_complete'] = [
-            Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 150, 200, 60, "CONTINUE", FONTS['header'], COLORS['GREEN'], glow=True)
-        ]
-        
-        # Arsenal buttons
-        self.buttons['arsenal'] = [
-            Button(50, SCREEN_HEIGHT - 100, 120, 50, "BACK", FONTS['normal'])
-        ]
-    
-    def draw_futuristic_background(self):
-        """Draw animated futuristic background"""
-        self.screen.fill(COLORS['BACKGROUND'])
-        
-        # Animated grid
-        time_offset = pygame.time.get_ticks() * 0.001
-        for x in range(0, SCREEN_WIDTH, 40):
-            alpha = int(50 + 30 * math.sin(time_offset + x * 0.01))
-            color = (*COLORS['PRIMARY'][:3], alpha)
-            pygame.draw.line(self.screen, COLORS['PRIMARY'], (x, 0), (x, SCREEN_HEIGHT), 1)
-        
-        for y in range(0, SCREEN_HEIGHT, 40):
-            alpha = int(50 + 30 * math.cos(time_offset + y * 0.01))
-            pygame.draw.line(self.screen, COLORS['PRIMARY'], (0, y), (SCREEN_WIDTH, y), 1)
-        
-        # Floating particles
+        self.load_game_data()
+
+    # --- Use your _init_weapons_arsenal, _init_missions, save_game_data, load_game_data, _create_default_marines, _init_ui, setup_other_buttons, draw_futuristic_background, update_particles, draw_main_menu, draw_enhanced_marine_status, draw_mission_select, draw_briefing methods here ---
+
+    # --- New: Main Game Loop and Scene Handling ---
+
+    def main_loop(self):
+        """Main game loop: handles events, updates, renders."""
+        while self.running:
+            dt = self.clock.tick(FPS) / 1000.0
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif self.state == GameState.MAIN_MENU:
+                    self.handle_main_menu_event(event)
+                elif self.state == GameState.MISSION_SELECT:
+                    self.handle_mission_select_event(event)
+                elif self.state == GameState.BRIEFING:
+                    self.handle_briefing_event(event)
+                elif self.state == GameState.GAME:
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                        self.paused = not self.paused
+                        self.sound_manager.play_sound('click')
+                    elif not self.paused:
+                        self.handle_game_event(event)
+                    elif self.paused:
+                        self.handle_pause_event(event)
+                elif self.state == GameState.PAUSED:
+                    self.handle_pause_event(event)
+                # ... handle other states
+
+            if self.state == GameState.GAME and not self.paused:
+                self.update_game(dt)
+
+            self.render()
+
+        pygame.quit()
+        sys.exit()
+
+    def render(self):
+        if self.state == GameState.MAIN_MENU:
+            self.draw_main_menu()
+        elif self.state == GameState.MISSION_SELECT:
+            self.draw_mission_select()
+        elif self.state == GameState.BRIEFING:
+            self.draw_briefing()
+        elif self.state == GameState.GAME:
+            self.draw_game_hud()
+            if self.paused:
+                self.draw_pause_screen()
+        elif self.state == GameState.PAUSED:
+            self.draw_pause_screen()
+        pygame.display.flip()
+
+    def draw_game_hud(self):
+        self.draw_futuristic_background()
+        if self.player_marine:
+            # Health, shield, energy bars
+            pygame.draw.rect(self.screen, COLORS['DARK_GRAY'], (40, 30, 300, 28))
+            health_width = int(300 * self.player_marine.health / 100)
+            pygame.draw.rect(self.screen, COLORS['GREEN'], (40, 30, health_width, 28))
+            health_text = FONTS['small'].render(f"HP: {self.player_marine.health}", True, COLORS['WHITE'])
+            self.screen.blit(health_text, (50, 34))
+
+            pygame.draw.rect(self.screen, COLORS['DARK_GRAY'], (40, 70, 300, 14))
+            shield_width = int(300 * self.player_marine.shields / 100)
+            pygame.draw.rect(self.screen, COLORS['SHIELD'], (40, 70, shield_width, 14))
+            shield_text = FONTS['small'].render(f"SHIELD: {self.player_marine.shields}", True, COLORS['WHITE'])
+            self.screen.blit(shield_text, (50, 72))
+
+            energy_width = int(300 * self.player_marine.energy / 100)
+            pygame.draw.rect(self.screen, COLORS['ENERGY'], (40, 90, energy_width, 8))
+            energy_text = FONTS['small'].render(f"ENERGY: {self.player_marine.energy}", True, COLORS['WHITE'])
+            self.screen.blit(energy_text, (50, 92))
+        # Objectives
+        obj_text = FONTS['normal'].render(f"Objectives: {self.mission_objectives_completed}/{self.total_objectives}", True, COLORS['PRIMARY'])
+        self.screen.blit(obj_text, (SCREEN_WIDTH-350, 40))
+        time_text = FONTS['small'].render(f"Mission Time: {int(self.game_time)}s", True, COLORS['LIGHT_GRAY'])
+        self.screen.blit(time_text, (SCREEN_WIDTH-350, 80))
+        pause_hint = FONTS['small'].render("ESC: Pause", True, COLORS['HOVER'])
+        self.screen.blit(pause_hint, (SCREEN_WIDTH-120, SCREEN_HEIGHT-40))
+
+    def draw_pause_screen(self):
+        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 170))
+        self.screen.blit(overlay, (0, 0))
+        pause_text = FONTS['title'].render("PAUSED", True, COLORS['SECONDARY'])
+        self.screen.blit(pause_text, pause_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2-60)))
+        resume = FONTS['header'].render("Press ESC to resume", True, COLORS['WHITE'])
+        self.screen.blit(resume, resume.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2+10)))
+        music_toggle = FONTS['normal'].render(f"Music: {'ON' if self.music_on else 'OFF'} (M)", True, COLORS['GREEN'] if self.music_on else COLORS['RED'])
+        sfx_toggle = FONTS['normal'].render(f"SFX: {'ON' if self.sfx_on else 'OFF'} (S)", True, COLORS['GREEN'] if self.sfx_on else COLORS['RED'])
+        self.screen.blit(music_toggle, (SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2 + 60))
+        self.screen.blit(sfx_toggle, (SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2 + 100))
+
+    def handle_pause_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                self.paused = not self.paused
+                self.sound_manager.play_sound('click')
+            elif event.key == pygame.K_m:
+                self.music_on = not self.music_on
+            elif event.key == pygame.K_s:
+                self.sfx_on = not self.sfx_on
+
+    # --- Add your other event handler methods here (handle_main_menu_event etc.) ---
+
+    def update_game(self, dt):
+        # Example: update timer and particles
+        self.game_time += dt
         self.update_particles()
-        
-        # Holographic scanlines
-        for y in range(0, SCREEN_HEIGHT, 4):
-            if random.random() < 0.1:
-                alpha = random.randint(10, 30)
-                scan_surface = pygame.Surface((SCREEN_WIDTH, 2))
-                scan_surface.set_alpha(alpha)
-                scan_surface.fill(COLORS['PRIMARY'])
-                self.screen.blit(scan_surface, (0, y))
-    
-    def update_particles(self):
-        """Update and draw particle effects"""
-        # Add new particles
-        if random.random() < 0.1:
-            self.particles.append(Particle(
-                random.randint(0, SCREEN_WIDTH),
-                random.randint(0, SCREEN_HEIGHT),
-                random.choice([COLORS['PRIMARY'], COLORS['SECONDARY'], COLORS['ENERGY']]),
-                (random.uniform(-1, 1), random.uniform(-1, 1)),
-                random.randint(60, 180)
-            ))
-        
-        # Update existing particles
-        self.particles = [p for p in self.particles if p.update()]
-        
-        # Draw particles
-        for particle in self.particles:
-            alpha = int(255 * (1 - particle.age / particle.lifetime))
-            color = (*particle.color[:3], alpha)
-            pygame.draw.circle(self.screen, particle.color, (int(particle.x), int(particle.y)), 2)
-    
-    def draw_main_menu(self):
-        self.draw_futuristic_background()
-        
-        # Animated title
-        title_glow = int(100 + 50 * math.sin(pygame.time.get_ticks() * 0.003))
-        title = FONTS['title'].render("TACTICAL LEGEND 2087", True, COLORS['SECONDARY'])
-        title_rect = title.get_rect(center=(SCREEN_WIDTH//2, 150))
-        
-        # Title glow effect
-        glow_surface = pygame.Surface((title_rect.width + 20, title_rect.height + 20))
-        glow_surface.set_alpha(title_glow)
-        glow_surface.fill(COLORS['SECONDARY'])
-        self.screen.blit(glow_surface, (title_rect.x - 10, title_rect.y - 10))
-        
-        self.screen.blit(title, title_rect)
-        
-        subtitle = FONTS['normal'].render("Neural Command Interface - Active", True, COLORS['PRIMARY'])
-        subtitle_rect = subtitle.get_rect(center=(SCREEN_WIDTH//2, 200))
-        self.screen.blit(subtitle, subtitle_rect)
-        
-        # System status
-        status_text = FONTS['small'].render(f"System Time: {time.strftime('%H:%M:%S')} | Status: OPERATIONAL", True, COLORS['GREEN'])
-        self.screen.blit(status_text, (20, 20))
-        
-        # Draw buttons
-        for button in self.buttons['main_menu']:
-            button.draw(self.screen)
-        
-        # Enhanced marine status display
-        self.draw_enhanced_marine_status()
-    
-    def draw_enhanced_marine_status(self):
-        """Enhanced marine status with futuristic HUD elements"""
-        x, y = 50, 300
-        
-        # Status panel background
-        panel_rect = pygame.Rect(x - 10, y - 10, 350, len(self.marines) * 120 + 60)
-        panel_surface = pygame.Surface((panel_rect.width, panel_rect.height))
-        panel_surface.set_alpha(30)
-        panel_surface.fill(COLORS['PRIMARY'])
-        self.screen.blit(panel_surface, panel_rect)
-        pygame.draw.rect(self.screen, COLORS['PRIMARY'], panel_rect, 2)
-        
-        status_title = FONTS['header'].render("SQUAD STATUS", True, COLORS['SECONDARY'])
-        self.screen.blit(status_title, (x, y))
-        y += 50
-        
-        for marine in self.marines:
-            # Marine name and rank
-            name_text = FONTS['normal'].render(f"{marine.rank} {marine.name}", True, COLORS['WHITE'])
-            self.screen.blit(name_text, (x, y))
-            
-            # Combat rating
-            rating = marine.get_combat_rating()
-            rating_color = COLORS['GREEN'] if rating > 100 else COLORS['SECONDARY'] if rating > 50 else COLORS['RED']
-            rating_text = FONTS['small'].render(f"Combat Rating: {rating}", True, rating_color)
-            self.screen.blit(rating_text, (x, y + 25))
-            
-            # Experience bar
-            xp_bar_rect = pygame.Rect(x, y + 45, 200, 10)
-            pygame.draw.rect(self.screen, COLORS['DARK_GRAY'], xp_bar_rect)
-            xp_progress = min(1.0, (marine.experience % 100) / 100)
-            progress_rect = pygame.Rect(x, y + 45, int(200 * xp_progress), 10)
-            pygame.draw.rect(self.screen, COLORS['PRIMARY'], progress_rect)
-            
-            xp_text = FONTS['small'].render(f"XP: {marine.experience}", True, COLORS['LIGHT_GRAY'])
-            self.screen.blit(xp_text, (x + 210, y + 42))
-            
-            # Implants
-            if marine.cybernetic_implants:
-                implants_text = FONTS['small'].render(f"Implants: {len(marine.cybernetic_implants)}", True, COLORS['ENERGY'])
-                self.screen.blit(implants_text, (x, y + 65))
-            
-            y += 100
-    
-    def draw_mission_select(self):
-        self.draw_futuristic_background()
-        
-        title = FONTS['title'].render("MISSION SELECTION", True, COLORS['SECONDARY'])
-        title_rect = title.get_rect(center=(SCREEN_WIDTH//2, 80))
-        self.screen.blit(title, title_rect)
-        
-        # Threat level indicator
-        threat_text = FONTS['normal'].render("THREAT LEVEL: EXTREME", True, COLORS['RED'])
-        threat_rect = threat_text.get_rect(center=(SCREEN_WIDTH//2, 130))
-        self.screen.blit(threat_text, threat_rect)
-        
-        # Draw mission buttons with enhanced info
-        for i, button in enumerate(self.buttons['mission_select'][:-1]):
-            button.draw(self.screen)
-            
-            mission_name = list(self.missions.keys())[i]
-            mission = self.missions[mission_name]
-            
-            # Mission info panel
-            info_x = button.rect.right + 30
-            info_y = button.rect.y
-            
-            # Environment
-            env_text = FONTS['small'].render(f"Environment: {mission.environment}", True, COLORS['PRIMARY'])
-            self.screen.blit(env_text, (info_x, info_y))
-            
-            # Difficulty with visual indicator
-            difficulty_text = FONTS['small'].render(f"Difficulty: {'▲' * mission.difficulty}", True, COLORS['SECONDARY'])
-            self.screen.blit(difficulty_text, (info_x, info_y + 20))
-            
-            # Reward
-            reward_text = FONTS['small'].render(f"Reward: {mission.reward_xp} XP + {mission.reward_item}", True, COLORS['GREEN'])
-            self.screen.blit(reward_text, (info_x, info_y + 40))
-            
-            # Enemy types
-            enemies_text = FONTS['small'].render(f"Hostiles: {', '.join(mission.enemy_types[:2])}", True, COLORS['RED'])
-            self.screen.blit(enemies_text, (info_x, info_y + 60))
-        
-        # Back button
-        self.buttons['mission_select'][-1].draw(self.screen)
-    
-    def draw_briefing(self):
-        if not self.selected_mission:
-            return
-            
-        self.draw_futuristic_background()
-        mission = self.missions[self.selected_mission]
-        
-        # Mission briefing panel
-        panel_rect = pygame.Rect(100, 100, SCREEN_WIDTH - 200, SCREEN_HEIGHT - 250)
-        panel_surface = pygame.Surface((panel_rect.width, panel_rect.height))
-        panel_surface.set_alpha(40)
-        panel_surface.fill(COLORS['DARK_GRAY'])
-        self.screen.blit(panel_surface, panel_rect)
-        pygame.draw.rect(self.screen, COLORS['PRIMARY'], panel_rect, 3)
-        
-        # Title
-        title = FONTS['title'].render(f"MISSION: {mission.title}", True, COLORS['SECONDARY'])
-        title_rect = title.get_rect(center=(SCREEN_WIDTH//2, 140))
-        self.screen.blit(title, title_rect)
-        
-        # Classification
-        class_text = FONTS['small'].render("CLASSIFIED - NEURAL EYES ONLY", True, COLORS['RED'])
-        class_rect = class_text.get_rect(center=(SCREEN_WIDTH//2, 170))
-        self.screen.blit(class_text, class_rect)
-        
-        # Mission details
-        y = 220
-        details = [
-            ("OBJECTIVE:", mission.objective),
-            ("ENVIRONMENT:", mission.environment),
-            ("THREAT LEVEL:", "★" * mission.difficulty),
-            ("REWARD:", f"{mission.reward_xp} XP + {mission.reward_item}"),
-            ("HOSTILES:", ", ".join(mission.enemy_types)),
-            ("INTEL:", mission.description)
-        ]
-        
-        for label, value in details:
-            label_text = FONTS['normal'].render(label, True, COLORS['SECONDARY'])
-            self.screen.blit(label_text, (120, y))
-            
-            # Word wrap for long text
-            words = value.split(' ')
-            line = ""
-            line_y = y
-            for word in words:
-                test_line = line + word + " "
-                if FONTS['normal'].size(test_line)[0] > SCREEN_WIDTH - 400:
-                    value_text = FONTS['normal'].render(line, True, COLORS['WHITE'])
-                    self.screen.blit(value_text, (280, line_y))
-                    line = word + " "
-                    line_y += 30
-                else:
-                    line = test_line
-            
-            if line:
-                value_text = FONTS['normal'].render(line, True, COLORS['WHITE'])
-                self.screen.blit(value_text, (280, line_y))
-            
-            y += 60
-        
-        #
+        # ... add your gameplay logic here (enemy AI, objectives, etc.)
+
+if __name__ == "__main__":
+    game = TacticalLegend()
+    game.main_loop()
