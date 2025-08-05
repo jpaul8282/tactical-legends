@@ -2822,3 +2822,84 @@ public class EmpathySystem: MonoBehaviour
         }
     }
 }
+using UnityEngine;
+using UnityEngine.Playables;
+
+/// <summary>
+/// Triggers Timeline cutscenes with Cinemachine support and UI integration.
+/// </summary>
+public class TimelineCutsceneTrigger: MonoBehaviour
+{
+    public PlayableDirector director;
+    public CanvasGroup cinematicUI;
+    public string[] cinematicLines;
+    public float cinematicTextDisplayTime = 3f;
+
+    void Start()
+    {
+        if (director == null) director = GetComponent<PlayableDirector>();
+    }
+
+    public void PlayCutscene()
+    {
+        StartCoroutine(PlayCinematicSequence());
+    }
+
+    IEnumerator PlayCinematicSequence()
+    {
+        UIManager.Instance.ShowCinematicBars(true);
+        director.Play();
+        foreach (string line in cinematicLines)
+        {
+            UIManager.Instance.PlayCinematicText(line);
+            yield return new WaitForSeconds(cinematicTextDisplayTime);
+        }
+        UIManager.Instance.ShowCinematicBars(false);
+    }
+}
+using UnityEngine;
+using UnityEngine.Playables;
+using Cinemachine;
+
+/// <summary>
+/// Automatically binds Cinemachine and audio tracks on Timeline for cutscenes.
+/// </summary>
+public class PlayableDirectorAutoBinder: MonoBehaviour
+{
+    public PlayableDirector director;
+    public CinemachineVirtualCamera cineCam;
+    public AudioSource narratorAudioSource;
+
+    void Awake()
+    {
+        if (director == null) director = GetComponent<PlayableDirector>();
+        if (cineCam != null)
+            director.SetGenericBinding("Cinemachine Track", cineCam);
+        if (narratorAudioSource != null)
+            director.SetGenericBinding("Audio Track", narratorAudioSource);
+    }
+}
+using UnityEngine;
+
+/// <summary>
+/// Example controller for player-issued squad commands and empathy choices.
+/// </summary>
+public class SquadLeaderCommandIntegration: MonoBehaviour
+{
+    public SquadManager squadManager;
+    public EmpathySystem empathySystem;
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.H)) // Hold
+            squadManager.GiveOrder(SquadOrder.Hold);
+        if (Input.GetKeyDown(KeyCode.F)) // Flank
+            squadManager.GiveOrder(SquadOrder.Flank);
+        if (Input.GetKeyDown(KeyCode.E)) // Empathize
+        {
+            squadManager.GiveOrder(SquadOrder.Empathize);
+            empathySystem.GainEmpathy(0.05f);
+            UIManager.Instance.ShowAlert("You encouraged your squad. Empathy up!", 1.2f);
+        }
+    }
+}
