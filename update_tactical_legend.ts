@@ -14068,4 +14068,285 @@ public class SoundProfileManager : MonoBehaviour
     }
 }
 
+using UnityEngine;
 
+public enum WeaponType 
+{ 
+    // Firearms
+    Rifle, Pistol, Sniper, SMG, Shotgun, RocketLauncher, GrenadeLauncher,
+    
+    // Melee & Throwables
+    Knife, Sword, Baton, Grenade, Flashbang, SmokeGrenade, TearGas,
+    
+    // High-Tech Weapons
+    LaserRifle, PlasmaGun, RailGun, EnergyBlade, TaserGun,
+    
+    // Gadgets & Electronics
+    Drone, EMP, NightVision, ThermalVision, GrapplingHook, JetPack,
+    Hacker, Scanner, CloakingDevice, ShieldGenerator, Decoy,
+    
+    // Protective Gear
+    BodyArmor, Helmet, Shield, GasMask, FullBodySuit, ExoSkeleton,
+    
+    // Special/Illegal
+    SilencedPistol, AssaultRifle, IllegalSMG, BlackMarketSniper,
+    ExplosiveDevice, PoisonDart, Tranquilizer
+}
+
+public enum WeaponRarity
+{
+    Common, Uncommon, Rare, Epic, Legendary, BlackMarket, Prototype
+}
+
+public enum ArmorType
+{
+    Light, Medium, Heavy, Tactical, Stealth, Environmental, Powered
+}
+
+[System.Serializable]
+public class Weapon
+{
+    [Header("Basic Info")]
+    public string Name;
+    public WeaponType Type;
+    public WeaponRarity Rarity;
+    public string Description;
+    public Sprite Icon;
+    
+    [Header("Combat Stats")]
+    public int Damage;
+    public int AmmoCapacity;
+    public float ReloadTime;
+    public float Range;
+    public float FireRate; // Rounds per minute
+    public float Accuracy; // 0-100%
+    public int PenetrationPower; // Can pierce armor
+    
+    [Header("Special Properties")]
+    public bool IsGadget;
+    public bool IsSilenced;
+    public bool IsIllegal; // Black market items
+    public bool RequiresLicense;
+    public bool IsOneTimeUse;
+    public bool IsThrowable;
+    
+    [Header("Gadget Effects")]
+    public string GadgetEffect;
+    public float EffectDuration;
+    public float EffectRadius;
+    public int BatteryLife; // For electronic gadgets
+    
+    [Header("Armor Properties")]
+    public ArmorType ArmorClass;
+    public int DefenseRating;
+    public float MovementPenalty; // Speed reduction when worn
+    public bool ProtectsAgainstGas;
+    public bool ProtectsAgainstRadiation;
+    public bool ProtectsAgainstElectric;
+    public bool HasNightVision;
+    public bool HasThermalVision;
+    
+    [Header("Economics")]
+    public int Cost;
+    public int BlackMarketCost; // Higher cost for illegal items
+    public bool AvailableInShops;
+    public int MinLevel; // Player level requirement
+}
+
+[System.Serializable]
+public class WeaponDatabase : MonoBehaviour
+{
+    [Header("Weapon Arsenal")]
+    public Weapon[] AllWeapons;
+    
+    void Start()
+    {
+        InitializeWeapons();
+    }
+    
+    void InitializeWeapons()
+    {
+        AllWeapons = new Weapon[]
+        {
+            // === STANDARD FIREARMS ===
+            new Weapon { Name = "M4A1 Assault Rifle", Type = WeaponType.Rifle, Rarity = WeaponRarity.Common, 
+                        Damage = 35, AmmoCapacity = 30, ReloadTime = 2.5f, Range = 300f, FireRate = 750, Accuracy = 75f },
+            
+            new Weapon { Name = "Glock 17 Pistol", Type = WeaponType.Pistol, Rarity = WeaponRarity.Common,
+                        Damage = 25, AmmoCapacity = 17, ReloadTime = 1.5f, Range = 50f, FireRate = 300, Accuracy = 65f },
+            
+            new Weapon { Name = "Barrett M82 Sniper", Type = WeaponType.Sniper, Rarity = WeaponRarity.Rare,
+                        Damage = 120, AmmoCapacity = 10, ReloadTime = 3.5f, Range = 1000f, FireRate = 60, Accuracy = 95f },
+            
+            new Weapon { Name = "MP5 Submachine Gun", Type = WeaponType.SMG, Rarity = WeaponRarity.Uncommon,
+                        Damage = 28, AmmoCapacity = 25, ReloadTime = 2.0f, Range = 150f, FireRate = 900, Accuracy = 70f },
+            
+            new Weapon { Name = "Benelli M4 Shotgun", Type = WeaponType.Shotgun, Rarity = WeaponRarity.Common,
+                        Damage = 80, AmmoCapacity = 7, ReloadTime = 4.0f, Range = 30f, FireRate = 180, Accuracy = 50f },
+            
+            // === BLACK MARKET / ILLEGAL WEAPONS ===
+            new Weapon { Name = "Ghost Gun (Untraceable)", Type = WeaponType.IllegalSMG, Rarity = WeaponRarity.BlackMarket,
+                        Damage = 40, AmmoCapacity = 32, ReloadTime = 2.2f, Range = 120f, IsIllegal = true, 
+                        BlackMarketCost = 15000, IsSilenced = true },
+            
+            new Weapon { Name = "Modified AK-47", Type = WeaponType.BlackMarketSniper, Rarity = WeaponRarity.BlackMarket,
+                        Damage = 55, AmmoCapacity = 30, ReloadTime = 2.8f, Range = 400f, IsIllegal = true,
+                        BlackMarketCost = 25000 },
+            
+            new Weapon { Name = "Silenced .22 Assassin Pistol", Type = WeaponType.SilencedPistol, Rarity = WeaponRarity.BlackMarket,
+                        Damage = 45, AmmoCapacity = 12, ReloadTime = 1.8f, Range = 80f, IsSilenced = true,
+                        IsIllegal = true, BlackMarketCost = 12000 },
+            
+            // === JAMES BOND GADGETS ===
+            new Weapon { Name = "Walther PPK (Bond's Gun)", Type = WeaponType.Pistol, Rarity = WeaponRarity.Legendary,
+                        Damage = 40, AmmoCapacity = 7, ReloadTime = 1.2f, Range = 60f, IsSilenced = true,
+                        GadgetEffect = "Never misses critical shots", IsGadget = true },
+            
+            new Weapon { Name = "Explosive Pen", Type = WeaponType.ExplosiveDevice, Rarity = WeaponRarity.Epic,
+                        Damage = 200, IsOneTimeUse = true, IsGadget = true, EffectRadius = 5f,
+                        GadgetEffect = "Disguised explosive device" },
+            
+            new Weapon { Name = "Laser Watch", Type = WeaponType.LaserRifle, Rarity = WeaponRarity.Legendary,
+                        Damage = 60, BatteryLife = 20, IsGadget = true, Range = 100f,
+                        GadgetEffect = "Cuts through metal and glass" },
+            
+            new Weapon { Name = "Ejector Seat Remote", Type = WeaponType.Hacker, Rarity = WeaponRarity.Epic,
+                        IsGadget = true, EffectRadius = 50f, GadgetEffect = "Disables enemy vehicles" },
+            
+            new Weapon { Name = "Grappling Hook Watch", Type = WeaponType.GrapplingHook, Rarity = WeaponRarity.Rare,
+                        Range = 200f, IsGadget = true, GadgetEffect = "Swing across gaps, climb buildings" },
+            
+            // === BATMAN ARSENAL ===
+            new Weapon { Name = "Batarang", Type = WeaponType.Knife, Rarity = WeaponRarity.Epic,
+                        Damage = 35, IsThrowable = true, Range = 100f, IsGadget = true,
+                        GadgetEffect = "Returns to user, can disarm enemies" },
+            
+            new Weapon { Name = "Explosive Batarang", Type = WeaponType.Grenade, Rarity = WeaponRarity.Legendary,
+                        Damage = 150, IsThrowable = true, Range = 120f, EffectRadius = 8f, IsOneTimeUse = true },
+            
+            new Weapon { Name = "Grappling Gun", Type = WeaponType.GrapplingHook, Rarity = WeaponRarity.Epic,
+                        Range = 500f, IsGadget = true, GadgetEffect = "Rapid building traversal" },
+            
+            new Weapon { Name = "Smoke Pellets", Type = WeaponType.SmokeGrenade, Rarity = WeaponRarity.Rare,
+                        IsThrowable = true, EffectRadius = 15f, EffectDuration = 30f, Range = 50f },
+            
+            new Weapon { Name = "EMP Batarang", Type = WeaponType.EMP, Rarity = WeaponRarity.Epic,
+                        IsThrowable = true, EffectRadius = 20f, Range = 80f,
+                        GadgetEffect = "Disables all electronics in area" },
+            
+            new Weapon { Name = "Cryptographic Sequencer", Type = WeaponType.Hacker, Rarity = WeaponRarity.Rare,
+                        IsGadget = true, GadgetEffect = "Hack security systems and doors" },
+            
+            // === PROTECTIVE GEAR ===
+            new Weapon { Name = "Kevlar Vest", Type = WeaponType.BodyArmor, Rarity = WeaponRarity.Common,
+                        ArmorClass = ArmorType.Light, DefenseRating = 25, MovementPenalty = 0.05f, Cost = 800 },
+            
+            new Weapon { Name = "Tactical Body Armor", Type = WeaponType.BodyArmor, Rarity = WeaponRarity.Uncommon,
+                        ArmorClass = ArmorType.Medium, DefenseRating = 45, MovementPenalty = 0.15f, Cost = 2500 },
+            
+            new Weapon { Name = "Military Grade Armor", Type = WeaponType.BodyArmor, Rarity = WeaponRarity.Rare,
+                        ArmorClass = ArmorType.Heavy, DefenseRating = 70, MovementPenalty = 0.25f, RequiresLicense = true },
+            
+            new Weapon { Name = "Riot Helmet", Type = WeaponType.Helmet, Rarity = WeaponRarity.Common,
+                        DefenseRating = 15, ProtectsAgainstGas = false, Cost = 300 },
+            
+            new Weapon { Name = "Tactical Helmet", Type = WeaponType.Helmet, Rarity = WeaponRarity.Uncommon,
+                        DefenseRating = 25, HasNightVision = true, ProtectsAgainstGas = true, Cost = 1200 },
+            
+            new Weapon { Name = "M50 Gas Mask", Type = WeaponType.GasMask, Rarity = WeaponRarity.Common,
+                        ProtectsAgainstGas = true, DefenseRating = 5, Cost = 400 },
+            
+            new Weapon { Name = "CBRN Gas Mask", Type = WeaponType.GasMask, Rarity = WeaponRarity.Rare,
+                        ProtectsAgainstGas = true, ProtectsAgainstRadiation = true, DefenseRating = 10, Cost = 1500 },
+            
+            new Weapon { Name = "Riot Shield", Type = WeaponType.Shield, Rarity = WeaponRarity.Common,
+                        DefenseRating = 50, MovementPenalty = 0.20f, Cost = 600 },
+            
+            new Weapon { Name = "Ballistic Shield", Type = WeaponType.Shield, Rarity = WeaponRarity.Uncommon,
+                        DefenseRating = 80, MovementPenalty = 0.30f, Cost = 2000 },
+            
+            new Weapon { Name = "Energy Shield Generator", Type = WeaponType.ShieldGenerator, Rarity = WeaponRarity.Legendary,
+                        DefenseRating = 100, BatteryLife = 300, IsGadget = true, ProtectsAgainstElectric = true,
+                        GadgetEffect = "Absorbs energy attacks to recharge" },
+            
+            new Weapon { Name = "Hazmat Suit", Type = WeaponType.FullBodySuit, Rarity = WeaponRarity.Rare,
+                        ArmorClass = ArmorType.Environmental, DefenseRating = 30, MovementPenalty = 0.35f,
+                        ProtectsAgainstGas = true, ProtectsAgainstRadiation = true, Cost = 3000 },
+            
+            new Weapon { Name = "Powered Exoskeleton", Type = WeaponType.ExoSkeleton, Rarity = WeaponRarity.Prototype,
+                        ArmorClass = ArmorType.Powered, DefenseRating = 120, MovementPenalty = -0.20f, // Increases speed
+                        BatteryLife = 480, GadgetEffect = "Enhances strength and speed" },
+            
+            // === HIGH-TECH GADGETS ===
+            new Weapon { Name = "Stealth Suit", Type = WeaponType.CloakingDevice, Rarity = WeaponRarity.Prototype,
+                        IsGadget = true, BatteryLife = 180, EffectDuration = 30f,
+                        GadgetEffect = "Temporary invisibility" },
+            
+            new Weapon { Name = "Combat Drone", Type = WeaponType.Drone, Rarity = WeaponRarity.Epic,
+                        Damage = 25, Range = 200f, BatteryLife = 600, IsGadget = true,
+                        GadgetEffect = "Autonomous combat support" },
+            
+            new Weapon { Name = "Reconnaissance Drone", Type = WeaponType.Scanner, Rarity = WeaponRarity.Rare,
+                        Range = 500f, BatteryLife = 1200, IsGadget = true,
+                        GadgetEffect = "Marks enemies through walls" },
+            
+            new Weapon { Name = "Holographic Decoy", Type = WeaponType.Decoy, Rarity = WeaponRarity.Epic,
+                        IsGadget = true, EffectDuration = 60f, BatteryLife = 5,
+                        GadgetEffect = "Creates false target to confuse enemies" },
+            
+            new Weapon { Name = "Jetpack", Type = WeaponType.JetPack, Rarity = WeaponRarity.Legendary,
+                        IsGadget = true, BatteryLife = 300, GadgetEffect = "Limited flight capability" },
+            
+            // === SPECIALIZED AMMO/DARTS ===
+            new Weapon { Name = "Tranquilizer Gun", Type = WeaponType.Tranquilizer, Rarity = WeaponRarity.Rare,
+                        Damage = 0, AmmoCapacity = 5, Range = 80f, IsSilenced = true,
+                        GadgetEffect = "Non-lethal knockout", EffectDuration = 120f },
+            
+            new Weapon { Name = "Poison Dart Blowgun", Type = WeaponType.PoisonDart, Rarity = WeaponRarity.BlackMarket,
+                        Damage = 100, AmmoCapacity = 1, Range = 40f, IsSilenced = true, IsIllegal = true,
+                        GadgetEffect = "Delayed poison damage over time" },
+            
+            // === VISION EQUIPMENT ===
+            new Weapon { Name = "Night Vision Goggles", Type = WeaponType.NightVision, Rarity = WeaponRarity.Common,
+                        IsGadget = true, BatteryLife = 480, GadgetEffect = "See in complete darkness" },
+            
+            new Weapon { Name = "Thermal Goggles", Type = WeaponType.ThermalVision, Rarity = WeaponRarity.Uncommon,
+                        IsGadget = true, BatteryLife = 360, GadgetEffect = "See heat signatures through walls" }
+        };
+    }
+    
+    public Weapon[] GetWeaponsByType(WeaponType type)
+    {
+        System.Collections.Generic.List<Weapon> weapons = new System.Collections.Generic.List<Weapon>();
+        foreach (Weapon weapon in AllWeapons)
+        {
+            if (weapon.Type == type)
+                weapons.Add(weapon);
+        }
+        return weapons.ToArray();
+    }
+    
+    public Weapon[] GetBlackMarketWeapons()
+    {
+        System.Collections.Generic.List<Weapon> weapons = new System.Collections.Generic.List<Weapon>();
+        foreach (Weapon weapon in AllWeapons)
+        {
+            if (weapon.IsIllegal || weapon.Rarity == WeaponRarity.BlackMarket)
+                weapons.Add(weapon);
+        }
+        return weapons.ToArray();
+    }
+    
+    public Weapon[] GetProtectiveGear()
+    {
+        System.Collections.Generic.List<Weapon> gear = new System.Collections.Generic.List<Weapon>();
+        foreach (Weapon weapon in AllWeapons)
+        {
+            if (weapon.Type == WeaponType.BodyArmor || weapon.Type == WeaponType.Helmet || 
+                weapon.Type == WeaponType.Shield || weapon.Type == WeaponType.GasMask ||
+                weapon.Type == WeaponType.FullBodySuit || weapon.Type == WeaponType.ExoSkeleton)
+                gear.Add(weapon);
+        }
+        return gear.ToArray();
+    }
+}
