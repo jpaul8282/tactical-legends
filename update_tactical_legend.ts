@@ -632,4 +632,398 @@ const CharacterGenerator = () => {
 
 export default CharacterGenerator;
 
-                                            
+/Audio/
+├── Menu/
+│   ├── menu_select.wav
+│   ├── encrypted_tone.wav
+├── HUD/
+│   └── hud_ping.wav
+├── Dialogue/
+│   ├── fade_in.wav
+│   ├── shadow_intro.wav
+├── Mutators/
+│   ├── mutator_warp.wav
+│   └── pitch_distort.wav
+├── Effects/
+│   ├── stealth_reverb.wav
+│   └── sonar_echo.wav
+├── Ambient/
+│   ├── CalmAtmosphere.wav
+│   ├── AlertPulse.wav
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Audio;
+
+/// <summary>
+/// Full-featured AudioManager supporting SFX, music, ambient, and dialogue layers,
+/// with auto-mixer routing, crossfades, pause/resume, and plugin-ready events.
+/// </summary>
+[DisallowMultipleComponent]
+public class AudioManager : MonoBehaviour
+{
+    [Header("Mixer Setup")]
+    public AudioMixer masterMixer;
+    public string sfxGroupName = "SFX";
+    public string musicGroupName = "Music";
+    public string ambientGroupName = "Ambient";
+    public string dialogueGroupName = "Dialogue";
+
+    [Header("Clips: Ambient")]
+    public AudioClip sirenLoop;
+    public AudioClip crowdChant;
+    public AudioClip rainDrip;
+    public List<AudioClip> extraAmbientLayers;
+
+    [Header("Clips: SFX")]
+    public List<AudioClip> sfxClips; // Add SFX by name in Inspector
+
+    [Header("Clips: Music")]
+    public List<AudioClip> musicTracks; // Add music by name in Inspector
+
+    [Header("Clips: Dialogue")]
+    public List<AudioClip> dialogueClips; // Add dialogue by name in Inspector
+
+    [Header("Volume")]
+    [Range(0f, 1f)] public float sfxVolume = 0.8f;
+    [Range(0f, 1f)] public float musicVolume = 0.7f;
+    [Range(0f, 1f)] public float ambientVolume = 0.7f;
+    [Range(0f, 1f)] public float dialogueVolume = 1.0f;
+
+    // Mixer parameter names (must match mixer setup)
+    private string sfxParam = "SFXVolume";
+    private string musicParam = "MusicVolume";
+    private string ambientParam = "AmbientVolume";
+    private string dialogueParam = "DialogueVolume";
+    private string masterParam = "MasterVolume";
+
+    // Audio sources
+    private Dictionary<string, AudioSource> ambientSources = new Dictionary<string, AudioSource>();
+    private Dictionary<string, AudioClip> ambientClips = new Dictionary<string, AudioClip>();
+
+    private AudioSource musicSource;
+    private AudioSource sfxSource;
+    private AudioSource dialogueSource;
+
+    private Dictionary<string, AudioClip> sfxClipDict = new Dictionary<string, AudioClip>();
+    private Dictionary<string, AudioClip> musicTrackDict = new Dictionary<string, AudioClip>();
+    private Dictionary<string, AudioClip> dialogueClipDict = new Dictionary<string, AudioClip>();
+
+    // Singleton support
+    public static AudioManager Instance { get; private set; }
+
+    private bool isPaused = false;
+
+    void Awake()
+    {
+        // Singleton
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        // Register ambient
+        ambientClips["SirenLoop"] = sirenLoop;
+        ambientClips["CrowdChant"] = crowdChant;
+        ambientClips["RainDrip"] = rainDrip;
+        if (extraAmbientLayers != null)
+            foreach (var a in extraAmbientLayers) if (a != null) ambientClips[a.name] = a;
+
+        // Register SFX
+        if (sfxClips != null)
+            foreach (var sfx in sfxClips) if (sfx != null) sfxClipDict[sfx.name] = sfx;
+
+        // Register Music
+        if (musicTracks != null)
+            foreach (var m in musicTracks) if (m != null) musicTrackDict[m.name] = m;
+
+        // Register Dialogue
+        if (dialogueClips != null)
+            foreach (var d in dialogueClips) if (d != null) dialogueClipDict[d.name] = d;
+
+        SetupSourcesAndMixer();
+    }
+
+    void SetupSourcesAndMixer()
+    {
+        // SFX
+        if (sfxSource == null)
+        {
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.loop = false; sfxSource.playOnAwake = false;
+            sfxSource.volume = sfxVolume;
+            if (masterMixer && !string.IsNullOrEmpty(sfxGroupName))
+            {
+                var group = masterMixer.FindMatchingGroups(sfxGroupName);
+                if (group.Length > 0) sfxSource.outputAudioMixerGroup = group[0];
+            }
+        }
+        // Music
+        if (musicSource == null)
+        {
+            musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.loop = true; musicSource.playOnAwake = false;
+            musicSource.volume = musicVolume;
+            if (masterMixer && !string.IsNullOrEmpty(musicGroupName))
+            {
+                var group = masterMixer.FindMatchingGroups(musicGroupName);
+                if (group.Length > 0) musicSource.outputAudioMixerGroup = group[0];
+            }
+        }
+        // Dialogue
+        if (dialogueSource == null)
+        {
+            dialogueSource = gameObject.AddComponent<AudioSource>();
+            dialogueSource.loop = false; dialogueSource.playOnAwake = false;
+            dialogueSource.volume = dialogueVolume;
+            if (masterMixer && !string.IsNullOrEmpty(dialogueGroupName))
+            {
+                var group = masterMixer.FindMatchingGroups(dialogueGroupName);
+                if (group.Length > 0) dialogueSource.outputAudioMixerGroup = group[0];
+            }
+        }
+        // Ambient: lazy-setup per layer
+    }
+
+    // --------------------- SFX -------------------------
+    public void PlaySFX(string sfxName)
+    {
+        if (sfxClipDict.ContainsKey(sfxName) && sfxClipDict[sfxName])
+        {
+            sfxSource.PlayOneShot(sfxClipDict[sfxName], sfxVolume);
+        }
+        else
+        {
+            Debug.LogWarning($"AudioManager: SFX '{sfxName}' not found.");
+        }
+    }
+
+    // --------------------- Music -----------------------
+    public void PlayMusic(string trackName, float fadeTime = 1.0f)
+    {
+        if (!musicTrackDict.ContainsKey(trackName) || musicTrackDict[trackName] == null)
+        {
+            Debug.LogWarning($"AudioManager: Music track '{trackName}' not found.");
+            return;
+        }
+        StartCoroutine(FadeInMusic(trackName, fadeTime));
+    }
+
+    IEnumerator FadeInMusic(string trackName, float fadeTime)
+    {
+        if (musicSource.isPlaying)
+            yield return StartCoroutine(FadeOut(musicSource, fadeTime));
+        musicSource.clip = musicTrackDict[trackName];
+        musicSource.volume = 0f;
+        musicSource.Play();
+        float t = 0f;
+        while (t < fadeTime)
+        {
+            t += Time.deltaTime;
+            musicSource.volume = Mathf.Lerp(0f, musicVolume, t / fadeTime);
+            yield return null;
+        }
+        musicSource.volume = musicVolume;
+    }
+
+    public void StopMusic(float fadeTime = 1.0f)
+    {
+        if (musicSource.isPlaying)
+            StartCoroutine(FadeOut(musicSource, fadeTime));
+    }
+
+    // ------------------- Ambient -----------------------
+    public void PlayAmbientLayer(string layerName, float crossfadeTime = 1.0f)
+    {
+        if (!ambientClips.ContainsKey(layerName) || ambientClips[layerName] == null)
+        {
+            Debug.LogWarning($"AudioManager: No ambient clip found for '{layerName}'");
+            return;
+        }
+
+        // If already playing, ignore
+        if (ambientSources.ContainsKey(layerName) && ambientSources[layerName].isPlaying)
+            return;
+
+        // Fade out all others
+        foreach (var src in ambientSources.Values)
+            if (src.isPlaying)
+                StartCoroutine(FadeOutAndStop(src, crossfadeTime));
+
+        // Play this layer
+        StartCoroutine(FadeInAndPlayAmbient(layerName, crossfadeTime));
+    }
+
+    IEnumerator FadeInAndPlayAmbient(string layerName, float fadeTime)
+    {
+        AudioClip clip = ambientClips[layerName];
+        AudioSource src;
+        if (!ambientSources.ContainsKey(layerName))
+        {
+            src = gameObject.AddComponent<AudioSource>();
+            src.clip = clip;
+            src.loop = true;
+            src.playOnAwake = false;
+            src.volume = 0f;
+            if (masterMixer && !string.IsNullOrEmpty(ambientGroupName))
+            {
+                var group = masterMixer.FindMatchingGroups(ambientGroupName);
+                if (group.Length > 0) src.outputAudioMixerGroup = group[0];
+            }
+            ambientSources[layerName] = src;
+        }
+        else
+        {
+            src = ambientSources[layerName];
+            src.clip = clip;
+        }
+
+        src.Play();
+        float t = 0f;
+        while (t < fadeTime)
+        {
+            t += Time.deltaTime;
+            src.volume = Mathf.Lerp(0f, ambientVolume, t / fadeTime);
+            yield return null;
+        }
+        src.volume = ambientVolume;
+    }
+
+    IEnumerator FadeOutAndStop(AudioSource src, float fadeTime)
+    {
+        float startVol = src.volume;
+        float t = 0f;
+        while (t < fadeTime)
+        {
+            t += Time.deltaTime;
+            src.volume = Mathf.Lerp(startVol, 0f, t / fadeTime);
+            yield return null;
+        }
+        src.Stop();
+        src.volume = ambientVolume;
+    }
+
+    public void StopAmbientLayer(string layerName, float fadeOutTime = 1.0f)
+    {
+        if (ambientSources.ContainsKey(layerName) && ambientSources[layerName].isPlaying)
+            StartCoroutine(FadeOutAndStop(ambientSources[layerName], fadeOutTime));
+    }
+    public void StopAllAmbient(float fadeOutTime = 1.0f)
+    {
+        foreach (var src in ambientSources.Values)
+            if (src.isPlaying)
+                StartCoroutine(FadeOutAndStop(src, fadeOutTime));
+    }
+
+    // ------------------- Dialogue ----------------------
+    public void PlayDialogue(string dialogueName)
+    {
+        if (!dialogueClipDict.ContainsKey(dialogueName) || dialogueClipDict[dialogueName] == null)
+        {
+            Debug.LogWarning($"AudioManager: Dialogue '{dialogueName}' not found.");
+            return;
+        }
+        dialogueSource.Stop();
+        dialogueSource.clip = dialogueClipDict[dialogueName];
+        dialogueSource.volume = dialogueVolume;
+        dialogueSource.Play();
+    }
+
+    public void StopDialogue()
+    {
+        dialogueSource.Stop();
+    }
+
+    // ------------------- Volume Controls ---------------
+    public void SetMasterVolume(float volume)
+    {
+        if (masterMixer)
+            masterMixer.SetFloat(masterParam, Mathf.Log10(Mathf.Max(volume, 0.01f)) * 20);
+    }
+    public void SetSFXVolume(float volume)
+    {
+        sfxVolume = Mathf.Clamp01(volume);
+        sfxSource.volume = sfxVolume;
+        if (masterMixer)
+            masterMixer.SetFloat(sfxParam, Mathf.Log10(Mathf.Max(sfxVolume, 0.01f)) * 20);
+    }
+    public void SetMusicVolume(float volume)
+    {
+        musicVolume = Mathf.Clamp01(volume);
+        musicSource.volume = musicVolume;
+        if (masterMixer)
+            masterMixer.SetFloat(musicParam, Mathf.Log10(Mathf.Max(musicVolume, 0.01f)) * 20);
+    }
+    public void SetAmbientVolume(float volume)
+    {
+        ambientVolume = Mathf.Clamp01(volume);
+        foreach (var src in ambientSources.Values)
+            src.volume = ambientVolume;
+        if (masterMixer)
+            masterMixer.SetFloat(ambientParam, Mathf.Log10(Mathf.Max(ambientVolume, 0.01f)) * 20);
+    }
+    public void SetDialogueVolume(float volume)
+    {
+        dialogueVolume = Mathf.Clamp01(volume);
+        dialogueSource.volume = dialogueVolume;
+        if (masterMixer)
+            masterMixer.SetFloat(dialogueParam, Mathf.Log10(Mathf.Max(dialogueVolume, 0.01f)) * 20);
+    }
+
+    // ------------------- Pause/Resume ------------------
+    public void PauseAllAudio()
+    {
+        isPaused = true;
+        sfxSource.Pause();
+        musicSource.Pause();
+        dialogueSource.Pause();
+        foreach (var src in ambientSources.Values) src.Pause();
+    }
+    public void ResumeAllAudio()
+    {
+        isPaused = false;
+        sfxSource.UnPause();
+        musicSource.UnPause();
+        dialogueSource.UnPause();
+        foreach (var src in ambientSources.Values) src.UnPause();
+    }
+
+    // ----------------- Utility/Debug -------------------
+#if UNITY_EDITOR
+    void OnGUI()
+    {
+        if (!Application.isPlaying) return;
+        GUILayout.BeginArea(new Rect(10, 10, 260, 400), "AudioManager Debug", GUI.skin.window);
+        if (GUILayout.Button("Play Siren")) PlayAmbientLayer("SirenLoop");
+        if (GUILayout.Button("Play Crowd")) PlayAmbientLayer("CrowdChant");
+        if (GUILayout.Button("Play Rain")) PlayAmbientLayer("RainDrip");
+        if (GUILayout.Button("Stop All Ambient")) StopAllAmbient();
+        if (GUILayout.Button("Play SFX (First)")) if (sfxClips.Count > 0) PlaySFX(sfxClips[0].name);
+        if (GUILayout.Button("Play Music (First)")) if (musicTracks.Count > 0) PlayMusic(musicTracks[0].name);
+        if (GUILayout.Button("Play Dialogue (First)")) if (dialogueClips.Count > 0) PlayDialogue(dialogueClips[0].name);
+        if (GUILayout.Button("Pause All")) PauseAllAudio();
+        if (GUILayout.Button("Resume All")) ResumeAllAudio();
+        GUILayout.Label("SFX Volume");
+        sfxVolume = GUILayout.HorizontalSlider(sfxVolume, 0f, 1f);
+        if (GUILayout.Button("Set SFX Volume")) SetSFXVolume(sfxVolume);
+        GUILayout.Label("Music Volume");
+        musicVolume = GUILayout.HorizontalSlider(musicVolume, 0f, 1f);
+        if (GUILayout.Button("Set Music Volume")) SetMusicVolume(musicVolume);
+        GUILayout.Label("Ambient Volume");
+        ambientVolume = GUILayout.HorizontalSlider(ambientVolume, 0f, 1f);
+        if (GUILayout.Button("Set Ambient Volume")) SetAmbientVolume(ambientVolume);
+        GUILayout.Label("Dialogue Volume");
+        dialogueVolume = GUILayout.HorizontalSlider(dialogueVolume, 0f, 1f);
+        if (GUILayout.Button("Set Dialogue Volume")) SetDialogueVolume(dialogueVolume);
+        GUILayout.EndArea();
+    }
+#endif
+
+    void OnDestroy()
+    {
+        foreach (var src in ambientSources.Values)
+            if (src != null)
+                Destroy(src);
+    }
+}
+            
+
