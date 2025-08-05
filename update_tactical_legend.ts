@@ -5915,3 +5915,143 @@ public class EnemyAI : MonoBehaviour
         Gizmos.DrawLine(transform.position, transform.position + rightBoundary);
     }
 }
+const WeatherSystem = {
+  currentCondition: null,
+  temperature: null,
+  visibility: null,
+  effectsOnBattlefield: {},
+
+  REGION_CONFIGS: {
+    "Tel Aviv": {
+      condition: "dry heat",
+      temperature: 36,
+      visibility: "moderate",
+      urbanLayout: "civilian density",
+      intelStrategy: "intel cover",
+    },
+    "Jerusalem": {
+      condition: "desert wind",
+      temperature: 40,
+      visibility: "low",
+      urbanLayout: "historic layout",
+      intelStrategy: "limited sightlines",
+    },
+    "Golan Heights": {
+      condition: "stormy front",
+      temperature: 12,
+      visibility: "foggy",
+      urbanLayout: "open terrain",
+      intelStrategy: "long-range combat",
+    },
+    "default": {
+      condition: "clear",
+      temperature: 25,
+      visibility: "high",
+    }
+  },
+
+  WEATHER_EFFECTS: {
+    "dry heat": {
+      staminaDrain: true,
+      cooldownReduction: false,
+      opticalMirage: true,
+    },
+    "desert wind": {
+      rangedAccuracyPenalty: true,
+      stealthBoost: false,
+      visibilityObscured: true,
+    },
+    "stormy front": {
+      movementSlowdown: true,
+      coverAdvantage: true,
+      moraleImpact: true,
+    },
+    "clear": {},
+  },
+
+  initialize(region) {
+    const config = this.REGION_CONFIGS[region] || this.REGION_CONFIGS["default"];
+
+    this.setCondition(config.condition, config.temperature, config.visibility);
+
+    if (config.urbanLayout && config.intelStrategy) {
+      this.setUrbanDynamics(config.urbanLayout, config.intelStrategy);
+    }
+
+    // Send results to Unity
+    this.sendToUnity();
+  },
+
+  setCondition(condition, temperature, visibility) {
+    this.currentCondition = condition;
+    this.temperature = temperature;
+    this.visibility = visibility;
+    this.effectsOnBattlefield = { ...this.generateEffects(condition) };
+  },
+
+  setUrbanDynamics(layout, intel) {
+    this.effectsOnBattlefield.urbanLayout = layout;
+    this.effectsOnBattlefield.intelStrategy = intel;
+  },
+
+  generateEffects(condition) {
+    return this.WEATHER_EFFECTS[condition] || {};
+  },
+
+  sendToUnity() {
+    const payload = JSON.stringify({
+      condition: this.currentCondition,
+      temperature: this.temperature,
+      visibility: this.visibility,
+      effects: this.effectsOnBattlefield,
+    });
+
+    // Sends message to Unity GameObject named "WeatherManager"
+    // which has a method "ApplyWeather" to receive the payload
+    SendMessage("WeatherManager", "ApplyWeather", payload);
+  }
+};
+using UnityEngine;
+
+public class WeatherManager : MonoBehaviour
+{
+    [System.Serializable]
+    public class WeatherData
+    {
+        public string condition;
+        public float temperature;
+        public string visibility;
+        public WeatherEffects effects;
+    }
+
+    [System.Serializable]
+    public class WeatherEffects
+    {
+        public bool staminaDrain;
+        public bool cooldownReduction;
+        public bool opticalMirage;
+        public bool rangedAccuracyPenalty;
+        public bool stealthBoost;
+        public bool visibilityObscured;
+        public bool movementSlowdown;
+        public bool coverAdvantage;
+        public bool moraleImpact;
+        public string urbanLayout;
+        public string intelStrategy;
+    }
+
+    public void ApplyWeather(string json)
+    {
+        WeatherData data = JsonUtility.FromJson<WeatherData>(json);
+        Debug.Log("Weather received from JS: " + data.condition);
+
+        // Apply effects in Unity (visuals, gameplay logic, etc.)
+        // Example:
+        // UpdateSkybox(data.condition);
+        // SetTemperatureUI(data.temperature);
+        // AdjustFogBasedOnVisibility(data.visibility);
+        // ApplyCombatModifiers(data.effects);
+    }
+}
+WeatherSystem.initialize("Jerusalem");
+<button onclick="WeatherSystem.initialize('Golan Heights')">Load Golan Weather</button>
