@@ -3816,3 +3816,2102 @@ public class ConflictEscalation : MonoBehaviour
         if (crowdPanicVFX) crowdPanicVFX.SetActive(false);
     }
 }
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+public class ConflictEscalation : MonoBehaviour
+{
+    [Header("Alert System")]
+    [Range(0, 4)]
+    public int alertLevel = 0; // 0 = Peaceful, 1 = Tension, 2 = Alert, 3 = Skirmish, 4 = Warzone
+    public float alertDecayRate = 0.1f; // How fast alert level decreases over time
+    public float alertDecayDelay = 30f; // Delay before starting to decay
+    
+    [Header("Escalation Factors")]
+    public int civilianCasualties = 0;
+    public int playerDetections = 0;
+    public int explosionsCount = 0;
+    public bool vipTargetEliminated = false;
+    public string dominantFaction = "Neutral";
+    
+    [Header("Thresholds")]
+    public int casualtyThreshold = 3;
+    public int detectionThreshold = 2;
+    public int explosionThreshold = 1;
+    public float timeBasedEscalation = 600f; // 10 minutes
+    
+    [Header("Audio & Visual")]
+    public AudioClip[] alertSounds;
+    public Color[] alertColors = { Color.green, Color.yellow, Color.orange, Color.red, Color.black };
+    
+    private float lastEscalationTime;
+    private bool[] levelTriggered = new bool[5];
+    private Dictionary<string, int> factionInfluence = new Dictionary<string, int>();
+    
+    // Events for other systems to subscribe to
+    public System.Action<int> OnAlertLevelChanged;
+    public System.Action<string> OnEventTriggered;
+    
+    void Start()
+    {
+        InitializeFactions();
+        lastEscalationTime = Time.time;
+    }
+    
+    void Update()
+    {
+        MonitorEvents();
+        ProcessAlertDecay();
+        AdjustAlertLevel();
+        UpdateEnvironmentalEffects();
+    }
+    
+    void InitializeFactions()
+    {
+        factionInfluence["Military"] = 0;
+        factionInfluence["Rebel"] = 0;
+        factionInfluence["Civilian"] = 100;
+    }
+    
+    void MonitorEvents()
+    {
+        // Civilian casualties escalation
+        if (civilianCasualties >= casualtyThreshold && !levelTriggered[1])
+        {
+            EscalateAlert(1, "Civilian casualties reported");
+        }
+        
+        // Player detection escalation
+        if (playerDetections >= detectionThreshold && !levelTriggered[2])
+        {
+            EscalateAlert(1, "Hostile presence detected");
+        }
+        
+        // Explosions cause immediate escalation
+        if (explosionsCount >= explosionThreshold)
+        {
+            EscalateAlert(2, "Explosions detected");
+            explosionsCount = 0; // Reset after handling
+        }
+        
+        // VIP elimination causes major escalation
+        if (vipTargetEliminated && !levelTriggered[3])
+        {
+            EscalateAlert(3, "High-value target eliminated");
+            levelTriggered[3] = true;
+        }
+        
+        // Time-based escalation
+        if (Time.timeSinceLevelLoad > timeBasedEscalation && dominantFaction != "Neutral")
+        {
+            EscalateAlert(1, "Prolonged conflict detected");
+        }
+        
+        // Faction dominance escalation
+        CheckFactionDominance();
+    }
+    
+    void CheckFactionDominance()
+    {
+        string newDominantFaction = "Neutral";
+        int highestInfluence = 50; // Threshold for dominance
+        
+        foreach (var faction in factionInfluence)
+        {
+            if (faction.Value > highestInfluence)
+            {
+                highestInfluence = faction.Value;
+                newDominantFaction = faction.Key;
+            }
+        }
+        
+        if (newDominantFaction != dominantFaction)
+        {
+            dominantFaction = newDominantFaction;
+            EscalateAlert(1, $"{dominantFaction} gaining control");
+        }
+    }
+    
+    void EscalateAlert(int increase, string reason)
+    {
+        int previousLevel = alertLevel;
+        alertLevel = Mathf.Clamp(alertLevel + increase, 0, 4);
+        lastEscalationTime = Time.time;
+        
+        if (alertLevel != previousLevel)
+        {
+            Debug.Log($"Alert escalated to level {alertLevel}: {reason}");
+            OnAlertLevelChanged?.Invoke(alertLevel);
+            PlayAlertSound();
+        }
+    }
+    
+    void ProcessAlertDecay()
+    {
+        // Only decay if enough time has passed and no recent escalation
+        if (Time.time - lastEscalationTime > alertDecayDelay && alertLevel > 0)
+        {
+            // Gradually reduce alert level
+            if (Time.time % (1f / alertDecayRate) < Time.deltaTime)
+            {
+                alertLevel = Mathf.Max(0, alertLevel - 1);
+                Debug.Log($"Alert level decayed to {alertLevel}");
+                OnAlertLevelChanged?.Invoke(alertLevel);
+                
+                // Reset level triggers when decaying
+                for (int i = alertLevel + 1; i < levelTriggered.Length; i++)
+                {
+                    levelTriggered[i] = false;
+                }
+            }
+        }
+    }
+    
+    void AdjustAlertLevel()
+    {
+        switch (alertLevel)
+        {
+            case 0: // Peaceful
+                if (!levelTriggered[0])
+                {
+                    TriggerEvent("PeacefulState");
+                    levelTriggered[0] = true;
+                }
+                break;
+                
+            case 1: // Tension
+                if (!levelTriggered[1])
+                {
+                    TriggerEvent("FactionTensionRise");
+                    IncreasePatrols(1.2f);
+                    levelTriggered[1] = true;
+                }
+                break;
+                
+            case 2: // Alert
+                if (!levelTriggered[2])
+                {
+                    TriggerEvent("AlertStatus");
+                    ActivateCheckpoints();
+                    IncreasePatrols(1.5f);
+                    levelTriggered[2] = true;
+                }
+                break;
+                
+            case 3: // Skirmish
+                if (!levelTriggered[3])
+                {
+                    TriggerEvent("SkirmishBegins");
+                    DeployEliteUnits();
+                    BroadcastWarning();
+                    ActivateHeavyWeapons();
+                    levelTriggered[3] = true;
+                }
+                break;
+                
+            case 4: // Warzone
+                if (!levelTriggered[4])
+                {
+                    TriggerEvent("WarzoneStatus");
+                    DeployAirSupport();
+                    EvacuateCivilians();
+                    lockdownProtocol();
+                    levelTriggered[4] = true;
+                }
+                break;
+        }
+    }
+    
+    void UpdateEnvironmentalEffects()
+    {
+        // Update lighting based on alert level
+        RenderSettings.ambientLight = Color.Lerp(RenderSettings.ambientLight, 
+            alertColors[alertLevel], Time.deltaTime * 0.5f);
+            
+        // Add screen effects, particle systems, etc. based on alert level
+        if (alertLevel >= 3)
+        {
+            // Add smoke, fire effects, debris
+            CreateWarEffects();
+        }
+    }
+    
+    #region Event Handlers
+    void TriggerEvent(string eventName)
+    {
+        Debug.Log($"Event Triggered: {eventName}");
+        OnEventTriggered?.Invoke(eventName);
+    }
+    
+    void ActivateCheckpoints()
+    {
+        // Find and activate checkpoint objects
+        GameObject[] checkpoints = GameObject.FindGameObjectsWithTag("Checkpoint");
+        foreach (GameObject checkpoint in checkpoints)
+        {
+            checkpoint.SetActive(true);
+        }
+    }
+    
+    void IncreasePatrols(float multiplier)
+    {
+        // Increase patrol frequency and routes
+        PatrolManager[] patrols = FindObjectsOfType<PatrolManager>();
+        foreach (PatrolManager patrol in patrols)
+        {
+            patrol.SetSpeedMultiplier(multiplier);
+        }
+    }
+    
+    void DeployEliteUnits()
+    {
+        // Spawn elite enemy units
+        EnemySpawner[] spawners = FindObjectsOfType<EnemySpawner>();
+        foreach (EnemySpawner spawner in spawners)
+        {
+            spawner.SpawnEliteUnit();
+        }
+    }
+    
+    void BroadcastWarning()
+    {
+        // Display warning UI and play announcement
+        UIManager.Instance?.ShowWarning("CONFLICT ESCALATION DETECTED");
+    }
+    
+    void ActivateHeavyWeapons()
+    {
+        // Enable heavy weapon spawns and mounted guns
+        WeaponSpawner[] weaponSpawners = FindObjectsOfType<WeaponSpawner>();
+        foreach (WeaponSpawner spawner in weaponSpawners)
+        {
+            spawner.EnableHeavyWeapons();
+        }
+    }
+    
+    void DeployAirSupport()
+    {
+        // Spawn helicopters, drones, air strikes
+        AirSupportManager.Instance?.DeploySupport();
+    }
+    
+    void EvacuateCivilians()
+    {
+        // Move civilians to safe zones
+        CivilianManager[] civilians = FindObjectsOfType<CivilianManager>();
+        foreach (CivilianManager civilian in civilians)
+        {
+            civilian.StartEvacuation();
+        }
+    }
+    
+    void lockdownProtocol()
+    {
+        // Close roads, activate barriers
+        RoadBlock[] roadblocks = FindObjectsOfType<RoadBlock>();
+        foreach (RoadBlock block in roadblocks)
+        {
+            block.Activate();
+        }
+    }
+    
+    void CreateWarEffects()
+    {
+        // Add visual and audio effects for warfare
+        // Explosions in the distance, smoke, sirens, etc.
+    }
+    
+    void PlayAlertSound()
+    {
+        if (alertSounds != null && alertSounds.Length > alertLevel)
+        {
+            AudioSource.PlayClipAtPoint(alertSounds[alertLevel], transform.position);
+        }
+    }
+    #endregion
+    
+    #region Public Interface Methods
+    public void AddCivilianCasualty()
+    {
+        civilianCasualties++;
+        EscalateAlert(1, "Civilian casualty");
+    }
+    
+    public void AddPlayerDetection()
+    {
+        playerDetections++;
+    }
+    
+    public void AddExplosion()
+    {
+        explosionsCount++;
+    }
+    
+    public void SetVIPEliminated()
+    {
+        vipTargetEliminated = true;
+    }
+    
+    public void ModifyFactionInfluence(string faction, int change)
+    {
+        if (factionInfluence.ContainsKey(faction))
+        {
+            factionInfluence[faction] = Mathf.Clamp(factionInfluence[faction] + change, 0, 100);
+        }
+    }
+    
+    public int GetAlertLevel() => alertLevel;
+    public string GetDominantFaction() => dominantFaction;
+    #endregion
+}
+
+using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
+using System.Collections;
+using System.Collections.Generic;
+
+public class ManifestoCutsceneSystem : MonoBehaviour
+{
+    [Header("Core Resonance Engine")]
+    public PlayableDirector director;
+    public Camera mainCamera;
+    public Transform[] keyPositions;
+    
+    [Header("Audio & Rhythm")]
+    public AudioSource primaryAudio;
+    public AudioSource ambientAudio;
+    public AudioClip[] manifestoPhases;
+    public BeatDetector beatDetector;
+    public float beatSensitivity = 0.8f;
+    
+    [Header("Visual Effects")]
+    public ParticleSystem[] phaseEffects;
+    public Light[] dynamicLights;
+    public PostProcessingController postProcessing;
+    public Color[] resonanceColors;
+    
+    [Header("Multiplayer Sync")]
+    public bool isMultiplayerEnabled = false;
+    public NetworkCutsceneSync networkSync;
+    
+    private int currentPhase = 0;
+    private bool cutsceneActive = false;
+    private Dictionary<string, System.Action> rhythmActions;
+    private Coroutine mainCutsceneCoroutine;
+    
+    // Core Resonance Engine Components
+    private ImmersionController immersion;
+    private AudioLogicProcessor audioLogic;
+    private MultiplayerSyncManager multiplayer;
+    
+    void Awake()
+    {
+        InitializeResonanceEngine();
+        SetupRhythmActions();
+    }
+    
+    void InitializeResonanceEngine()
+    {
+        immersion = GetComponent<ImmersionController>() ?? gameObject.AddComponent<ImmersionController>();
+        audioLogic = GetComponent<AudioLogicProcessor>() ?? gameObject.AddComponent<AudioLogicProcessor>();
+        
+        if (isMultiplayerEnabled)
+            multiplayer = GetComponent<MultiplayerSyncManager>() ?? gameObject.AddComponent<MultiplayerSyncManager>();
+    }
+    
+    void SetupRhythmActions()
+    {
+        rhythmActions = new Dictionary<string, System.Action>
+        {
+            ["SnareHigh"] = () => HandleSnareHigh(),
+            ["BassDrop"] = () => HandleBassDrop(),
+            ["Echo-L"] = () => HandleEchoLeft(),
+            ["Echo-R"] = () => HandleEchoRight(),
+            ["Crescendo"] = () => HandleCrescendo(),
+            ["Silence"] = () => HandleSilence()
+        };
+    }
+    
+    public void StartManifestoCutscene()
+    {
+        if (cutsceneActive) return;
+        
+        cutsceneActive = true;
+        mainCutsceneCoroutine = StartCoroutine(ExecuteManifestoCutscene());
+    }
+    
+    IEnumerator ExecuteManifestoCutscene()
+    {
+        // Initialize cutscene environment
+        yield return StartCoroutine(PrepareCutsceneEnvironment());
+        
+        // Load and prepare timeline
+        var timelineAsset = Resources.Load<TimelineAsset>("SixPhaseManifesto");
+        if (timelineAsset == null)
+        {
+            Debug.LogError("Timeline asset 'SixPhaseManifesto' not found!");
+            yield break;
+        }
+        
+        director.playableAsset = timelineAsset;
+        
+        // Sync multiplayer if enabled
+        if (isMultiplayerEnabled && multiplayer != null)
+        {
+            yield return StartCoroutine(multiplayer.SyncCutsceneStart());
+        }
+        
+        // Begin the six-phase manifesto
+        for (int phase = 0; phase < 6; phase++)
+        {
+            currentPhase = phase;
+            yield return StartCoroutine(ExecutePhase(phase));
+        }
+        
+        // Cleanup and transition
+        yield return StartCoroutine(ConcludeCutscene());
+    }
+    
+    IEnumerator PrepareCutsceneEnvironment()
+    {
+        // Fade in atmospheric effects
+        SoundManager.FadeInAmbient("battlefield_whispers", 2f);
+        HUDManager.TriggerPulse("introRhythm");
+        
+        // Initialize weather and urban environment
+        immersion.SetWeatherIntensity(0.3f);
+        immersion.SetUrbanAmbience("conflict_zone");
+        
+        // Camera preparation
+        CameraManager.SetCinematicMode(true);
+        
+        // Audio logic initialization
+        audioLogic.Initialize(beatSensitivity);
+        beatDetector.onBeatDetected += OnBeatDetected;
+        
+        yield return new WaitForSeconds(1f);
+    }
+    
+    IEnumerator ExecutePhase(int phaseIndex)
+    {
+        Debug.Log($"Executing Manifesto Phase {phaseIndex + 1}");
+        
+        // Phase-specific setup
+        SetupPhaseEnvironment(phaseIndex);
+        
+        // Play phase audio
+        if (phaseIndex < manifestoPhases.Length)
+        {
+            primaryAudio.clip = manifestoPhases[phaseIndex];
+            primaryAudio.Play();
+        }
+        
+        // Start timeline for this phase
+        director.time = phaseIndex * (director.duration / 6);
+        director.Play();
+        
+        // Phase-specific effects and logic
+        switch (phaseIndex)
+        {
+            case 0: yield return StartCoroutine(PhaseOne_Awakening()); break;
+            case 1: yield return StartCoroutine(PhaseTwo_Recognition()); break;
+            case 2: yield return StartCoroutine(PhaseThree_Conflict()); break;
+            case 3: yield return StartCoroutine(PhaseFour_Revelation()); break;
+            case 4: yield return StartCoroutine(PhaseFive_Transformation()); break;
+            case 5: yield return StartCoroutine(PhaseSix_Resolution()); break;
+        }
+        
+        yield return new WaitForSeconds(0.5f); // Brief pause between phases
+    }
+    
+    void SetupPhaseEnvironment(int phase)
+    {
+        // Dynamic lighting
+        if (phase < dynamicLights.Length)
+        {
+            for (int i = 0; i < dynamicLights.Length; i++)
+            {
+                dynamicLights[i].intensity = (i == phase) ? 1.5f : 0.3f;
+                dynamicLights[i].color = resonanceColors[Mathf.Min(phase, resonanceColors.Length - 1)];
+            }
+        }
+        
+        // Particle effects
+        if (phase < phaseEffects.Length && phaseEffects[phase] != null)
+        {
+            phaseEffects[phase].Play();
+        }
+        
+        // Post-processing adjustments
+        postProcessing?.SetProfile(phase);
+    }
+    
+    #region Phase Implementations
+    IEnumerator PhaseOne_Awakening()
+    {
+        HUDManager.ShowSubtitle("The battlefield whispers truths...", 3f);
+        immersion.SetWeatherIntensity(0.1f);
+        CameraManager.SmoothTransition(keyPositions[0], 2f);
+        yield return new WaitForSeconds(8f);
+    }
+    
+    IEnumerator PhaseTwo_Recognition()
+    {
+        HUDManager.ShowSubtitle("Recognition dawns in shadow...", 3f);
+        audioLogic.EnableEchoMode(true);
+        yield return new WaitForSeconds(6f);
+    }
+    
+    IEnumerator PhaseThree_Conflict()
+    {
+        HUDManager.ShowSubtitle("Conflict shapes the soul...", 3f);
+        immersion.SetUrbanAmbience("heavy_combat");
+        StartCoroutine(RhythmicCameraShake());
+        yield return new WaitForSeconds(10f);
+    }
+    
+    IEnumerator PhaseFour_Revelation()
+    {
+        HUDManager.ShowSubtitle("Truth pierces the veil...", 3f);
+        TriggerMajorVisualEffect("revelation_burst");
+        yield return new WaitForSeconds(7f);
+    }
+    
+    IEnumerator PhaseFive_Transformation()
+    {
+        HUDManager.ShowSubtitle("Transformation begins...", 3f);
+        immersion.MorphEnvironment("storm_reveal");
+        yield return new WaitForSeconds(9f);
+    }
+    
+    IEnumerator PhaseSix_Resolution()
+    {
+        HUDManager.ShowSubtitle("The manifesto concludes...", 4f);
+        audioLogic.BuildToCrescendo();
+        yield return new WaitForSeconds(12f);
+    }
+    #endregion
+    
+    #region Beat Detection & Rhythm Response
+    void OnBeatDetected(string beatType, float intensity)
+    {
+        if (rhythmActions.ContainsKey(beatType))
+        {
+            rhythmActions[beatType].Invoke();
+        }
+        
+        // Sync multiplayer beat events
+        if (isMultiplayerEnabled && multiplayer != null)
+        {
+            multiplayer.SyncBeatEvent(beatType, intensity);
+        }
+    }
+    
+    void HandleSnareHigh()
+    {
+        Agent.Trigger("ShieldBreak");
+        FXEmitter.Emit("BossGlyphCrack");
+        CameraManager.ImpactShake(0.3f);
+        
+        // HUD feedback
+        HUDManager.FlashElement("combat_indicator", Color.red);
+    }
+    
+    void HandleBassDrop()
+    {
+        immersion.TriggerEnvironmentalResponse("bass_resonance");
+        postProcessing?.PulseEffect("chromatic_aberration", 0.5f);
+        
+        // Screen effects
+        ScreenEffects.RadialBlur(0.2f, 1f);
+    }
+    
+    void HandleEchoLeft()
+    {
+        audioLogic.ProcessEcho("left_channel");
+        CameraManager.SubtleRotation(-2f, 0.5f);
+    }
+    
+    void HandleEchoRight()
+    {
+        audioLogic.ProcessEcho("right_channel");
+        CameraManager.SubtleRotation(2f, 0.5f);
+        
+        // Check for combo
+        if (audioLogic.DetectCombo("Echo-L", "Echo-R", "BassDrop"))
+        {
+            ExecuteRhythmCombo();
+        }
+    }
+    
+    void HandleCrescendo()
+    {
+        for (int i = 0; i < phaseEffects.Length; i++)
+        {
+            if (phaseEffects[i] != null)
+                phaseEffects[i].startLifetime *= 1.5f;
+        }
+    }
+    
+    void HandleSilence()
+    {
+        // Dramatic pause effect
+        Time.timeScale = 0.1f;
+        StartCoroutine(RestoreTimeScale());
+    }
+    
+    void ExecuteRhythmCombo()
+    {
+        Vault.Unlock("SonarChamber");
+        immersion.MorphEnvironment("StormReveal");
+        
+        // Special combo effects
+        TriggerMajorVisualEffect("combo_explosion");
+        HUDManager.ShowAchievement("Rhythm Master");
+        
+        Debug.Log("Rhythm combo executed!");
+    }
+    #endregion
+    
+    #region Utility Methods
+    IEnumerator RhythmicCameraShake()
+    {
+        float duration = 8f;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            if (beatDetector.IsBeatFrame())
+            {
+                CameraManager.RhythmicShake(0.2f);
+            }
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+    }
+    
+    void TriggerMajorVisualEffect(string effectName)
+    {
+        // Implementation for major visual effects
+        FXEmitter.EmitBurst(effectName, transform.position);
+        postProcessing?.TriggerEffect(effectName);
+    }
+    
+    IEnumerator RestoreTimeScale()
+    {
+        yield return new WaitForSecondsRealtime(0.5f);
+        
+        float duration = 1f;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            Time.timeScale = Mathf.Lerp(0.1f, 1f, elapsed / duration);
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+        
+        Time.timeScale = 1f;
+    }
+    
+    IEnumerator ConcludeCutscene()
+    {
+        // Fade out effects
+        SoundManager.FadeOutAmbient(3f);
+        
+        // Restore normal game state
+        CameraManager.SetCinematicMode(false);
+        immersion.RestoreDefaultEnvironment();
+        
+        // Cleanup
+        beatDetector.onBeatDetected -= OnBeatDetected;
+        cutsceneActive = false;
+        
+        // Final multiplayer sync
+        if (isMultiplayerEnabled && multiplayer != null)
+        {
+            yield return StartCoroutine(multiplayer.SyncCutsceneEnd());
+        }
+        
+        // Trigger post-cutscene events
+        GameEvents.TriggerEvent("ManifestoComplete");
+        
+        yield return new WaitForSeconds(2f);
+        
+        Debug.Log("Manifesto cutscene completed successfully");
+    }
+    
+    public void SkipToPhase(int phaseIndex)
+    {
+        if (cutsceneActive && phaseIndex >= 0 && phaseIndex < 6)
+        {
+            StopCoroutine(mainCutsceneCoroutine);
+            currentPhase = phaseIndex;
+            mainCutsceneCoroutine = StartCoroutine(ExecutePhase(phaseIndex));
+        }
+    }
+    
+    public void StopCutscene()
+    {
+        if (cutsceneActive)
+        {
+            StopCoroutine(mainCutsceneCoroutine);
+            StartCoroutine(ConcludeCutscene());
+        }
+    }
+    #endregion
+}
+
+// Supporting component classes
+public class BeatDetector: MonoBehaviour
+{
+    public System.Action<string, float> onBeatDetected;
+    private float[] spectrum = new float[1024];
+    
+    public bool IsBeatFrame() 
+    { 
+        // Implementation for beat detection
+        return Time.frameCount % 30 == 0; // Placeholder
+    }
+}
+
+public static class Agent
+{
+    public static void Trigger(string action) => Debug.Log($"Agent triggered: {action}");
+}
+
+public static class FXEmitter
+{
+    public static void Emit(string effect) => Debug.Log($"FX emitted: {effect}");
+    public static void EmitBurst(string effect, Vector3 position) => Debug.Log($"FX burst: {effect} at {position}");
+}
+
+public static class Vault
+{
+    public static void Unlock(string chamber) => Debug.Log($"Vault unlocked: {chamber}");
+}
+
+using UnityEngine;
+using UnityEngine.Rendering;
+using System.Collections;
+using System.Collections.Generic;
+
+[System.Serializable]
+public class TimeOfDaySettings
+{
+    public string periodName;
+    public float lightIntensity;
+    public Color lightColor;
+    public Color ambientColor;
+    public Color fogColor;
+    public float fogDensity;
+    public float shadowStrength;
+    public AudioClip ambientSound;
+    public float temperature; // For gameplay effects
+    public float visibility; // 0-1 visibility range
+}
+
+public class DayCycleManager : MonoBehaviour
+{
+    [Header("Core Lighting")]
+    public Light directionalLight;
+    public Light moonLight;
+    public Transform sunTransform;
+    public Transform moonTransform;
+    
+    [Header("Cycle Configuration")]
+    [Range(60f, 3600f)]
+    public float cycleDuration = 300f; // 5 minutes default
+    public bool useRealTimeSync = false;
+    public float timeMultiplier = 1f;
+    public bool pauseAtNight = false;
+    
+    [Header("Time Periods")]
+    public TimeOfDaySettings[] timePeriods = new TimeOfDaySettings[8];
+    
+    [Header("Weather Integration")]
+    public ParticleSystem rainSystem;
+    public ParticleSystem snowSystem;
+    public ParticleSystem fogSystem;
+    public AudioSource weatherAudioSource;
+    
+    [Header("Gameplay Integration")]
+    public bool affectEnemyBehavior = true;
+    public bool affectPlayerVisibility = true;
+    public bool enableRandomEvents = true;
+    public float eventChance = 0.3f;
+    
+    [Header("Visual Effects")]
+    public Gradient skyboxTint;
+    public AnimationCurve starVisibility;
+    public GameObject[] streetLights;
+    public GameObject[] windowLights;
+    public Material skyboxMaterial;
+    
+    // Current state
+    [SerializeField] private float currentTime = 0f; // 0-1 representing full day
+    [SerializeField] private int currentPeriodIndex = 0;
+    [SerializeField] private string currentPeriod = "Dawn";
+    [SerializeField] private bool cycleActive = false;
+    [SerializeField] private WeatherType currentWeather = WeatherType.Clear;
+    
+    // Events
+    public System.Action<string> OnTimeOfDayChanged;
+    public System.Action<float> OnTimeUpdated;
+    public System.Action<WeatherType> OnWeatherChanged;
+    
+    // Private variables
+    private Coroutine dayNightCoroutine;
+    private Dictionary<string, System.Action> timeBasedEvents;
+    private EnemyManager enemyManager;
+    private PlayerController playerController;
+    private AudioSource ambientAudioSource;
+    private float lastEventTime;
+    
+    public enum WeatherType { Clear, Overcast, Rain, Storm, Fog, Snow }
+    
+    void Awake()
+    {
+        InitializeTimePeriods();
+        SetupComponents();
+        InitializeTimeBasedEvents();
+    }
+    
+    void Start()
+    {
+        // Auto-start cycle
+        BeginCycle();
+    }
+    
+    void InitializeTimePeriods()
+    {
+        if (timePeriods.Length != 8)
+            timePeriods = new TimeOfDaySettings[8];
+            
+        // Pre-populate with realistic settings if empty
+        var defaultPeriods = new (string name, float intensity, Color light, Color ambient, float vis)[]
+        {
+            ("Dawn", 0.3f, new Color(1f, 0.8f, 0.6f), new Color(0.5f, 0.4f, 0.3f), 0.7f),
+            ("Morning", 0.8f, new Color(1f, 0.95f, 0.8f), new Color(0.7f, 0.7f, 0.6f), 0.9f),
+            ("Midday", 1.2f, new Color(1f, 1f, 0.9f), new Color(0.8f, 0.8f, 0.7f), 1.0f),
+            ("Afternoon", 1f, new Color(1f, 0.9f, 0.7f), new Color(0.7f, 0.6f, 0.5f), 0.9f),
+            ("Evening", 0.6f, new Color(1f, 0.7f, 0.4f), new Color(0.6f, 0.4f, 0.3f), 0.8f),
+            ("Dusk", 0.2f, new Color(0.8f, 0.5f, 0.3f), new Color(0.3f, 0.2f, 0.2f), 0.5f),
+            ("Night", 0.05f, new Color(0.4f, 0.4f, 0.8f), new Color(0.1f, 0.1f, 0.2f), 0.3f),
+            ("Late Night", 0.02f, new Color(0.3f, 0.3f, 0.7f), new Color(0.05f, 0.05f, 0.15f), 0.2f)
+        };
+        
+        for (int i = 0; i < timePeriods.Length; i++)
+        {
+            if (timePeriods[i] == null)
+            {
+                timePeriods[i] = new TimeOfDaySettings();
+                var defaultPeriod = defaultPeriods[i];
+                timePeriods[i].periodName = defaultPeriod.name;
+                timePeriods[i].lightIntensity = defaultPeriod.intensity;
+                timePeriods[i].lightColor = defaultPeriod.light;
+                timePeriods[i].ambientColor = defaultPeriod.ambient;
+                timePeriods[i].visibility = defaultPeriod.vis;
+                timePeriods[i].fogDensity = 0.01f;
+                timePeriods[i].shadowStrength = Mathf.Clamp01(defaultPeriod.intensity);
+                timePeriods[i].temperature = 20f + (defaultPeriod.intensity * 10f);
+            }
+        }
+    }
+    
+    void SetupComponents()
+    {
+        // Get or create components
+        enemyManager = FindObjectOfType<EnemyManager>();
+        playerController = FindObjectOfType<PlayerController>();
+        
+        ambientAudioSource = gameObject.GetComponent<AudioSource>();
+        if (ambientAudioSource == null)
+            ambientAudioSource = gameObject.AddComponent<AudioSource>();
+            
+        ambientAudioSource.loop = true;
+        ambientAudioSource.playOnAwake = false;
+        
+        // Setup moon light if not assigned
+        if (moonLight == null && moonTransform != null)
+        {
+            GameObject moonLightObj = new GameObject("Moon Light");
+            moonLightObj.transform.SetParent(moonTransform);
+            moonLight = moonLightObj.AddComponent<Light>();
+            moonLight.type = LightType.Directional;
+            moonLight.intensity = 0.1f;
+            moonLight.color = new Color(0.6f, 0.6f, 1f);
+        }
+    }
+    
+    void InitializeTimeBasedEvents()
+    {
+        timeBasedEvents = new Dictionary<string, System.Action>
+        {
+            ["Dawn"] = () => HandleDawn(),
+            ["Morning"] = () => HandleMorning(),
+            ["Midday"] = () => HandleMidday(),
+            ["Afternoon"] = () => HandleAfternoon(),
+            ["Evening"] = () => HandleEvening(),
+            ["Dusk"] = () => HandleDusk(),
+            ["Night"] = () => HandleNight(),
+            ["Late Night"] = () => HandleLateNight()
+        };
+    }
+    
+    public void BeginCycle()
+    {
+        if (cycleActive) return;
+        
+        cycleActive = true;
+        dayNightCoroutine = StartCoroutine(DayNightRoutine());
+        Debug.Log("Day cycle started with duration: " + cycleDuration + " seconds");
+    }
+    
+    public void StopCycle()
+    {
+        if (dayNightCoroutine != null)
+        {
+            StopCoroutine(dayNightCoroutine);
+            cycleActive = false;
+        }
+    }
+    
+    IEnumerator DayNightRoutine()
+    {
+        while (cycleActive)
+        {
+            float periodDuration = cycleDuration / timePeriods.Length;
+            
+            for (int i = 0; i < timePeriods.Length; i++)
+            {
+                currentPeriodIndex = i;
+                currentPeriod = timePeriods[i].periodName;
+                
+                // Trigger period-specific events
+                if (timeBasedEvents.ContainsKey(currentPeriod))
+                {
+                    timeBasedEvents[currentPeriod].Invoke();
+                }
+                
+                OnTimeOfDayChanged?.Invoke(currentPeriod);
+                
+                // Smooth transition to new period
+                yield return StartCoroutine(TransitionToPeriod(i, periodDuration));
+                
+                // Handle random events
+                if (enableRandomEvents && Random.value < eventChance)
+                {
+                    HandleRandomEvent();
+                }
+                
+                // Pause at night if enabled
+                if (pauseAtNight && IsNightTime())
+                {
+                    yield return new WaitUntil(() => !pauseAtNight || Input.anyKeyDown);
+                }
+            }
+        }
+    }
+    
+    IEnumerator TransitionToPeriod(int periodIndex, float duration)
+    {
+        var targetSettings = timePeriods[periodIndex];
+        var startSettings = GetCurrentLightingSettings();
+        
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            float progress = elapsed / duration;
+            currentTime = (periodIndex + progress) / timePeriods.Length;
+            
+            // Interpolate lighting
+            InterpolateLighting(startSettings, targetSettings, progress);
+            
+            // Update sun/moon positions
+            UpdateCelestialBodies();
+            
+            // Update environmental effects
+            UpdateEnvironmentalEffects(progress);
+            
+            OnTimeUpdated?.Invoke(currentTime);
+            
+            elapsed += Time.deltaTime * timeMultiplier;
+            yield return null;
+        }
+        
+        // Ensure final values are set
+        ApplyLightingSettings(targetSettings);
+    }
+    
+    void InterpolateLighting(TimeOfDaySettings from, TimeOfDaySettings to, float t)
+    {
+        if (directionalLight != null)
+        {
+            directionalLight.intensity = Mathf.Lerp(from.lightIntensity, to.lightIntensity, t);
+            directionalLight.color = Color.Lerp(from.lightColor, to.lightColor, t);
+            directionalLight.shadowStrength = Mathf.Lerp(from.shadowStrength, to.shadowStrength, t);
+        }
+        
+        // Ambient lighting
+        RenderSettings.ambientLight = Color.Lerp(from.ambientColor, to.ambientColor, t);
+        
+        // Fog settings
+        RenderSettings.fogColor = Color.Lerp(from.fogColor, to.fogColor, t);
+        RenderSettings.fogDensity = Mathf.Lerp(from.fogDensity, to.fogDensity, t);
+        
+        // Moon light
+        if (moonLight != null)
+        {
+            moonLight.intensity = IsNightTime() ? 0.1f * (1f - directionalLight.intensity) : 0f;
+        }
+    }
+    
+    void UpdateCelestialBodies()
+    {
+        if (sunTransform != null)
+        {
+            float sunAngle = (currentTime * 360f) - 90f; // Start at dawn
+            sunTransform.rotation = Quaternion.Euler(sunAngle, 30f, 0f);
+        }
+        
+        if (moonTransform != null)
+        {
+            float moonAngle = ((currentTime + 0.5f) % 1f * 360f) - 90f;
+            moonTransform.rotation = Quaternion.Euler(moonAngle, 30f, 0f);
+        }
+    }
+    
+    void UpdateEnvironmentalEffects(float progress)
+    {
+        // Update skybox
+        if (skyboxMaterial != null)
+        {
+            skyboxMaterial.SetColor("_Tint", skyboxTint.Evaluate(currentTime));
+        }
+        
+        // Street lights
+        bool shouldLightsBeOn = IsNightTime() || currentWeather == WeatherType.Storm;
+        ToggleStreetLights(shouldLightsBeOn);
+        
+        // Window lights
+        ToggleWindowLights(shouldLightsBeOn && Random.value > 0.3f);
+        
+        // Weather effects
+        UpdateWeatherEffects();
+    }
+    
+    void UpdateWeatherEffects()
+    {
+        switch (currentWeather)
+        {
+            case WeatherType.Rain:
+                if (rainSystem != null) rainSystem.Play();
+                break;
+            case WeatherType.Snow:
+                if (snowSystem != null) snowSystem.Play();
+                break;
+            case WeatherType.Fog:
+                if (fogSystem != null) fogSystem.Play();
+                RenderSettings.fogDensity *= 3f;
+                break;
+        }
+    }
+    
+    #region Period Event Handlers
+    void HandleDawn()
+    {
+        TriggerEvent("DawnBreak");
+        ChangeWeather(WeatherType.Clear);
+        if (enemyManager != null) enemyManager.SetAlertLevel(0.3f);
+    }
+    
+    void HandleMorning()
+    {
+        TriggerEvent("MorningPatrol");
+        if (enemyManager != null) enemyManager.IncreasePatrolFrequency(1.2f);
+    }
+    
+    void HandleMidday()
+    {
+        TriggerEvent("MiddayActivity");
+        // Peak activity period
+        if (enemyManager != null) enemyManager.SetAlertLevel(0.8f);
+    }
+    
+    void HandleAfternoon()
+    {
+        TriggerEvent("AfternoonWatch");
+        // Consider random weather change
+        if (Random.value < 0.2f) ChangeWeather(GetRandomWeather());
+    }
+    
+    void HandleEvening()
+    {
+        TriggerEvent("EveningPrep");
+        if (enemyManager != null) enemyManager.PrepareForNight();
+    }
+    
+    void HandleDusk()
+    {
+        TriggerEvent("DuskSettles");
+        // Transition to night activities
+        if (playerController != null) playerController.EnableNightVision();
+    }
+    
+    void HandleNight()
+    {
+        TriggerEvent("NightRaid");
+        if (enemyManager != null) 
+        {
+            enemyManager.SetNightBehavior(true);
+            enemyManager.SetAlertLevel(0.6f);
+        }
+    }
+    
+    void HandleLateNight()
+    {
+        TriggerEvent("LateNightOps");
+        // Lowest enemy activity
+        if (enemyManager != null) enemyManager.SetAlertLevel(0.2f);
+    }
+    #endregion
+    
+    void HandleRandomEvent()
+    {
+        if (Time.time - lastEventTime < 60f) return; // Cooldown
+        
+        string[] randomEvents = { "Blackout", "Patrol", "AirDrop", "Reinforcements", "WeatherChange" };
+        string selectedEvent = randomEvents[Random.Range(0, randomEvents.Length)];
+        
+        switch (selectedEvent)
+        {
+            case "Blackout":
+                StartCoroutine(TemporaryBlackout(30f));
+                break;
+            case "WeatherChange":
+                ChangeWeather(GetRandomWeather());
+                break;
+            default:
+                TriggerEvent(selectedEvent);
+                break;
+        }
+        
+        lastEventTime = Time.time;
+    }
+    
+    IEnumerator TemporaryBlackout(float duration)
+    {
+        ToggleStreetLights(false);
+        ToggleWindowLights(false);
+        TriggerEvent("Blackout");
+        
+        yield return new WaitForSeconds(duration);
+        
+        ToggleStreetLights(IsNightTime());
+        ToggleWindowLights(IsNightTime());
+        TriggerEvent("PowerRestored");
+    }
+    
+    #region Utility Methods
+    TimeOfDaySettings GetCurrentLightingSettings()
+    {
+        return new TimeOfDaySettings
+        {
+            lightIntensity = directionalLight?.intensity ?? 1f,
+            lightColor = directionalLight?.color ?? Color.white,
+            ambientColor = RenderSettings.ambientLight,
+            fogColor = RenderSettings.fogColor,
+            fogDensity = RenderSettings.fogDensity,
+            shadowStrength = directionalLight?.shadowStrength ?? 1f
+        };
+    }
+    
+    void ApplyLightingSettings(TimeOfDaySettings settings)
+    {
+        if (directionalLight != null)
+        {
+            directionalLight.intensity = settings.lightIntensity;
+            directionalLight.color = settings.lightColor;
+            directionalLight.shadowStrength = settings.shadowStrength;
+        }
+        
+        RenderSettings.ambientLight = settings.ambientColor;
+        RenderSettings.fogColor = settings.fogColor;
+        RenderSettings.fogDensity = settings.fogDensity;
+        
+        // Update ambient audio
+        if (settings.ambientSound != null && ambientAudioSource != null)
+        {
+            if (ambientAudioSource.clip != settings.ambientSound)
+            {
+                ambientAudioSource.clip = settings.ambientSound;
+                ambientAudioSource.Play();
+            }
+        }
+    }
+    
+    void ToggleStreetLights(bool state)
+    {
+        foreach (var light in streetLights)
+        {
+            if (light != null) light.SetActive(state);
+        }
+    }
+    
+    void ToggleWindowLights(bool state)
+    {
+        foreach (var light in windowLights)
+        {
+            if (light != null) light.SetActive(state && Random.value > 0.4f);
+        }
+    }
+    
+    void ChangeWeather(WeatherType newWeather)
+    {
+        if (currentWeather == newWeather) return;
+        
+        // Stop current weather effects
+        StopWeatherEffects();
+        
+        currentWeather = newWeather;
+        OnWeatherChanged?.Invoke(currentWeather);
+        
+        // Apply weather-specific modifications
+        ApplyWeatherEffects();
+    }
+    
+    void StopWeatherEffects()
+    {
+        if (rainSystem != null) rainSystem.Stop();
+        if (snowSystem != null) snowSystem.Stop();
+        if (fogSystem != null) fogSystem.Stop();
+    }
+    
+    void ApplyWeatherEffects()
+    {
+        switch (currentWeather)
+        {
+            case WeatherType.Storm:
+                if (directionalLight != null) directionalLight.intensity *= 0.5f;
+                TriggerEvent("StormWeather");
+                break;
+            case WeatherType.Fog:
+                if (playerController != null) playerController.ModifyVisibility(0.3f);
+                TriggerEvent("FoggyWeather");
+                break;
+        }
+    }
+    
+    WeatherType GetRandomWeather()
+    {
+        var weatherTypes = System.Enum.GetValues(typeof(WeatherType));
+        return (WeatherType)weatherTypes.GetValue(Random.Range(0, weatherTypes.Length));
+    }
+    
+    bool IsNightTime()
+    {
+        return currentPeriod == "Night" || currentPeriod == "Late Night" || currentPeriod == "Dusk";
+    }
+    
+    void TriggerEvent(string eventName)
+    {
+        Debug.Log($"Day Cycle Event: {eventName} at {currentPeriod}");
+        // Integration with other systems
+        GameEventSystem.TriggerEvent(eventName, currentTime);
+    }
+    #endregion
+    
+    #region Public Interface
+    public float GetCurrentTime() => currentTime;
+    public string GetCurrentPeriod() => currentPeriod;
+    public WeatherType GetCurrentWeather() => currentWeather;
+    public bool IsDay() => !IsNightTime();
+    public float GetVisibilityModifier() => timePeriods[currentPeriodIndex].visibility;
+    public float GetTemperature() => timePeriods[currentPeriodIndex].temperature;
+    
+    public void SetTimeOfDay(float time)
+    {
+        currentTime = Mathf.Clamp01(time);
+        currentPeriodIndex = Mathf.FloorToInt(currentTime * timePeriods.Length);
+        currentPeriod = timePeriods[currentPeriodIndex].periodName;
+        ApplyLightingSettings(timePeriods[currentPeriodIndex]);
+    }
+    
+    public void SetWeather(WeatherType weather) => ChangeWeather(weather);
+    public void SkipToNextPeriod() => SetTimeOfDay((currentPeriodIndex + 1f) / timePeriods.Length);
+    #endregion
+}
+
+// Supporting classes
+public static class GameEventSystem
+{
+    public static void TriggerEvent(string eventName, float timeContext) 
+    {
+        Debug.Log($"Game Event: {eventName} at time {timeContext:F2}");
+    }
+}
+
+using UnityEngine;
+using UnityEngine.AI;
+using System.Collections;
+using System.Collections.Generic;
+
+public enum EnemyState 
+{ 
+    Patrol, Search, Alert, Attack, InvestigateNoise, Flee, TakeCover, 
+    CallForHelp, Stunned, DeadBody, Flanking, Suppressing 
+}
+
+public enum EnemyType { Grunt, Elite, Sniper, Heavy, Scout, Commander }
+public enum AlertLevel { Green, Yellow, Orange, Red }
+
+[System.Serializable]
+public class EnemyStats
+{
+    public int maxHealth = 100;
+    public float moveSpeed = 3.5f;
+    public float runSpeed = 6f;
+    public float detectionRadius = 15f;
+    public float hearingRadius = 20f;
+    public float attackRange = 10f;
+    public float accuracy = 0.7f;
+    public float reactionTime = 0.5f;
+    public float stealthSensitivity = 0.3f;
+    public int reinforcementValue = 1; // How many allies this unit can call
+}
+
+[System.Serializable]
+public class CombatBehavior
+{
+    public float coverSeekDistance = 8f;
+    public float flankingChance = 0.3f;
+    public float suppressionDuration = 3f;
+    public bool canCallReinforcements = true;
+    public float retreatHealthThreshold = 0.2f;
+    public float aggressionLevel = 0.5f; // 0 = defensive, 1 = aggressive
+}
+
+public class EnemyAI : MonoBehaviour
+{
+    [Header("Core Components")]
+    public NavMeshAgent agent;
+    public Animator animator;
+    public AudioSource audioSource;
+    public Transform target;
+    public Weapon weapon;
+    public Transform eyePosition;
+    
+    [Header("Enemy Configuration")]
+    public EnemyType enemyType = EnemyType.Grunt;
+    public EnemyStats stats = new EnemyStats();
+    public CombatBehavior combatBehavior = new CombatBehavior();
+    
+    [Header("Patrol System")]
+    public Transform[] patrolPoints;
+    public float patrolWaitTime = 2f;
+    public bool randomPatrol = false;
+    
+    [Header("Detection System")]
+    public LayerMask playerLayer = 1;
+    public LayerMask obstacleLayer = 1;
+    public float fieldOfView = 60f;
+    public float suspicionDecayRate = 1f;
+    
+    [Header("Audio & Visual")]
+    public AudioClip[] alertSounds;
+    public AudioClip[] attackSounds;
+    public AudioClip[] deathSounds;
+    public GameObject muzzleFlash;
+    public ParticleSystem bloodEffect;
+    
+    // Current state
+    [SerializeField] private EnemyState currentState = EnemyState.Patrol;
+    [SerializeField] private AlertLevel alertLevel = AlertLevel.Green;
+    [SerializeField] private int currentHealth;
+    [SerializeField] private float suspicionLevel = 0f;
+    [SerializeField] private bool isDead = false;
+    
+    // AI Variables
+    private Vector3 lastKnownPlayerPosition;
+    private Vector3 investigationTarget;
+    private Vector3 currentCoverPosition;
+    private Transform currentPatrolTarget;
+    private int currentPatrolIndex = 0;
+    private float lastShotTime;
+    private float stateTimer;
+    private float lastPlayerSighting;
+    private bool hasCalledForHelp = false;
+    private List<Transform> nearbyAllies = new List<Transform>();
+    private Coroutine currentBehaviorCoroutine;
+    
+    // Detection system
+    private float detectionProgress = 0f;
+    private bool playerInSight = false;
+    private float noiseLevel = 0f;
+    
+    // Events
+    public System.Action<EnemyAI> OnEnemyDeath;
+    public System.Action<EnemyAI, Vector3> OnEnemyAlert;
+    public System.Action<EnemyAI> OnPlayerSpotted;
+    
+    void Awake()
+    {
+        InitializeComponents();
+        ApplyEnemyTypeModifications();
+    }
+    
+    void Start()
+    {
+        currentHealth = stats.maxHealth;
+        SetState(EnemyState.Patrol);
+        FindNearbyAllies();
+    }
+    
+    void Update()
+    {
+        if (isDead) return;
+        
+        UpdateDetectionSystem();
+        UpdateSuspicion();
+        ExecuteCurrentState();
+        UpdateAnimator();
+        
+        stateTimer += Time.deltaTime;
+    }
+    
+    void InitializeComponents()
+    {
+        if (agent == null) agent = GetComponent<NavMeshAgent>();
+        if (animator == null) animator = GetComponent<Animator>();
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
+        if (eyePosition == null) eyePosition = transform;
+        
+        // Setup agent
+        if (agent != null)
+        {
+            agent.speed = stats.moveSpeed;
+            agent.stoppingDistance = stats.attackRange * 0.8f;
+        }
+    }
+    
+    void ApplyEnemyTypeModifications()
+    {
+        switch (enemyType)
+        {
+            case EnemyType.Elite:
+                stats.accuracy *= 1.3f;
+                stats.reactionTime *= 0.7f;
+                stats.maxHealth = Mathf.RoundToInt(stats.maxHealth * 1.5f);
+                combatBehavior.flankingChance = 0.5f;
+                break;
+                
+            case EnemyType.Sniper:
+                stats.detectionRadius *= 1.8f;
+                stats.attackRange *= 2f;
+                stats.accuracy = 0.95f;
+                stats.moveSpeed *= 0.8f;
+                combatBehavior.aggressionLevel = 0.2f;
+                break;
+                
+            case EnemyType.Heavy:
+                stats.maxHealth = Mathf.RoundToInt(stats.maxHealth * 2f);
+                stats.moveSpeed *= 0.7f;
+                combatBehavior.aggressionLevel = 0.8f;
+                combatBehavior.retreatHealthThreshold = 0.1f;
+                break;
+                
+            case EnemyType.Scout:
+                stats.detectionRadius *= 1.2f;
+                stats.moveSpeed *= 1.3f;
+                stats.runSpeed *= 1.4f;
+                combatBehavior.canCallReinforcements = true;
+                stats.reinforcementValue = 2;
+                break;
+                
+            case EnemyType.Commander:
+                stats.reinforcementValue = 3;
+                combatBehavior.canCallReinforcements = true;
+                stats.maxHealth = Mathf.RoundToInt(stats.maxHealth * 1.3f);
+                break;
+        }
+        
+        currentHealth = stats.maxHealth;
+    }
+    
+    #region State Management
+    void SetState(EnemyState newState)
+    {
+        if (currentState == newState) return;
+        
+        // Exit current state
+        ExitState(currentState);
+        
+        // Enter new state
+        currentState = newState;
+        stateTimer = 0f;
+        EnterState(newState);
+        
+        if (animator != null)
+            animator.SetInteger("State", (int)currentState);
+    }
+    
+    void EnterState(EnemyState state)
+    {
+        if (currentBehaviorCoroutine != null)
+            StopCoroutine(currentBehaviorCoroutine);
+            
+        switch (state)
+        {
+            case EnemyState.Patrol:
+                agent.speed = stats.moveSpeed;
+                currentBehaviorCoroutine = StartCoroutine(PatrolBehavior());
+                break;
+                
+            case EnemyState.Search:
+                agent.speed = stats.runSpeed;
+                currentBehaviorCoroutine = StartCoroutine(SearchBehavior());
+                break;
+                
+            case EnemyState.Alert:
+                PlaySound(alertSounds);
+                alertLevel = AlertLevel.Orange;
+                if (!hasCalledForHelp && combatBehavior.canCallReinforcements)
+                    currentBehaviorCoroutine = StartCoroutine(CallForHelpBehavior());
+                break;
+                
+            case EnemyState.Attack:
+                agent.speed = stats.moveSpeed;
+                alertLevel = AlertLevel.Red;
+                currentBehaviorCoroutine = StartCoroutine(CombatBehavior());
+                break;
+                
+            case EnemyState.TakeCover:
+                currentBehaviorCoroutine = StartCoroutine(TakeCoverBehavior());
+                break;
+                
+            case EnemyState.Flee:
+                agent.speed = stats.runSpeed;
+                currentBehaviorCoroutine = StartCoroutine(FleeBehavior());
+                break;
+        }
+    }
+    
+    void ExitState(EnemyState state)
+    {
+        // State-specific cleanup
+        switch (state)
+        {
+            case EnemyState.Attack:
+                if (muzzleFlash != null)
+                    muzzleFlash.SetActive(false);
+                break;
+        }
+    }
+    
+    void ExecuteCurrentState()
+    {
+        // Global state transitions
+        if (currentHealth <= stats.maxHealth * combatBehavior.retreatHealthThreshold && 
+            currentState != EnemyState.Flee && currentState != EnemyState.DeadBody)
+        {
+            SetState(EnemyState.Flee);
+            return;
+        }
+        
+        // Detection-based transitions
+        if (playerInSight && detectionProgress >= 1f)
+        {
+            if (currentState != EnemyState.Attack && currentState != EnemyState.TakeCover)
+            {
+                lastKnownPlayerPosition = target.position;
+                lastPlayerSighting = Time.time;
+                OnPlayerSpotted?.Invoke(this);
+                SetState(EnemyState.Attack);
+            }
+        }
+        else if (suspicionLevel > 0.5f && currentState == EnemyState.Patrol)
+        {
+            SetState(EnemyState.Search);
+        }
+        else if (noiseLevel > 0.3f && 
+                (currentState == EnemyState.Patrol || currentState == EnemyState.Search))
+        {
+            SetState(EnemyState.InvestigateNoise);
+        }
+    }
+    #endregion
+    
+    #region Detection System
+    void UpdateDetectionSystem()
+    {
+        if (target == null) return;
+        
+        float distance = Vector3.Distance(transform.position, target.position);
+        playerInSight = false;
+        
+        if (distance <= stats.detectionRadius)
+        {
+            if (CanSeePlayer())
+            {
+                playerInSight = true;
+                
+                // Calculate detection factors
+                float distanceFactor = 1f - (distance / stats.detectionRadius);
+                float angleFactor = CalculateAngleFactor();
+                float stealthFactor = GetPlayerStealthFactor();
+                float lightFactor = GetLightingFactor();
+                float movementFactor = GetPlayerMovementFactor();
+                
+                float detectionRate = distanceFactor * angleFactor * stealthFactor * 
+                                    lightFactor * movementFactor * Time.deltaTime;
+                
+                detectionProgress = Mathf.Clamp01(detectionProgress + detectionRate);
+                suspicionLevel = Mathf.Min(1f, suspicionLevel + detectionRate * 0.5f);
+            }
+            else
+            {
+                detectionProgress = Mathf.Max(0f, detectionProgress - Time.deltaTime * 0.3f);
+            }
+        }
+        
+        // Hearing detection
+        UpdateHearingDetection();
+    }
+    
+    bool CanSeePlayer()
+    {
+        Vector3 directionToPlayer = (target.position - eyePosition.position).normalized;
+        float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
+        
+        if (angleToPlayer > fieldOfView * 0.5f)
+            return false;
+            
+        RaycastHit hit;
+        if (Physics.Raycast(eyePosition.position, directionToPlayer, out hit, 
+                           stats.detectionRadius, playerLayer | obstacleLayer))
+        {
+            return hit.transform == target;
+        }
+        
+        return false;
+    }
+    
+    float CalculateAngleFactor()
+    {
+        Vector3 directionToPlayer = (target.position - transform.position).normalized;
+        float angle = Vector3.Angle(transform.forward, directionToPlayer);
+        return Mathf.Clamp01(1f - (angle / (fieldOfView * 0.5f)));
+    }
+    
+    float GetPlayerStealthFactor()
+    {
+        var stealth = target.GetComponent<PlayerStealth>();
+        if (stealth != null)
+        {
+            return Mathf.Clamp01(2f - stealth.CurrentStealth);
+        }
+        return 1f;
+    }
+    
+    float GetLightingFactor()
+    {
+        // Integration with day/night cycle
+        var dayManager = FindObjectOfType<DayCycleManager>();
+        if (dayManager != null)
+        {
+            return dayManager.IsDay() ? 1f : 0.6f;
+        }
+        return 1f;
+    }
+    
+    float GetPlayerMovementFactor()
+    {
+        var playerController = target.GetComponent<PlayerController>();
+        if (playerController != null)
+        {
+            return playerController.IsRunning() ? 1.5f : 
+                   playerController.IsCrouching() ? 0.3f : 1f;
+        }
+        return 1f;
+    }
+    
+    void UpdateHearingDetection()
+    {
+        float hearingDistance = Vector3.Distance(transform.position, target.position);
+        if (hearingDistance <= stats.hearingRadius)
+        {
+            var playerController = target.GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                float playerNoise = playerController.GetNoiseLevel();
+                float hearingFactor = 1f - (hearingDistance / stats.hearingRadius);
+                noiseLevel = playerNoise * hearingFactor;
+                
+                if (noiseLevel > 0.7f)
+                {
+                    investigationTarget = target.position;
+                    suspicionLevel = Mathf.Min(1f, suspicionLevel + noiseLevel * Time.deltaTime);
+                }
+            }
+        }
+        
+        noiseLevel = Mathf.Max(0f, noiseLevel - Time.deltaTime * 2f);
+    }
+    
+    void UpdateSuspicion()
+    {
+        if (!playerInSight && detectionProgress < 1f)
+        {
+            suspicionLevel = Mathf.Max(0f, suspicionLevel - suspicionDecayRate * Time.deltaTime);
+            detectionProgress = Mathf.Max(0f, detectionProgress - Time.deltaTime * 0.5f);
+        }
+    }
+    #endregion
+    
+    #region Behavior Coroutines
+    IEnumerator PatrolBehavior()
+    {
+        while (currentState == EnemyState.Patrol)
+        {
+            if (patrolPoints.Length == 0)
+            {
+                // Random patrol
+                Vector3 randomPoint = GetRandomNavMeshPoint(15f);
+                agent.SetDestination(randomPoint);
+            }
+            else
+            {
+                // Waypoint patrol
+                if (currentPatrolTarget == null || 
+                    Vector3.Distance(transform.position, currentPatrolTarget.position) < 2f)
+                {
+                    if (randomPatrol)
+                        currentPatrolIndex = Random.Range(0, patrolPoints.Length);
+                    else
+                        currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
+                        
+                    currentPatrolTarget = patrolPoints[currentPatrolIndex];
+                    agent.SetDestination(currentPatrolTarget.position);
+                    
+                    yield return new WaitForSeconds(patrolWaitTime);
+                }
+            }
+            
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+    
+    IEnumerator SearchBehavior()
+    {
+        agent.SetDestination(lastKnownPlayerPosition);
+        
+        while (currentState == EnemyState.Search)
+        {
+            if (Vector3.Distance(transform.position, lastKnownPlayerPosition) < 3f)
+            {
+                // Search nearby area
+                for (int i = 0; i < 3; i++)
+                {
+                    Vector3 searchPoint = lastKnownPlayerPosition + 
+                                        Random.insideUnitSphere * 10f;
+                    searchPoint.y = transform.position.y;
+                    
+                    agent.SetDestination(searchPoint);
+                    yield return new WaitForSeconds(2f);
+                }
+                
+                // Return to patrol if player not found
+                SetState(EnemyState.Patrol);
+            }
+            
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+    
+    IEnumerator CombatBehavior()
+    {
+        while (currentState == EnemyState.Attack)
+        {
+            if (target == null) break;
+            
+            float distanceToPlayer = Vector3.Distance(transform.position, target.position);
+            
+            // Decide combat behavior
+            if (distanceToPlayer > stats.attackRange)
+            {
+                // Move closer
+                agent.SetDestination(target.position);
+            }
+            else if (ShouldTakeCover())
+            {
+                SetState(EnemyState.TakeCover);
+                break;
+            }
+            else if (ShouldFlank())
+            {
+                SetState(EnemyState.Flanking);
+                break;
+            }
+            else
+            {
+                // Attack
+                agent.SetDestination(transform.position); // Stop moving
+                yield return StartCoroutine(AttackSequence());
+            }
+            
+            yield return new WaitForSeconds(0.1f);
+        }
+    }
+    
+    IEnumerator AttackSequence()
+    {
+        // Aim at player
+        Vector3 directionToPlayer = (target.position - transform.position).normalized;
+        transform.rotation = Quaternion.LookRotation(directionToPlayer);
+        
+        yield return new WaitForSeconds(stats.reactionTime);
+        
+        // Fire weapon
+        if (weapon != null && Time.time - lastShotTime > weapon.fireRate)
+        {
+            bool hit = Random.value < stats.accuracy;
+            weapon.Fire(hit ? target : null);
+            
+            if (muzzleFlash != null)
+            {
+                muzzleFlash.SetActive(true);
+                yield return new WaitForSeconds(0.1f);
+                muzzleFlash.SetActive(false);
+            }
+            
+            PlaySound(attackSounds);
+            lastShotTime = Time.time;
+        }
+    }
+    
+    IEnumerator TakeCoverBehavior()
+    {
+        Vector3 coverPosition = FindNearestCover();
+        if (coverPosition != Vector3.zero)
+        {
+            agent.SetDestination(coverPosition);
+            currentCoverPosition = coverPosition;
+            
+            while (Vector3.Distance(transform.position, coverPosition) > 1f && 
+                   currentState == EnemyState.TakeCover)
+            {
+                yield return new WaitForSeconds(0.1f);
+            }
+            
+            // Stay in cover briefly, then return to combat
+            yield return new WaitForSeconds(combatBehavior.suppressionDuration);
+            SetState(EnemyState.Attack);
+        }
+        else
+        {
+            SetState(EnemyState.Attack);
+        }
+    }
+    
+    IEnumerator CallForHelpBehavior()
+    {
+        hasCalledForHelp = true;
+        PlaySound(alertSounds);
+        
+        // Alert nearby allies
+        OnEnemyAlert?.Invoke(this, lastKnownPlayerPosition);
+        
+        yield return new WaitForSeconds(1f);
+        SetState(EnemyState.Search);
+    }
+    
+    IEnumerator FleeBehavior()
+    {
+        Vector3 fleeDirection = (transform.position - target.position).normalized;
+        Vector3 fleeTarget = transform.position + fleeDirection * 20f;
+        
+        agent.SetDestination(fleeTarget);
+        
+        while (currentState == EnemyState.Flee)
+        {
+            // Check if far enough away
+            if (Vector3.Distance(transform.position, target.position) > stats.detectionRadius * 1.5f)
+            {
+                SetState(EnemyState.Patrol);
+                break;
+            }
+            
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+    #endregion
+    
+    #region Combat Logic
+    bool ShouldTakeCover()
+    {
+        return Random.value < (1f - combatBehavior.aggressionLevel) && 
+               currentHealth < stats.maxHealth * 0.7f;
+    }
+    
+    bool ShouldFlank()
+    {
+        return Random.value < combatBehavior.flankingChance && 
+               nearbyAllies.Count > 0;
+    }
+    
+    Vector3 FindNearestCover()
+    {
+        // Find cover objects tagged as "Cover"
+        GameObject[] coverObjects = GameObject.FindGameObjectsWithTag("Cover");
+        Vector3 bestCover = Vector3.zero;
+        float closestDistance = Mathf.Infinity;
+        
+        foreach (var cover in coverObjects)
+        {
+            float distance = Vector3.Distance(transform.position, cover.transform.position);
+            if (distance < closestDistance && distance < combatBehavior.coverSeekDistance)
+            {
+                closestDistance = distance;
+                bestCover = cover.transform.position;
+            }
+        }
+        
+        return bestCover;
+    }
+    
+    Vector3 GetRandomNavMeshPoint(float radius)
+    {
+        Vector3 randomDirection = Random.insideUnitSphere * radius;
+        randomDirection += transform.position;
+        
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(randomDirection, out hit, radius, 1))
+        {
+            return hit.position;
+        }
+        
+        return transform.position;
+    }
+    
+    void FindNearbyAllies()
+    {
+        nearbyAllies.Clear();
+        EnemyAI[] allEnemies = FindObjectsOfType<EnemyAI>();
+        
+        foreach (var enemy in allEnemies)
+        {
+            if (enemy != this && 
+                Vector3.Distance(transform.position, enemy.transform.position) < 30f)
+            {
+                nearbyAllies.Add(enemy.transform);
+            }
+        }
+    }
+    #endregion
+    
+    #region Health and Damage
+    public void TakeDamage(int amount, Vector3 damageSource = default)
+    {
+        if (isDead) return;
+        
+        currentHealth -= amount;
+        
+        if (bloodEffect != null)
+            bloodEffect.Play();
+            
+        // React to damage
+        if (currentState == EnemyState.Patrol)
+        {
+            lastKnownPlayerPosition = damageSource != default ? damageSource : target.position;
+            SetState(EnemyState.Alert);
+        }
+        
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+        else if (currentHealth <= stats.maxHealth * combatBehavior.retreatHealthThreshold)
+        {
+            SetState(EnemyState.Flee);
+        }
+    }
+    
+    void Die()
+    {
+        isDead = true;
+        SetState(EnemyState.DeadBody);
+        
+        PlaySound(deathSounds);
+        
+        if (agent != null)
+            agent.enabled = false;
+            
+        if (animator != null)
+            animator.SetTrigger("Die");
+            
+        OnEnemyDeath?.Invoke(this);
+        
+        // Disable collider and destroy after delay
+        GetComponent<Collider>().enabled = false;
+        Destroy(gameObject, 5f);
+    }
+    #endregion
+    
+    #region Utility Methods
+    void PlaySound(AudioClip[] clips)
+    {
+        if (clips.Length > 0 && audioSource != null)
+        {
+            audioSource.clip = clips[Random.Range(0, clips.Length)];
+            audioSource.Play();
+        }
+    }
+    
+    void UpdateAnimator()
+    {
+        if (animator == null) return;
+        
+        animator.SetFloat("Speed", agent.velocity.magnitude);
+        animator.SetBool("InCombat", currentState == EnemyState.Attack);
+        animator.SetFloat("Health", (float)currentHealth / stats.maxHealth);
+        animator.SetFloat("AlertLevel", (int)alertLevel);
+    }
+    
+    public void AlertToPosition(Vector3 position)
+    {
+        lastKnownPlayerPosition = position;
+        suspicionLevel = 0.8f;
+        
+        if (currentState == EnemyState.Patrol)
+            SetState(EnemyState.Search);
+    }
+    
+    public EnemyState GetCurrentState() => currentState;
+    public float GetHealthPercentage() => (float)currentHealth / stats.maxHealth;
+    public bool IsAlerted() => alertLevel >= AlertLevel.Orange;
+    public Vector3 GetLastKnownPlayerPosition() => lastKnownPlayerPosition;
+    #endregion
+    
+    void OnDrawGizmosSelected()
+    {
+        // Detection radius
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCircle(transform.position, stats.detectionRadius);
+        
+        // Hearing radius
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireCircle(transform.position, stats.hearingRadius);
+        
+        // Field of view
+        Gizmos.color = Color.red;
+        Vector3 leftBoundary = Quaternion.Euler(0, -fieldOfView * 0.5f, 0) * transform.forward * stats.detectionRadius;
+        Vector3 rightBoundary = Quaternion.Euler(0, fieldOfView * 0.5f, 0) * transform.forward * stats.detectionRadius;
+        
+        Gizmos.DrawLine(transform.position, transform.position + leftBoundary);
+        Gizmos.DrawLine(transform.position, transform.position + rightBoundary);
+    }
+}
