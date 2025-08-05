@@ -1369,5 +1369,1419 @@ public class BattlefieldManager : MonoBehaviour
         return SystemInfo.deviceUniqueIdentifier;
     }
 }
+// --- MISSION: Echoes of Judgment ---
+// Deeply dynamic, tactical, and emotionally reactive mission script for an immersive experience.
 
+mission "Echoes of Judgment" {
+    description: """
+        Infiltrate the Corrupted Grid to extract the Memory Shard, neutralize hostile elements, and face moral crossroads.
+        Every action and tactical order will echo through the battlefield, affecting both the environment and your soul.
+    """,
+    objectives: [
+        {
+            title: "Secure Entry Point",
+            details: "Disable cameras and guards quietly to avoid alerting the main force.",
+            tactical: [
+                "Use suppressed weapons or melee for silent takedowns.",
+                "Scan for alternate routes with the Sin Scanner."
+            ],
+            success: [
+                "No reinforcements called.",
+                "Unlocks hidden supply cache."
+            ],
+            failure: [
+                "Alarm triggers enemy reinforcements.",
+                "Morale penalty for squad."
+            ]
+        },
+        {
+            title: "Confront the Sniper's Nest",
+            details: "Neutralize hostile snipers overwatching the plaza.",
+            tactical: [
+                "Mark targets for synchronized takedowns.",
+                "Flank using smoke grenades or distract with drone.",
+                "Sin Scanner can reveal sniper guilt—sparing may grant unique intel."
+            ],
+            dynamic: [
+                "Snipers may surrender if outflanked and not harmed.",
+                "Killing surrendered snipers triggers squad dialogue and morality shift."
+            ]
+        },
+        {
+            title: "Hack the Terminal",
+            details: "Access the encrypted vault terminal under fire.",
+            tactical: [
+                "Assign a squadmate to cover while hacking.",
+                "Use EMP grenades to disable automated defenses.",
+                "Sin Scanner reveals emotional residue—terminal may trigger memory echo traps."
+            ],
+            dynamic: [
+                "Hacking success speed depends on squad morale and NPC trust.",
+                "If enemy NPCs with high guilt are nearby during hack, weapons may misfire from haunt level."
+            ]
+        },
+        {
+            title: "Escort the Civilians",
+            details: "Guide NPC civilians through an active killzone to safety.",
+            tactical: [
+                "Order squad to provide covering fire or create diversions.",
+                "Sin Scanner identifies 'high guilt' civilians—handle with care, as they may panic or betray.",
+                "Use Chord of Mercy or Harmony Surge to calm panicked civilians."
+            ],
+            dynamic: [
+                "If civilians die, trigger regret-induced hallucinations and morale penalties.",
+                "Successful escort boosts squad morale and unlocks 'Forgiveness Protocol' weapon evolution."
+            ]
+        },
+        {
+            title: "Face ShadowEcho",
+            details: "Confront the haunting NPC that embodies your past decisions.",
+            tactical: [
+                "Use dialogue options: Compassion, Threat, Silence.",
+                "ShadowEcho adapts: may attack, flee, or offer crucial intel based on your morality.",
+                "Pulse of Silence disables ShadowEcho’s abilities, but increases Fear Haunt."
+            ],
+            dynamic: [
+                "Spare ShadowEcho to unlock unique codex and weapon skin.",
+                "Killing ShadowEcho triggers 'Sin Surge' event—environment mutates, enemies become more aggressive."
+            ]
+        }
+    ],
+    onComplete {
+        evaluateMorality()
+        applyTraitShift()
+        unlockAbility()
+        evolveWeapons()
+        updateCodex()
+        triggerMoralityFX()
+        synchronizeArsenal()
+    }
+}
 
+// --- DYNAMIC SYSTEMS ---
+
+function evaluateMorality() {
+    let compassionScore = player.actions.count("spared_enemy") + player.dialogue.count("compassion");
+    let ruthlessnessScore = player.actions.count("executed_enemy") + player.dialogue.count("threat");
+    player.morality += (compassionScore * 10) - (ruthlessnessScore * 10);
+    // Bonus/penalty for sparing or killing high-guilt targets
+    foreach (npc in scene.npcs) {
+        if (npc.isSpared && npc.guiltLevel === "High") player.morality += 5;
+        if (npc.isExecuted && npc.guiltLevel === "Low") player.morality -= 5;
+    }
+}
+
+function applyTraitShift() {
+    if (player.morality >= 20) {
+        player.traits.add("Empathetic");
+        player.traits.remove("Detached");
+    } else if (player.morality <= -20) {
+        player.traits.add("Cold");
+        player.traits.remove("Empathetic");
+    }
+    // Decay and reinforce
+    decayTraits();
+}
+
+function unlockAbility() {
+    if (player.morality >= 20) {
+        player.abilities.unlock("Harmony Surge");
+        log("Unlocked: Harmony Surge – AoE heal + morale boost. Attracts spectral enemies seeking peace.");
+    } else if (player.morality <= -20) {
+        player.abilities.unlock("Pulse of Silence");
+        log("Unlocked: Pulse of Silence – Disables enemy speech and drains resolve; increases player empathy drain.");
+    } else if (player.morality >= 10) {
+        player.abilities.unlock("Chord of Mercy");
+        log("Unlocked: Chord of Mercy – Heals allies and calms enemies.");
+    }
+}
+
+function evolveWeapons() {
+    // Evolve weapons based on use and morality
+    foreach (weapon in player.weapons) {
+        if (weapon.name === "Echofang" && player.actions.count("backstab") > 4) {
+            weapon.evolve("Whisperfang");
+            log("Echofang evolved into Whisperfang – can phase through walls.");
+        }
+        if (weapon.name === "Mercybrand" && player.morality > 15) {
+            weapon.evolve("Harmony Surge");
+            log("Mercybrand evolved into Harmony Surge – heals all in radius, triggers empathy aura.");
+        }
+        // Haunt level triggers
+        if (weapon.hauntLevel > 7) {
+            weapon.addTrait("Spectral Ricochet");
+            UI.distort("weapon");
+            audio.play("HauntWhisper");
+            log("Weapon cursed: Spectral Ricochet unlocked.");
+        }
+    }
+}
+
+function decayTraits() {
+    foreach (trait in player.traits) {
+        trait.duration -= deltaTime;
+        if (trait.duration <= 0 && !player.actions.reinforce(trait.name)) {
+            player.traits.remove(trait.name);
+            log("Trait faded: " + trait.name);
+        }
+    }
+}
+
+function updateCodex() {
+    codex.update("PlayerPath", player.morality);
+    codex.update("RegretLog", player.guilt);
+}
+
+function triggerMoralityFX() {
+    if (player.morality > 10) {
+        VFX.play("LightPulse");
+        Audio.play("MercyChord");
+        UI.skinSync("Radiant Gleam");
+    } else if (player.morality < -10) {
+        VFX.play("DarkRipple");
+        Audio.play("SilencePulse");
+        UI.skinSync("Shadow Veil");
+    }
+}
+
+function synchronizeArsenal() {
+    foreach (weapon in player.vaultArsenal) {
+        weapon.syncEmotion(player.dominantEmotion);
+        if (weapon.isMirrorLinked && !player.isMoral()) {
+            weapon.lock();
+            log("Mirror-linked weapon refuses to fire due to negative morality.");
+        }
+    }
+    // Sin Scanner integration
+    if (player.tools.contains("Sin Scanner")) {
+        foreach (npc in scene.npcs) {
+            npc.guiltLevel = SinScanner.scan(npc);
+            UI.displayScannerFeedback(npc.guiltLevel);
+        }
+    }
+}
+
+// --- NPC & MAP DYNAMICS ---
+
+function updateNPCReactions() {
+    foreach (npc in scene.npcs) {
+        if (player.abilities.contains("Pulse of Silence")) {
+            npc.dialogue.override("...Why can't I speak?");
+            npc.traits.add("Fearful");
+        } else if (player.abilities.contains("Chord of Mercy") || player.abilities.contains("Harmony Surge")) {
+            npc.dialogue.override("You radiate something... kind.");
+            npc.traits.add("Trusting");
+        }
+        if (npc.guiltLevel === "High" && player.tools.contains("Sin Scanner")) {
+            npc.behavior = "Nervous";
+            UI.highlightNPC(npc, "red");
+        }
+    }
+}
+
+function updateMapDynamics() {
+    if (player.morality < -10) {
+        map.layout.mutate("chaotic");
+        map.visibility.reduce(50%);
+        map.labels.scramble();
+        VFX.play("CorruptionSpread");
+    } else if (player.morality > 10) {
+        map.layout.stabilize();
+        map.revealHiddenPaths();
+        VFX.play("HopeReveal");
+    }
+}
+
+// --- TACTICAL SYSTEMS ---
+
+function handleEmotionalAmmo(weapon) {
+    switch (weapon.echoCharge) {
+        case "Guilt":
+            weapon.tremble();
+            log("Weapon trembles before firing due to guilt echo.");
+            break;
+        case "Fear":
+            weapon.boostDamage();
+            weapon.decreaseAccuracy();
+            break;
+        case "Regret":
+            weapon.enableSplashAllyDamage();
+            break;
+        case "Hope":
+            weapon.convertMissToHeal();
+            break;
+    }
+    // Haunt level
+    if (weapon.hauntLevel > 7) {
+        weapon.enableCursedTrait();
+        UI.distort("weapon");
+    }
+}
+
+// --- EMOTION-BASED WEAPON SKINS ---
+function updateWeaponSkin(weapon) {
+    switch (player.dominantEmotion) {
+        case "Anger":
+            weapon.skin = "Crimson Fury";
+            weapon.applyVFX("GlowingRedVeins");
+            break;
+        case "Fear":
+            weapon.skin = "Shadow Veil";
+            weapon.applyVFX("FlickerShadows");
+            break;
+        case "Joy":
+            weapon.skin = "Radiant Gleam";
+            weapon.applyVFX("GoldenShimmer");
+            break;
+        case "Sadness":
+            weapon.skin = "Blue Eclipse";
+            weapon.applyVFX("MistyAura");
+            break;
+        default:
+            weapon.skin = "Steel Core";
+            weapon.applyVFX("None");
+            break;
+    }
+}
+
+// --- SIN SCANNER SYSTEM ---
+function useSinScanner(npc) {
+    let feedback = SinScanner.scan(npc);
+    switch (feedback) {
+        case "Low":
+            UI.displayScannerFeedback("Echo faint. Soul clean.");
+            // Option: spare for bonus empathy XP
+            break;
+        case "Medium":
+            UI.displayScannerFeedback("Echo unstable. Regret detected.");
+            // Option: triggers emotional side quest
+            break;
+        case "High":
+            UI.displayScannerFeedback("Echo loud. Sin saturated.");
+            // Option: unlocks cursed weapon trait
+            break;
+    }
+}
+
+// --- PLAYER DECISION CONSEQUENCES LOG ---
+codex "PlayerPath" {
+    onUpdate {
+        if (player.morality > 10) {
+            entry.text = "You chose compassion. The world remembers your mercy.";
+        } else if (player.morality < -10) {
+            entry.text = "You silenced the weak. The echoes of fear remain.";
+        } else {
+            entry.text = "You walked the line. Neither condemned nor redeemed.";
+        }
+    }
+}
+codex "RegretLog" {
+    onUpdate {
+        if (mirror.sum("morality") < -10) {
+            entry.text = "You silenced the innocent. The vault remembers.";
+        } else if (vault.contains("guilt")) {
+            entry.text = "Their voices echo in the dark corners of your mind.";
+        }
+    }
+}
+
+// --- EXAMPLE: NPC "ShadowEcho" ---
+npc "ShadowEcho" {
+    onEnter {
+        if (player.decisions.contains("betrayal")) {
+            speak("They begged. You walked away.");
+        } else if (player.decisions.contains("violence")) {
+            speak("Blood never forgets.");
+        }
+    }
+    behavior = "Haunt";
+    visibility = "Flicker";
+    movement = "Follow when unseen";
+}
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class EchoesOfJudgmentMission : MonoBehaviour
+{
+    // --- Mission State ---
+    public enum ObjectiveType { SecureEntry, SniperNest, HackTerminal, EscortCivilians, ConfrontShadowEcho }
+    public enum Outcome { Undecided, Compassion, Ruthless, Balanced }
+    public ObjectiveType currentObjective = ObjectiveType.SecureEntry;
+    public Outcome missionOutcome = Outcome.Undecided;
+
+    [Header("References")]
+    public PlayerController player;
+    public UIManager uiManager;
+    public WeaponManager weaponManager;
+    public NPCManager npcManager;
+    public AudioManager audioManager;
+    public VFXManager vfxManager;
+    public MapManager mapManager;
+    public SinScanner sinScanner;
+
+    // Mission progress
+    private int compassionScore = 0;
+    private int ruthlessnessScore = 0;
+
+    void Start()
+    {
+        StartCoroutine(MissionSequence());
+    }
+
+    IEnumerator MissionSequence()
+    {
+        yield return SecureEntryPoint();
+        yield return ConfrontSnipers();
+        yield return HackTerminal();
+        yield return EscortCivilians();
+        yield return ConfrontShadowEcho();
+        MissionComplete();
+    }
+
+    IEnumerator SecureEntryPoint()
+    {
+        uiManager.SetObjective("Secure Entry Point", "Disable cameras and guards quietly.");
+        // Example: Wait for player to disable all cameras/guards
+        yield return new WaitUntil(() => player.HasDisabledAll("Camera") && player.HasDisabledAll("Guard"));
+
+        if (!player.AlertedEnemies)
+        {
+            compassionScore += 2;
+            uiManager.ShowMessage("Entry secured, enemy unaware.");
+            audioManager.PlaySFX("ObjectiveComplete");
+        }
+        else
+        {
+            ruthlessnessScore += 1;
+            uiManager.ShowMessage("Entry secured, reinforcements inbound.");
+            audioManager.PlaySFX("Alarm");
+        }
+        currentObjective = ObjectiveType.SniperNest;
+        yield return new WaitForSeconds(2f);
+    }
+
+    IEnumerator ConfrontSnipers()
+    {
+        uiManager.SetObjective("Neutralize Sniper's Nest", "Flank, distract, or spare snipers.");
+        // Wait for all snipers to be resolved
+        yield return new WaitUntil(() => npcManager.AllSnipersResolved());
+
+        foreach (var sniper in npcManager.SniperNPCs)
+        {
+            if (sniper.WasSpared)
+                compassionScore += 2;
+            else if (sniper.WasKilledSurrendering)
+                ruthlessnessScore += 2;
+        }
+
+        currentObjective = ObjectiveType.HackTerminal;
+        yield return new WaitForSeconds(2f);
+    }
+
+    IEnumerator HackTerminal()
+    {
+        uiManager.SetObjective("Hack the Terminal", "Access vault under fire. Use cover and squad.");
+        // Wait for player to hack terminal
+        yield return new WaitUntil(() => player.HasHacked("VaultTerminal"));
+
+        if (player.SquadMorale > 0.8f)
+        {
+            compassionScore += 1;
+            uiManager.ShowMessage("Terminal hacked swiftly. Squad trusts you.");
+        }
+        else
+        {
+            ruthlessnessScore += 1;
+            uiManager.ShowMessage("Hacked with difficulty. Morale suffers.");
+        }
+        currentObjective = ObjectiveType.EscortCivilians;
+        yield return new WaitForSeconds(2f);
+    }
+
+    IEnumerator EscortCivilians()
+    {
+        uiManager.SetObjective("Escort Civilians", "Guide civilians to safety. High-guilt civilians may panic.");
+        sinScanner.Enable();
+
+        // Wait for civilians to reach extraction or perish
+        yield return new WaitUntil(() => npcManager.CiviliansEscapedOrDead());
+
+        foreach (var civ in npcManager.CivilianNPCs)
+        {
+            if (civ.IsAlive)
+                compassionScore += 1;
+            else
+                ruthlessnessScore += 1;
+        }
+
+        currentObjective = ObjectiveType.ConfrontShadowEcho;
+        yield return new WaitForSeconds(2f);
+    }
+
+    IEnumerator ConfrontShadowEcho()
+    {
+        uiManager.SetObjective("Face ShadowEcho", "Decide: show mercy, threaten, or silence.");
+        // Wait for the player to interact and choose a dialogue
+        yield return new WaitUntil(() => npcManager.ShadowEchoResolved);
+        // Outcome influence
+        if (npcManager.ShadowEchoOutcome == NPCManager.ShadowEchoResult.Spared)
+            compassionScore += 3;
+        else if (npcManager.ShadowEchoOutcome == NPCManager.ShadowEchoResult.Killed)
+            ruthlessnessScore += 3;
+        yield return null;
+    }
+
+    void MissionComplete()
+    {
+        // Evaluate morality
+        int morality = compassionScore - ruthlessnessScore;
+        if (morality >= 5)
+            missionOutcome = Outcome.Compassion;
+        else if (morality <= -5)
+            missionOutcome = Outcome.Ruthless;
+        else
+            missionOutcome = Outcome.Balanced;
+
+        ApplyTraitShift(morality);
+        UnlockAbility(morality);
+        weaponManager.EvolveWeapons(player, morality);
+        npcManager.UpdateNPCReactions(player);
+        vfxManager.TriggerMoralityFX(morality);
+        mapManager.UpdateMapDynamics(morality);
+        uiManager.ShowMissionSummary(missionOutcome);
+    }
+
+    void ApplyTraitShift(int morality)
+    {
+        if (morality >= 5)
+        {
+            player.AddTrait("Empathetic");
+            player.RemoveTrait("Detached");
+        }
+        else if (morality <= -5)
+        {
+            player.AddTrait("Cold");
+            player.RemoveTrait("Empathetic");
+        }
+    }
+
+    void UnlockAbility(int morality)
+    {
+        if (morality >= 5)
+            player.UnlockAbility("Harmony Surge");
+        else if (morality <= -5)
+            player.UnlockAbility("Pulse of Silence");
+        else if (morality >= 2)
+            player.UnlockAbility("Chord of Mercy");
+    }
+}
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+// Handles weapon emotion, haunt, and evolution
+public class WeaponManager : MonoBehaviour
+{
+    public List<Weapon> playerWeapons;
+
+    public void EvolveWeapons(PlayerController player, int morality)
+    {
+        foreach (var weapon in playerWeapons)
+        {
+            if (weapon.name == "Echofang" && player.GetActionCount("backstab") > 4)
+            {
+                weapon.Evolve("Whisperfang");
+                UIManager.Instance.ShowMessage("Echofang evolved: Whisperfang can phase through walls.");
+            }
+            if (weapon.name == "Mercybrand" && morality > 5)
+            {
+                weapon.Evolve("Harmony Surge");
+                UIManager.Instance.ShowMessage("Mercybrand evolved: Harmony Surge unlocked.");
+            }
+            // Haunt Level
+            if (weapon.HauntLevel > 7)
+            {
+                weapon.AddTrait("Spectral Ricochet");
+                UIManager.Instance.DistortWeaponUI(weapon);
+                AudioManager.Instance.PlaySFX("HauntWhisper");
+            }
+            // Emotional Ammo
+            HandleEmotionalAmmo(weapon, player);
+        }
+    }
+
+    void HandleEmotionalAmmo(Weapon weapon, PlayerController player)
+    {
+        switch (weapon.EchoCharge)
+        {
+            case EchoType.Guilt:
+                weapon.Tremble();
+                break;
+            case EchoType.Fear:
+                weapon.BoostDamage().DecreaseAccuracy();
+                break;
+            case EchoType.Regret:
+                weapon.EnableSplashAllyDamage();
+                break;
+            case EchoType.Hope:
+                weapon.ConvertMissToHeal();
+                break;
+        }
+    }
+}
+using UnityEngine;
+
+public enum EchoType { None, Guilt, Fear, Regret, Hope }
+
+public class Weapon : MonoBehaviour
+{
+    public string weaponName;
+    public int HauntLevel;
+    public EchoType EchoCharge;
+    public bool IsMirrorLinked;
+    public bool Locked;
+    public List<string> Traits;
+
+    public void Evolve(string newName)
+    {
+        weaponName = newName;
+        // Visual evolution, stats, etc.
+    }
+
+    public void AddTrait(string trait)
+    {
+        if (!Traits.Contains(trait))
+            Traits.Add(trait);
+    }
+
+    public void Tremble()
+    {
+        // Visual shake and SFX
+    }
+
+    public Weapon BoostDamage()
+    {
+        // Increase damage
+        return this;
+    }
+
+    public Weapon DecreaseAccuracy()
+    {
+        // Decrease accuracy
+        return this;
+    }
+
+    public void EnableSplashAllyDamage() { }
+    public void ConvertMissToHeal() { }
+
+    public void Lock()
+    {
+        Locked = true;
+        // UI feedback
+    }
+
+    public void SyncEmotion(string emotion)
+    {
+        // Change weapon skin/VFX per emotion
+    }
+}
+using System.Collections.Generic;
+using UnityEngine;
+
+public class NPCManager : MonoBehaviour
+{
+    public enum ShadowEchoResult { None, Spared, Killed }
+    public List<NPC> SniperNPCs;
+    public List<NPC> CivilianNPCs;
+    public bool ShadowEchoResolved;
+    public ShadowEchoResult ShadowEchoOutcome;
+
+    public bool AllSnipersResolved()
+    {
+        foreach (var sniper in SniperNPCs)
+            if (!sniper.IsResolved) return false;
+        return true;
+    }
+
+    public bool CiviliansEscapedOrDead()
+    {
+        foreach (var civ in CivilianNPCs)
+            if (civ.IsAlive && !civ.HasEscaped) return false;
+        return true;
+    }
+
+    public void UpdateNPCReactions(PlayerController player)
+    {
+        foreach (var npc in FindObjectsOfType<NPC>())
+        {
+            if (player.Abilities.Contains("Pulse of Silence"))
+            {
+                npc.OverrideDialogue("...Why can't I speak?");
+                npc.AddTrait("Fearful");
+            }
+            else if (player.Abilities.Contains("Chord of Mercy") || player.Abilities.Contains("Harmony Surge"))
+            {
+                npc.OverrideDialogue("You radiate something... kind.");
+                npc.AddTrait("Trusting");
+            }
+        }
+    }
+}
+using System.Collections.Generic;
+using UnityEngine;
+
+public class NPC : MonoBehaviour
+{
+    public bool WasSpared;
+    public bool WasKilledSurrendering;
+    public bool IsResolved;
+    public bool IsAlive;
+    public bool HasEscaped;
+    public string GuiltLevel;
+    public List<string> Traits;
+
+    public void SetBehavior(string behavior) { }
+    public void OverrideDialogue(string text) { }
+    public void AddTrait(string trait)
+    {
+        if (!Traits.Contains(trait)) Traits.Add(trait);
+    }
+}
+using UnityEngine;
+using UnityEngine.UI;
+
+public class UIManager : MonoBehaviour
+{
+    public Text objectiveTitle;
+    public Text objectiveDetails;
+    public GameObject summaryPanel;
+    public Text summaryText;
+    public static UIManager Instance;
+
+    void Awake() { Instance = this; }
+
+    public void SetObjective(string title, string details)
+    {
+        objectiveTitle.text = title;
+        objectiveDetails.text = details;
+    }
+
+    public void ShowMessage(string message)
+    {
+        // Show popup message (implement as desired)
+    }
+
+    public void ShowMissionSummary(EchoesOfJudgmentMission.Outcome outcome)
+    {
+        summaryPanel.SetActive(true);
+        switch (outcome)
+        {
+            case EchoesOfJudgmentMission.Outcome.Compassion:
+                summaryText.text = "You chose mercy and changed the world for the better.";
+                break;
+            case EchoesOfJudgmentMission.Outcome.Ruthless:
+                summaryText.text = "You left echoes of fear and regret across the grid.";
+                break;
+            default:
+                summaryText.text = "You walked the line, neither condemned nor redeemed.";
+                break;
+        }
+    }
+
+    public void DistortWeaponUI(Weapon weapon)
+    {
+        // Apply distortion VFX to weapon UI
+    }
+}
+using UnityEngine;
+using System.Collections.Generic;
+
+public class PlayerController : MonoBehaviour
+{
+    public List<string> Actions;
+    public List<string> DialogueChoices;
+    public List<string> Traits;
+    public List<string> Abilities;
+    public float SquadMorale;
+
+    public void AddTrait(string trait)
+    {
+        if (!Traits.Contains(trait)) Traits.Add(trait);
+    }
+
+    public void RemoveTrait(string trait)
+    {
+        if (Traits.Contains(trait)) Traits.Remove(trait);
+    }
+
+    public void UnlockAbility(string ability)
+    {
+        if (!Abilities.Contains(ability)) Abilities.Add(ability);
+    }
+
+    public bool HasDisabledAll(string type)
+    {
+        // Implement logic for all of type disabled
+        return true;
+    }
+
+    public bool AlertedEnemies { get; set; }
+    public bool HasHacked(string target) { return true; }
+    public int GetActionCount(string action) { return 0; }
+    public bool IsMoral() { return true; }
+}
+using UnityEngine;
+
+public class SinScanner: MonoBehaviour
+{
+    public void Enable() { }
+    public string Scan(NPC npc)
+    {
+        // Return guilt level: "Low", "Medium", "High"
+        return npc.GuiltLevel;
+    }
+}
+using UnityEngine;
+
+public class VFXManager: MonoBehaviour
+{
+    public void TriggerMoralityFX(int morality)
+    {
+        if (morality > 5)
+            PlayVFX("LightPulse");
+        else if (morality < -5)
+            PlayVFX("DarkRipple");
+    }
+
+    public void PlayVFX(string vfxName)
+    {
+        // Play named VFX
+    }
+}
+using UnityEngine;
+
+public class MapManager: MonoBehaviour
+{
+    public void UpdateMapDynamics(int morality)
+    {
+        if (morality < -5)
+        {
+            // Mutate map, reduce visibility, scramble labels
+        }
+        else if (morality > 5)
+        {
+            // Stabilize map, reveal hidden paths
+        }
+    }
+}
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using TMPro;
+
+// Example: Full UI prefab wiring for mission, squad, empathy, and cinematic feedback.
+public class UIManager : MonoBehaviour
+{
+    [Header("Mission UI")]
+    public TextMeshProUGUI missionTitleText;
+    public TextMeshProUGUI missionObjectiveText;
+    public Slider moraleSlider;
+    public TextMeshProUGUI moraleStatusText;
+
+    [Header("Squad UI")]
+    public Transform squadPanel;
+    public GameObject squadMemberPrefab; // Prefab with portrait, name, health, empathy slider
+
+    [Header("Dialogue UI")]
+    public GameObject dialoguePanel;
+    public TextMeshProUGUI dialogueSpeaker;
+    public TextMeshProUGUI dialogueText;
+    public Button[] dialogueChoices;
+
+    [Header("HUD Feedback")]
+    public GameObject alertPanel;
+    public TextMeshProUGUI alertText;
+    public Image empathyPulse;
+
+    [Header("Cinematic UI")]
+    public CanvasGroup blackBars;
+    public Animator cinematicTextAnimator;
+    public TextMeshProUGUI cinematicText;
+
+    public static UIManager Instance;
+
+    void Awake() { Instance = this; }
+
+    // --- Mission UI ---
+    public void SetMissionTitle(string title) => missionTitleText.text = title;
+    public void SetObjective(string desc) => missionObjectiveText.text = desc;
+    public void SetMorale(float val)
+    {
+        moraleSlider.value = val;
+        moraleStatusText.text = val < 0.4f ? "Low" : val > 0.8f ? "High" : "Normal";
+    }
+
+    // --- Squad UI ---
+    public void UpdateSquadUI(List<SquadMember> members)
+    {
+        foreach (Transform child in squadPanel) Destroy(child.gameObject);
+        foreach (var member in members)
+        {
+            var go = Instantiate(squadMemberPrefab, squadPanel);
+            go.transform.Find("Portrait").GetComponent<Image>().sprite = member.portrait;
+            go.transform.Find("Name").GetComponent<TextMeshProUGUI>().text = member.displayName;
+            go.transform.Find("HealthSlider").GetComponent<Slider>().value = member.health;
+            go.transform.Find("EmpathySlider").GetComponent<Slider>().value = member.empathy;
+        }
+    }
+
+    // --- Dialogue UI ---
+    public void ShowDialogue(string speaker, string text, string[] choices, System.Action<int> onChoice)
+    {
+        dialoguePanel.SetActive(true);
+        dialogueSpeaker.text = speaker;
+        dialogueText.text = text;
+        for (int i = 0; i < dialogueChoices.Length; i++)
+        {
+            if (i < choices.Length)
+            {
+                dialogueChoices[i].gameObject.SetActive(true);
+                dialogueChoices[i].GetComponentInChildren<TextMeshProUGUI>().text = choices[i];
+                int idx = i;
+                dialogueChoices[i].onClick.RemoveAllListeners();
+                dialogueChoices[i].onClick.AddListener(() => { dialoguePanel.SetActive(false); onChoice(idx); });
+            }
+            else
+            {
+                dialogueChoices[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
+    // --- HUD Alert/Feedback ---
+    public void ShowAlert(string msg, float duration = 1.5f)
+    {
+        StopAllCoroutines();
+        StartCoroutine(AlertRoutine(msg, duration));
+    }
+    IEnumerator AlertRoutine(string msg, float d)
+    {
+        alertPanel.SetActive(true);
+        alertText.text = msg;
+        yield return new WaitForSeconds(d);
+        alertPanel.SetActive(false);
+    }
+    public void PulseEmpathy(Color c)
+    {
+        empathyPulse.color = c;
+        empathyPulse.GetComponent<Animator>().SetTrigger("Pulse");
+    }
+
+    // --- Cinematic UI ---
+    public void ShowCinematicBars(bool show)
+    {
+        blackBars.alpha = show ? 1f : 0f;
+        blackBars.blocksRaycasts = show;
+    }
+    public void PlayCinematicText(string text)
+    {
+        cinematicText.text = text;
+        cinematicTextAnimator.SetTrigger("ShowText");
+    }
+}
+using UnityEngine;
+using System.Collections.Generic;
+
+public class PlayerController : MonoBehaviour
+{
+    public List<string> Actions;
+    public List<string> DialogueChoices;
+    public List<string> Traits;
+    public List<string> Abilities;
+    public float SquadMorale;
+
+    public void AddTrait(string trait)
+    {
+        if (!Traits.Contains(trait)) Traits.Add(trait);
+    }
+
+    public void RemoveTrait(string trait)
+    {
+        if (Traits.Contains(trait)) Traits.Remove(trait);
+    }
+
+    public void UnlockAbility(string ability)
+    {
+        if (!Abilities.Contains(ability)) Abilities.Add(ability);
+    }
+
+    public bool HasDisabledAll(string type)
+    {
+        // Implement logic for all types disabled
+        return true;
+    }
+
+    public bool AlertedEnemies { get; set; }
+    public bool HasHacked(string target) { return true; }
+    public int GetActionCount(string action) { return 0; }
+    public bool IsMoral() { return true; }
+}
+using UnityEngine;
+
+public class VFXManager: MonoBehaviour
+{
+    public void TriggerMoralityFX(int morality)
+    {
+        if (morality > 5)
+            PlayVFX("LightPulse");
+        else if (morality < -5)
+            PlayVFX("DarkRipple");
+    }
+
+    public void PlayVFX(string vfxName)
+    {
+        // Play named VFX
+    }
+}
+using UnityEngine;
+
+public class MapManager: MonoBehaviour
+{
+    public void UpdateMapDynamics(int morality)
+    {
+        if (morality < -5)
+        {
+            // Mutate map, reduce visibility, scramble labels
+        }
+        else if (morality > 5)
+        {
+            // Stabilize map, reveal hidden paths
+        }
+    }
+}
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AI;
+
+/// <summary>
+/// Advanced civilian AI with emergent emotional states, group panic, crowd physics, morale, and interactive behaviors.
+/// Integrates with regional ambience, HUD feedback, and cinematic systems.
+/// </summary>
+public class CivilianBehavior : MonoBehaviour
+{
+    public enum EmotionState { Calm, Fear, Panic, Resist, Hide, Surrender }
+    public EmotionState currentState = EmotionState.Calm;
+
+    [Header("Settings")]
+    public float threatDetectRadius = 15f;
+    public float panicRadius = 8f;
+    public float groupPanicSyncRadius = 6f;
+    public float resistChance = 0.1f; // 10% chance to resist instead of flee at panic
+    public float hideChance = 0.15f; // Some civilians hide instead of running
+
+    [Header("References")]
+    public Animator animator;
+    public NavMeshAgent navAgent;
+    public AudioSource voiceSource;
+    public AudioClip[] panicShouts;
+    public AudioClip[] calmChatter;
+    public AudioClip[] fearWhispers;
+    public ParticleSystem panicEffect;
+    public GameObject[] knockableObjects; // For crowd chaos
+
+    private Transform nearestEnemy;
+    private float lastStateChangeTime;
+
+    // Social/Group Panic
+    private static List<CivilianBehavior> allCivilians = new List<CivilianBehavior>();
+    private bool isHidden = false;
+
+    void Awake() { allCivilians.Add(this); }
+    void OnDestroy() { allCivilians.Remove(this); }
+
+    void Start()
+    {
+        if (!navAgent) navAgent = GetComponent<NavMeshAgent>();
+        if (!animator) animator = GetComponent<Animator>();
+    }
+
+    void Update()
+    {
+        DetectThreats();
+        GroupPanicSync();
+        HandleEmotion();
+    }
+
+    void DetectThreats()
+    {
+        nearestEnemy = FindNearestEnemy();
+        float nearestDist = nearestEnemy ? Vector3.Distance(transform.position, nearestEnemy.position) : Mathf.Infinity;
+
+        if (nearestDist < panicRadius)
+        {
+            // Randomly decide to resist, hide, or panic
+            float roll = Random.value;
+            if (roll < resistChance)
+                currentState = EmotionState.Resist;
+            else if (roll < resistChance + hideChance)
+                currentState = EmotionState.Hide;
+            else
+                currentState = EmotionState.Panic;
+        }
+        else if (nearestDist < threatDetectRadius)
+        {
+            currentState = EmotionState.Fear;
+        }
+        else
+        {
+            currentState = EmotionState.Calm;
+        }
+    }
+
+    void GroupPanicSync()
+    {
+        // If nearby civilian is panicking, may panic too
+        foreach (var civ in allCivilians)
+        {
+            if (civ != this && Vector3.Distance(transform.position, civ.transform.position) < groupPanicSyncRadius && civ.currentState == EmotionState.Panic)
+            {
+                if (currentState == EmotionState.Calm && Random.value < 0.33f)
+                    currentState = EmotionState.Fear;
+                else if (currentState == EmotionState.Fear && Random.value < 0.66f)
+                    currentState = EmotionState.Panic;
+            }
+        }
+    }
+
+    void HandleEmotion()
+    {
+        switch (currentState)
+        {
+            case EmotionState.Calm:
+                Wander();
+                PlayChatter();
+                animator.SetBool("isRunning", false);
+                break;
+            case EmotionState.Fear:
+                FleeFromThreat();
+                PlayWhisper();
+                animator.SetBool("isRunning", true);
+                break;
+            case EmotionState.Panic:
+                FleeFromThreat(true);
+                PlayPanicShout();
+                CrowdChaos();
+                animator.SetBool("isRunning", true);
+                if (panicEffect && !panicEffect.isPlaying) panicEffect.Play();
+                break;
+            case EmotionState.Resist:
+                ThrowObjectAtEnemy();
+                animator.SetTrigger("resist");
+                break;
+            case EmotionState.Hide:
+                if (!isHidden) StartCoroutine(HideInNearbyCover());
+                break;
+            case EmotionState.Surrender:
+                Surrender();
+                break;
+        }
+    }
+
+    Transform FindNearestEnemy()
+    {
+        float minDist = Mathf.Infinity;
+        Transform nearest = null;
+        foreach (var enemy in EnemyRegistry.AllEnemies)
+        {
+            float dist = Vector3.Distance(transform.position, enemy.transform.position);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                nearest = enemy.transform;
+            }
+        }
+        return nearest;
+    }
+
+    void Wander()
+    {
+        if (!navAgent.hasPath || navAgent.remainingDistance < 1f)
+        {
+            Vector3 randomDir = Random.insideUnitSphere * 5f + transform.position;
+            NavMeshHit hit;
+            if (NavMesh.SamplePosition(randomDir, out hit, 5f, NavMesh.AllAreas))
+                navAgent.SetDestination(hit.position);
+        }
+    }
+
+    void FleeFromThreat(bool isPanic = false)
+    {
+        if (!nearestEnemy) return;
+        Vector3 dir = (transform.position - nearestEnemy.position).normalized;
+        Vector3 runTo = transform.position + dir * (isPanic ? 20f : 10f);
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(runTo, out hit, 10f, NavMesh.AllAreas))
+            navAgent.SetDestination(hit.position);
+    }
+
+    void PlayChatter()
+    {
+        if (voiceSource && !voiceSource.isPlaying && calmChatter.Length > 0)
+            voiceSource.PlayOneShot(calmChatter[Random.Range(0, calmChatter.Length)]);
+    }
+
+    void PlayWhisper()
+    {
+        if (voiceSource && !voiceSource.isPlaying && fearWhispers.Length > 0)
+            voiceSource.PlayOneShot(fearWhispers[Random.Range(0, fearWhispers.Length)]);
+    }
+
+    void PlayPanicShout()
+    {
+        if (voiceSource && !voiceSource.isPlaying && panicShouts.Length > 0)
+            voiceSource.PlayOneShot(panicShouts[Random.Range(0, panicShouts.Length)]);
+    }
+
+    void CrowdChaos()
+    {
+        // Randomly knock over objects nearby
+        foreach (var obj in knockableObjects)
+        {
+            if (Random.value < 0.25f)
+            {
+                Rigidbody rb = obj.GetComponent<Rigidbody>();
+                if (rb) rb.AddForce(Vector3.right * Random.Range(-1f, 1f) * 100f + Vector3.up * 50f);
+            }
+        }
+    }
+
+    void ThrowObjectAtEnemy()
+    {
+        if (!nearestEnemy) return;
+        // Find throwable object
+        // This is a simple demo: find the closest knockable object in range
+        GameObject bestObj = null;
+        float minDist = 4f;
+        foreach (var obj in knockableObjects)
+        {
+            float dist = Vector3.Distance(transform.position, obj.transform.position);
+            if (dist < minDist)
+            {
+                bestObj = obj;
+                minDist = dist;
+            }
+        }
+        if (bestObj != null)
+        {
+            Rigidbody rb = bestObj.GetComponent<Rigidbody>();
+            if (rb)
+            {
+                Vector3 forceDir = (nearestEnemy.position - bestObj.transform.position).normalized;
+                rb.AddForce(forceDir * 250f + Vector3.up * 80f, ForceMode.Impulse);
+            }
+        }
+    }
+
+    IEnumerator HideInNearbyCover()
+    {
+        isHidden = true;
+        // Simple: find closest cover tagged "Cover"
+        var covers = GameObject.FindGameObjectsWithTag("Cover");
+        float minDist = 999f;
+        Vector3 hideSpot = transform.position;
+        foreach (var cover in covers)
+        {
+            float dist = Vector3.Distance(transform.position, cover.transform.position);
+            if (dist < minDist)
+            {
+                minDist = dist;
+                hideSpot = cover.transform.position;
+            }
+        }
+        navAgent.SetDestination(hideSpot);
+        yield return new WaitForSeconds(8f);
+        isHidden = false;
+        currentState = EmotionState.Calm;
+    }
+
+    void Surrender()
+    {
+        navAgent.isStopped = true;
+        animator.SetTrigger("surrender");
+        // Optionally: trigger dialogue or gameplay event
+    }
+
+    // --- Advanced Features: Morale, Dialogue, and Cinematic Integration ---
+
+    public float morale = 1f; // 0 = broken, 1 = normal, 2 = inspired
+    public void ChangeMorale(float delta)
+    {
+        morale = Mathf.Clamp(morale + delta, 0f, 2f);
+        if (morale < 0.3f) currentState = EmotionState.Panic;
+        else if (morale > 1.5f) currentState = EmotionState.Resist;
+    }
+
+    public void TriggerCinematic(string cinematicName)
+    {
+        // Call Timeline or cutscene
+        Debug.Log($"Triggering cinematic: {cinematicName}");
+    }
+
+    public void StartCustomDialogue(string line)
+    {
+        if (voiceSource)
+            voiceSource.PlayOneShot(Resources.Load<AudioClip>("Dialogue/" + line));
+    }
+
+    // --- UI and HUD Feedback Integration (Static Example) ---
+    public static void BroadcastPanic(Vector3 epicenter, float radius)
+    {
+        foreach (var civ in allCivilians)
+        {
+            if (Vector3.Distance(civ.transform.position, epicenter) < radius)
+                civ.currentState = EmotionState.Panic;
+        }
+        // Optionally: trigger HUD warning or crowd FX
+        HUDManager.Instance?.ShowAlert("Civilian panic spreading!");
+    }
+}
+
+/// <summary>
+/// Registry helper for enemies (to be managed globally in the scene)
+/// </summary>
+public static class EnemyRegistry
+{
+    public static List<Transform> AllEnemies = new List<Transform>();
+}
+
+// --- HUDManager Example (UI feedback for civilian events) ---
+public class HUDManager: MonoBehaviour
+{
+    public static HUDManager Instance;
+    public Text alertText;
+    void Awake() { Instance = this; }
+
+    public void ShowAlert(string msg)
+    {
+        alertText.text = msg;
+        alertText.color = Color.red;
+        alertText.CrossFadeAlpha(1f, 0f, true);
+        alertText.CrossFadeAlpha(0f, 2f, false);
+    }
+}
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AI;
+
+/// <summary>
+/// Central registry and control for all enemies.
+/// Allows queries for nearest, all, squad targeting, and group AI.
+/// </summary>
+public class EnemyManager : MonoBehaviour
+{
+    public static EnemyManager Instance;
+    public List<EnemyAI> allEnemies = new List<EnemyAI>();
+    public Transform player;
+
+    void Awake() { Instance = this; }
+
+    public void Register(EnemyAI ai) { if (!allEnemies.Contains(ai)) allEnemies.Add(ai); }
+    public void Unregister(EnemyAI ai) { if (allEnemies.Contains(ai)) allEnemies.Remove(ai); }
+
+    public EnemyAI GetNearestEnemy(Vector3 pos, float maxDist = 999f)
+    {
+        float min = maxDist; EnemyAI nearest = null;
+        foreach (var e in allEnemies)
+        {
+            if (!e) continue;
+            float d = Vector3.Distance(pos, e.transform.position);
+            if (d < min) { min = d; nearest = e; }
+        }
+        return nearest;
+    }
+
+    public List<EnemyAI> GetEnemiesInRange(Vector3 pos, float radius)
+    {
+        var list = new List<EnemyAI>();
+        foreach (var e in allEnemies)
+            if (e && Vector3.Distance(pos, e.transform.position) <= radius)
+                list.Add(e);
+        return list;
+    }
+
+    // Example: Squad call for reinforcements
+    public void CallReinforcements(Vector3 to, int count)
+    {
+        // Find closest spawner, spawn and send to 'to'
+        // Implement as needed
+    }
+
+    // Example: Set group alert state
+    public void SetGroupAlert(Vector3 pos, float radius, bool alert)
+    {
+        foreach (var e in GetEnemiesInRange(pos, radius))
+            e.SetAlert(alert);
+    }
+}
+
+/// <summary>
+/// Enemy AI base for registration and tactical logic
+/// </summary>
+public class EnemyAI: MonoBehaviour
+{
+    void OnEnable() { EnemyManager.Instance?.Register(this); }
+    void OnDisable() { EnemyManager.Instance?.Unregister(this); }
+    public void SetAlert(bool alert) { /* Handle alert logic */ }
+}
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// Controls squad members, empathy, and command system.
+/// </summary>
+public class SquadManager : MonoBehaviour
+{
+    public List<SquadMember> squad = new List<SquadMember>();
+    public Transform player;
+    public static SquadManager Instance;
+
+    void Awake() { Instance = this; }
+
+    public void GiveOrder(SquadOrder order, SquadMember target = null)
+    {
+        foreach (var member in squad)
+        {
+            if (target == null || member == target)
+                member.ReceiveOrder(order);
+        }
+        UIManager.Instance?.ShowAlert($"Squad ordered: {order}");
+    }
+
+    public void UpdateEmpathy()
+    {
+        float avgEmpathy = 0;
+        foreach (var m in squad) avgEmpathy += m.empathy;
+        avgEmpathy /= squad.Count;
+        UIManager.Instance.SetMorale(avgEmpathy);
+    }
+}
+
+public enum SquadOrder { Hold, Advance, Flank, Regroup, Heal, Empathize }
+
+[System.Serializable]
+public class SquadMember
+{
+    public string displayName;
+    public Sprite portrait;
+    public float health;
+    public float empathy;
+    public GameObject characterObject;
+
+    public void ReceiveOrder(SquadOrder order)
+    {
+        // Implement tactical and empathy responses
+    }
+}
