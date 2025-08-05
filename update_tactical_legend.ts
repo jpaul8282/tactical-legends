@@ -2903,3 +2903,398 @@ public class SquadLeaderCommandIntegration: MonoBehaviour
         }
     }
 }
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Playables;
+using UnityEngine.Timeline;
+
+/// <summary>
+/// Ultra-Realistic Campaign Branching Manager with animation triggers, slow-mo cam,
+/// and per-kill bloody FX. Tracks morality, faction trust, squad traits, wounds, 
+/// casualties, kill styles, and integrates with cinematic and FX systems.
+/// </summary>
+public class CampaignBranchingManager : MonoBehaviour
+{
+    public int globalMorality;
+    public Dictionary<string, int> factionTrust = new();
+    public Dictionary<string, TraitType> squadTraits = new();
+    public Dictionary<string, int> squadWounds = new();
+    public int totalCasualties = 0;
+    public int brutalKills = 0;
+    public int mercyEvents = 0;
+    public List<string> fallenSquadMembers = new();
+    public List<string> bloodiedMissionLogs = new();
+
+    [Header("Blood/Gore FX")]
+    public GameObject bloodSplatterPrefab;
+    public GameObject limbPrefab;
+    public AudioClip[] goreAudioClips;
+    public ParticleSystem bloodMistFX;
+    public Animator screenAnimator; // For screen blood/impact FX
+    public RuntimeAnimatorController killAnimController;
+    
+    [Header("Slow-Mo & Cinematic")]
+    public Camera mainCam;
+    public float slowMoDuration = 1.25f;
+    public float slowMoTimeScale = 0.18f;
+    public PlayableDirector timelineDirector;
+    public TimelineAsset killCamTimeline;
+
+    [Header("UI")]
+    public UIManager uiManager;
+
+    // --- Record outcome with advanced realism ---
+    public void RecordMissionOutcome(
+        int moralityDelta, 
+        Dictionary<string, TraitType> newTraits, 
+        string faction, 
+        int factionDelta,
+        int casualties, 
+        int brutalKillsDelta, 
+        int mercyDelta, 
+        List<string> deaths, 
+        bool wasBloody = false)
+    {
+        globalMorality += moralityDelta;
+        factionTrust[faction] = Mathf.Clamp(factionTrust.GetValueOrDefault(faction) + factionDelta, 0, 100);
+
+        foreach (var trait in newTraits)
+            squadTraits[trait.Key] = trait.Value;
+
+        totalCasualties += Mathf.Max(0, casualties);
+        brutalKills += Mathf.Max(0, brutalKillsDelta);
+        mercyEvents += Mathf.Max(0, mercyDelta);
+
+        foreach (var name in deaths)
+        {
+            if (!fallenSquadMembers.Contains(name))
+                fallenSquadMembers.Add(name);
+        }
+
+        foreach (var trait in newTraits)
+        {
+            if (trait.Value == TraitType.Wounded)
+                squadWounds[trait.Key] = squadWounds.GetValueOrDefault(trait.Key) + 1;
+        }
+
+        if (wasBloody)
+        {
+            var log = $"Mission ended in carnage. {brutalKillsDelta} brutal kills. {casualties} casualties.";
+            bloodiedMissionLogs.Add(log);
+            uiManager?.ShowBloodSplash();
+            TriggerBloodyFX();
+        }
+    }
+
+    public void UnlockNextMission()
+    {
+        if (globalMorality >= 80 && factionTrust.GetValueOrDefault("Echo Ascendants") > 80 && brutalKills == 0 && mercyEvents > 5)
+        {
+            MissionLoader.Load("Operation: Pax Virtus");
+        }
+        else if (globalMorality >= 50 && factionTrust.GetValueOrDefault("Echo Ascendants") > 60)
+        {
+            MissionLoader.Load("Operation: Dawn Accord");
+        }
+        else if (globalMorality <= -30 && brutalKills > 5)
+        {
+            MissionLoader.Load("Operation: Crimson Descent");
+        }
+        else if (globalMorality < 0)
+        {
+            MissionLoader.Load("Operation: Echo Collapse");
+        }
+        else
+        {
+            MissionLoader.Load("Operation: Grey Protocol");
+        }
+    }
+
+    public void PlayEpilogueTheme()
+    {
+        if (globalMorality > 75 && brutalKills < 2)
+            AudioManager.Play("theme_hope_rising");
+        else if (globalMorality < -50 && brutalKills > 10)
+            AudioManager.Play("theme_twilight_war_bloody");
+        else if (totalCasualties > 10 || fallenSquadMembers.Count > 3)
+            AudioManager.Play("theme_bittersweet_loss");
+        else
+            AudioManager.Play("theme_fragile_peace");
+    }
+
+    // --- Per-Kill Bloody FX and Animation Triggers ---
+    public void OnKill(Vector3 killPosition, bool isBrutal, bool isMercy, Transform victim = null)
+    {
+        if (isBrutal)
+        {
+            brutalKills++;
+            TriggerPerKillBloodyFX(killPosition, victim);
+            TriggerSlowMoKillCam(killPosition, victim);
+            if (screenAnimator) screenAnimator.SetTrigger("BloodSplash");
+            if (timelineDirector && killCamTimeline)
+            {
+                timelineDirector.playableAsset = killCamTimeline;
+                timelineDirector.Play();
+            }
+            uiManager?.ShowAlert("Brutal Execution!", 1.2f);
+        }
+        else if (isMercy)
+        {
+            mercyEvents++;
+            uiManager?.PulseEmpathy(Color.cyan);
+        }
+        else
+        {
+            // Standard kill effect (optional)
+            TriggerStandardBloodFX(killPosition);
+        }
+    }
+
+    void TriggerPerKillBloodyFX(Vector3 pos, Transform victim)
+    {
+        // Blood splatter at kill position
+        if (bloodSplatterPrefab)
+        {
+            var splat = Instantiate(bloodSplatterPrefab, pos, Quaternion.LookRotation(-mainCam.transform.forward));
+            Destroy(splat, 4f);
+        }
+        // Play gore SFX
+        if (goreAudioClips != null && goreAudioClips.Length > 0)
+        {
+            AudioSource.PlayClipAtPoint(goreAudioClips[Random.Range(0, goreAudioClips.Length)], pos);
+        }
+        // Limb fly-off for certain brutal kills
+        if (limbPrefab && Random.value > 0.6f)
+        {
+            Vector3 spawnPos = pos + Vector3.up * 0.5f;
+            var limb = Instantiate(limbPrefab, spawnPos, Random.rotation);
+            Rigidbody rb = limb.GetComponent<Rigidbody>();
+            if (rb) rb.AddForce((mainCam.transform.forward + Vector3.up * 0.7f) * Random.Range(6f, 12f), ForceMode.Impulse);
+            Destroy(limb, 3.5f);
+        }
+        // Blood mist particle burst
+        if (bloodMistFX)
+        {
+            bloodMistFX.transform.position = pos;
+            bloodMistFX.Play();
+        }
+        // Animation trigger on victim (ragdoll, death anim)
+        if (victim && killAnimController)
+        {
+            Animator victimAnim = victim.GetComponent<Animator>();
+            if (victimAnim)
+            {
+                victimAnim.runtimeAnimatorController = killAnimController;
+                victimAnim.SetTrigger("BrutalDeath");
+            }
+        }
+    }
+
+    void TriggerStandardBloodFX(Vector3 pos)
+    {
+        if (bloodMistFX)
+        {
+            bloodMistFX.transform.position = pos;
+            bloodMistFX.Play();
+        }
+    }
+
+    // --- Slow-Mo Kill Cam ---
+    public void TriggerSlowMoKillCam(Vector3 focusPoint, Transform target = null)
+    {
+        StartCoroutine(SlowMoRoutine(focusPoint, target));
+    }
+
+    IEnumerator SlowMoRoutine(Vector3 focus, Transform target)
+    {
+        // Focus camera on kill point
+        if (mainCam)
+        {
+            Vector3 camTarget = focus + Vector3.up * 1f;
+            mainCam.transform.LookAt(camTarget);
+        }
+        float oldTimeScale = Time.timeScale;
+        Time.timeScale = slowMoTimeScale;
+        Time.fixedDeltaTime = 0.02f * Time.timeScale;
+        yield return new WaitForSecondsRealtime(slowMoDuration);
+        Time.timeScale = oldTimeScale;
+        Time.fixedDeltaTime = 0.02f;
+    }
+
+    // --- Mission bloody/carnage FX for mission outcomes ---
+    public void TriggerBloodyFX()
+    {
+        // Spawn blood splatter at random positions on UI/camera
+        if (bloodSplatterPrefab != null)
+        {
+            for (int i = 0; i < Random.Range(3, 7); i++)
+            {
+                var pos = mainCam.transform.position + mainCam.transform.forward * 2f + Random.insideUnitSphere;
+                Instantiate(bloodSplatterPrefab, pos, Quaternion.LookRotation(-mainCam.transform.forward));
+            }
+        }
+        // Play gore SFX
+        if (goreAudioClips != null && goreAudioClips.Length > 0)
+        {
+            var clip = goreAudioClips[Random.Range(0, goreAudioClips.Length)];
+            AudioSource.PlayClipAtPoint(clip, mainCam.transform.position);
+        }
+        // Extra: limb for mission carnage
+        if (limbPrefab != null && brutalKills > 0)
+        {
+            var pos = mainCam.transform.position + mainCam.transform.forward * 3f;
+            var limb = Instantiate(limbPrefab, pos, Random.rotation);
+            Rigidbody rb = limb.GetComponent<Rigidbody>();
+            if (rb) rb.AddForce(Random.onUnitSphere * 7f, ForceMode.Impulse);
+            Destroy(limb, 4f);
+        }
+        // Blood mist effect
+        if (bloodMistFX != null)
+        {
+            bloodMistFX.transform.position = mainCam.transform.position + mainCam.transform.forward * 2f;
+            bloodMistFX.Play();
+        }
+        // Extra: screen blood animation
+        if (screenAnimator) screenAnimator.SetTrigger("BloodSplash");
+    }
+
+    // --- Squad trait and mission logs ---
+    public string GetSquadTraitSummary()
+    {
+        List<string> summary = new();
+        foreach (var trait in squadTraits)
+        {
+            summary.Add($"{trait.Key}: {trait.Value}" + 
+                (squadWounds.ContainsKey(trait.Key) ? $" (Wounds: {squadWounds[trait.Key]})" : ""));
+        }
+        return string.Join("\n", summary);
+    }
+
+    public string GetBloodyMissionLog()
+    {
+        return string.Join("\n", bloodiedMissionLogs);
+    }
+
+    // --- UIManager hook for blood splash on screen ---
+    public class UIManager : MonoBehaviour
+    {
+        public GameObject bloodOverlay;
+        public void ShowBloodSplash()
+        {
+            if (bloodOverlay)
+            {
+                bloodOverlay.SetActive(true);
+                StartCoroutine(FadeBlood());
+            }
+        }
+
+        IEnumerator FadeBlood()
+        {
+            yield return new WaitForSeconds(1.5f);
+            bloodOverlay.SetActive(false);
+        }
+
+        public void ShowAlert(string msg, float duration = 1.5f)
+        {
+            // Show pop-up or overlay alert
+        }
+
+        public void PulseEmpathy(Color c)
+        {
+            // HUD effect
+        }
+    }
+
+    // Example trait type enum
+    public enum TraitType { Brave, Cautious, Wounded, Ruthless, Compassionate, Hardened }
+}
+Particle System Asset Tips
+A. Blood/Gore Particle System
+Start with Unity’s built-in Particle System:
+Shape: Use Cone for spray, Sphere for burst, or Mesh for custom splatter.
+Start Color: Deep red (#6a0707) with alpha and randomization.
+Start Size: 0.1–0.25 for mist, 0.3–0.7 for thick splats.
+Start Speed: 4–12 for spurts, 1–3 for drips.
+Gravity Modifier: 1.5–3 to get fast, heavy drops.
+Collision: Enable and “Send Collision Messages” for splatter on surfaces.
+Sub Emitters: On Collision, spawn secondary “splat” or “mist” systems.
+Texture: Use a splatter sprite (Alpha blended or additive); try free assets like Kenney’s Blood Particle Pack.
+Example:
+Main system: Fast, short-lived red particles (spurts).
+Sub-emitter: On collision, burst out flat, sticky blood splats (use “Trails” for drips).
+B. Limb/Organ FX
+Use ragdoll limbs with blood particle prefab attached.
+Animate limb separation with physics force and a “blood spurter” ParticleSystem on the stump.
+C. Screen Blood Overlays
+Use a UI Canvas with an Image for splats.
+Animate alpha/pulse/fade with Animator or scripts.
+For pooling, use several overlays and cycle through on repeated impacts.
+2. Animation Controller Setups
+A. Victim Animations
+Animator Parameters:
+
+Trigger: "BrutalDeath", "MercyDeath", "StandardDeath"
+Float: "DeathType" (0: Standard, 1: Brutal, 2: Mercy)
+Animation Clips:
+
+Standard Death: Collapse or ragdoll.
+Brutal Death: Over-the-top reaction, body part detachment, extra force.
+Mercy Death: Slow, peaceful collapse, eyes close.
+Layered Animations:
+
+Use an “UpperBody” layer for flailing, or “Facial” layer for pain expressions.
+Ragdoll Blending:
+
+Transition from death anim to ragdoll for realistic collapse.
+Use Unity’s Ragdoll Utility or assets like PuppetMaster.
+Animator Controller Example:
+
+Any State → BrutalDeath (trigger) → RagdollBlend
+Any State → MercyDeath (trigger)
+Any State → StandardDeath (trigger)
+3. Cinematic Refinements
+A. Timeline (PlayableDirector)
+Sequence brutal kills:
+
+Timeline Track 1: Virtual Camera (Dolly or Aim at kill position)
+Timeline Track 2: Animation Track (trigger “BrutalDeath” on victim)
+Timeline Track 3: Particle Activation Track (blood FX prefab)
+Timeline Track 4: Audio Track (gore SFX, heartbeat slow-down)
+Timeline Track 5: Post-Processing (add blur, chromatic aberration, vignette)
+Timeline Track 6: UI Activation (screen blood overlay, slow-mo text)
+KillCam Slow-Mo:
+
+Use Cinemachine for dynamic camera movement (e.g., bullet follow, orbit around victim, time dilation).
+Keyframe Time.timeScale on Timeline for smooth slow-mo.
+Signal Tracks:
+
+Place Signal markers to call methods (e.g., OnBrutalKillStart, OnKillCamEnd).
+B. Camera Tricks
+Quick Cut: On impact, cut to a close-up camera on the wound.
+Shake: Add CinemachineImpulseSource for camera shake on brutal hits.
+Post-Process: Add extra bloom, red tint, lens distortion for disorientation.
+C. UI/Cinematic Integration
+Animate blood overlays, pulse vignette, and slow-down “BRUTAL KILL” text.
+Use custom fonts and sound for kill confirmations.
+4. Extra Tips & Asset Suggestions
+Assets:
+
+Blood Particle Pack (Kenney)
+Stylized Blood FX (Asset Store)
+Easy Decal for splat stickers.
+Code: Animator Trigger Example
+
+C#
+// Trigger kill animation and ragdoll
+victimAnimator.SetTrigger("BrutalDeath");
+// After anim event:
+victim.GetComponent<RagdollManager>().ActivateRagdoll();
+Summary Checklist
+ Particles: blood spurts, mist, splat, limb FX
+ Animation: Death triggers, ragdoll, facial layers
+ Timeline: Cinematic killcam, slow-mo, SFX, camera
+ UI: Blood overlays, pulse, text, sound
+ Camera: Shake, post-process, cut/orbit
+ Asset ready: Blood sprites, gore sounds, limb models
+
+ 
