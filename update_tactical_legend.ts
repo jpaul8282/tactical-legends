@@ -2740,9 +2740,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Controls squad members, empathy, and command system.
+/// Controls squad members, empathy, and the command system.
 /// </summary>
-public class SquadManager : MonoBehaviour
+public class SquadManager: MonoBehaviour
 {
     public List<SquadMember> squad = new List<SquadMember>();
     public Transform player;
@@ -2783,5 +2783,42 @@ public class SquadMember
     public void ReceiveOrder(SquadOrder order)
     {
         // Implement tactical and empathy responses
+    }
+}
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// Handles direct empathy gain/loss events and UI feedback.
+/// </summary>
+public class EmpathySystem: MonoBehaviour
+{
+    public PlayerController player;
+    public SquadManager squadMgr;
+    public float empathy { get; private set; }
+
+    public void GainEmpathy(float amt)
+    {
+        empathy += amt;
+        UIManager.Instance.PulseEmpathy(Color.cyan);
+        squadMgr.UpdateEmpathy();
+    }
+
+    public void LoseEmpathy(float amt)
+    {
+        empathy -= amt;
+        UIManager.Instance.PulseEmpathy(Color.red);
+        squadMgr.UpdateEmpathy();
+    }
+
+    public void OnSquadAction(SquadOrder order)
+    {
+        // Gain or lose empathy based on command
+        switch (order)
+        {
+            case SquadOrder.Empathize: GainEmpathy(0.05f); break;
+            case SquadOrder.Heal: GainEmpathy(0.02f); break;
+            case SquadOrder.Advance: LoseEmpathy(0.01f); break;
+        }
     }
 }
