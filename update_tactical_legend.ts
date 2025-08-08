@@ -20516,7 +20516,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
-        brightness: Brightness.dark,
+        brightness: Brightness. dark,
         primaryColor: _kLightBgColor, // In dark theme, fg becomes lighter, so success1 color is used.
         canvasColor: _kLightFgColor, // bg becomes darker
         colorScheme: ColorScheme.dark(
@@ -20527,9 +20527,917 @@ class MyApp extends StatelessWidget {
       ),
       themeMode: ThemeMode.system, // Respects system dark mode preference
       home: const Scaffold(
-        backgroundColor: Colors.transparent, // Background handled by Theme
+        backgroundColor: Colors. transparent, // Background handled by Theme
         body: AnimatedSpinner(),
       ),
+    );
+  }
+}
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+// 1. Color Constants
+final Color _kCyberGreen = const Color(0xFF00FF88);
+final Color _kCyberRed = const Color(0xFFFF6B6B);
+final Color _kDarkBackground1 = const Color(0xFF0A0A0A);
+final Color _kDarkBackground2 = const Color(0xFF1A1A2E);
+final Color _kDarkBackground3 = const Color(0xFF16213E);
+final Color _kDarkGrey = const Color(0xFF888888);
+final Color _kBlack = const Color(0xFF000000);
+final Color _kWhite = const Color(0xFFFFFFFF);
+final Color _kDarkerGreen = const Color(0xFF00CC6A);
+
+// 2. PodcastPlayerModel (Data Model)
+class PodcastPlayerModel extends ChangeNotifier {
+  bool _isPlaying = false;
+  double _currentTime = 0.0;
+  final double _totalTime = 150.0; // 2:30 in seconds
+  double _volume = 0.7; // 0.0 to 1.0
+
+  Timer? _progressTimer;
+
+  // Glitch effect properties
+  double _glitchMouseX = 0.0; // Normalized (0.0 - 1.0)
+  double _glitchMouseY = 0.0; // Normalized (0.0 - 1.0)
+  late final AnimationController _glitchTranslateController; // for glitch-lines translateX
+  late final Animation<double> _glitchTranslateAnimation;
+
+  // Visual indicator pulse properties
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseScaleAnimation;
+  late final Animation<double> _pulseOpacityAnimation;
+
+  // Podcast player conic gradient rotation
+  late final AnimationController _conicRotateController;
+  late final Animation<double> _conicRotateAnimation;
+
+  // Title glow effect
+  late final AnimationController _titleGlowController;
+  late final Animation<double> _titleGlowAnimation;
+
+  PodcastPlayerModel({required TickerProvider vsync}) {
+    // Glitch translate animation (simulates glitch-lines)
+    _glitchTranslateController = AnimationController(
+      vsync: vsync,
+      duration: const Duration(milliseconds: 3000),
+    )..repeat(reverse: true);
+    _glitchTranslateAnimation = Tween<double>(begin: 0.0, end: 2.0).animate(
+      CurvedAnimation(parent: _glitchTranslateController, curve: Curves.linear),
+    );
+    _glitchTranslateAnimation.addListener(notifyListeners);
+
+    // Pulse indicator animation
+    _pulseController = AnimationController(
+      vsync: vsync,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _pulseScaleAnimation = Tween<double>(begin: 0.1, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeOut),
+    );
+    _pulseOpacityAnimation = TweenSequence<double>(<TweenSequenceItem<double>>[
+      TweenSequenceItem<double>(tween: Tween<double>(begin: 1.0, end: 0.7), weight: 50),
+      TweenSequenceItem<double>(tween: Tween<double>(begin: 0.7, end: 0.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeOut));
+    _pulseScaleAnimation.addListener(notifyListeners);
+    _pulseOpacityAnimation.addListener(notifyListeners);
+
+    // Conic gradient rotation
+    _conicRotateController = AnimationController(
+      vsync: vsync,
+      duration: const Duration(milliseconds: 4000),
+    )..repeat();
+    _conicRotateAnimation = Tween<double>(begin: 0.0, end: 2 * math.pi).animate(
+      CurvedAnimation(parent: _conicRotateController, curve: Curves.linear),
+    );
+    _conicRotateAnimation.addListener(notifyListeners);
+
+    // Title glow animation
+    _titleGlowController = AnimationController(
+      vsync: vsync,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    _titleGlowAnimation = Tween<double>(begin: 20.0, end: 80.0).animate(
+      CurvedAnimation(parent: _titleGlowController, curve: Curves.easeInOut),
+    );
+    _titleGlowAnimation.addListener(notifyListeners);
+  }
+
+  bool get isPlaying => _isPlaying;
+  double get currentTime => _currentTime;
+  double get totalTime => _totalTime;
+  double get volume => _volume;
+
+  double get glitchTranslateValue => _glitchTranslateAnimation.value;
+  double get glitchMouseX => _glitchMouseX;
+  double get glitchMouseY => _glitchMouseY;
+
+  double get pulseScale => _pulseScaleAnimation.value;
+  double get pulseOpacity => _pulseOpacityAnimation.value;
+
+  double get conicRotateValue => _conicRotateAnimation.value;
+
+  double get titleGlowValue => _titleGlowAnimation.value;
+
+  void togglePlayPause() {
+    _isPlaying = !_isPlaying;
+    if (_isPlaying) {
+      _startProgressTimer();
+      // Simulate audio events visually
+      _glitchTranslateController.repeat(reverse: true);
+      _conicRotateController.repeat();
+      _titleGlowController.repeat(reverse: true);
+      _simulateAudioEvents(); // Start visual effects that mimic audio events
+    } else {
+      _stopProgressTimer();
+      _glitchTranslateController.stop();
+      _conicRotateController.stop();
+      _titleGlowController.stop();
+      _stopSimulatedAudioEvents();
+    }
+    notifyListeners();
+  }
+
+  void _startProgressTimer() {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (Timer timer) {
+      if (_currentTime < _totalTime) {
+        _currentTime += 0.1;
+        if (_currentTime > _totalTime) {
+          _currentTime = _totalTime; // Cap at total time
+        }
+        notifyListeners();
+      } else {
+        _stopProgressTimer();
+        _isPlaying = false;
+        notifyListeners();
+      }
+    });
+  }
+
+  void _stopProgressTimer() {
+    _progressTimer?.cancel();
+    _progressTimer = null;
+  }
+
+  void seek(double percentage) {
+    bool wasPlaying = _isPlaying;
+    if (wasPlaying) {
+      _stopProgressTimer();
+    }
+    _currentTime = (percentage * _totalTime).clamp(0.0, _totalTime);
+    if (wasPlaying) {
+      _startProgressTimer();
+    }
+    notifyListeners();
+  }
+
+  void setVolume(double value) {
+    _volume = value.clamp(0.0, 1.0);
+    notifyListeners();
+  }
+
+  void updateMousePosition(Offset localPosition, Size screenSize) {
+    _glitchMouseX = localPosition.dx / screenSize.width;
+    _glitchMouseY = localPosition.dy / screenSize.height;
+    notifyListeners();
+  }
+
+  void triggerVisualPulse() {
+    if (_pulseController.isAnimating) {
+      _pulseController.stop();
+      _pulseController.reset();
+    }
+    _pulseController.forward();
+  }
+
+  List<Timer> _simulatedAudioEventTimers = <Timer>[];
+
+  void _simulateAudioEvents() {
+    _stopSimulatedAudioEvents(); // Clear any existing timers
+
+    // Simplified visual cues for audio events. Actual audio synthesis is not implemented.
+    final List<Map<String, dynamic>> timeline = <Map<String, dynamic>>[
+      <String, dynamic>{'time': 0, 'action': triggerVisualPulse},
+      <String, dynamic>{'time': 2, 'action': triggerVisualPulse},
+      <String, dynamic>{'time': 8, 'action': triggerVisualPulse},
+      <String, dynamic>{'time': 15, 'action': triggerVisualPulse},
+      <String, dynamic>{'time': 30, 'action': triggerVisualPulse},
+      <String, dynamic>{'time': 45, 'action': triggerVisualPulse},
+      <String, dynamic>{'time': 60, 'action': triggerVisualPulse},
+      <String, dynamic>{'time': 80, 'action': triggerVisualPulse},
+      <String, dynamic>{'time': 120, 'action': triggerVisualPulse},
+    ];
+
+    for (final Map<String, dynamic> event in timeline) {
+      final Duration delay = Duration(milliseconds: (event['time'] * 1000).round());
+      final Timer timer = Timer(delay, () {
+        if (_isPlaying) {
+          (event['action'] as VoidCallback)();
+        }
+      });
+      _simulatedAudioEventTimers.add(timer);
+    }
+  }
+
+  void _stopSimulatedAudioEvents() {
+    for (final Timer timer in _simulatedAudioEventTimers) {
+      timer.cancel();
+    }
+    _simulatedAudioEventTimers.clear();
+  }
+
+  String formatTime(double seconds) {
+    final int mins = (seconds ~/ 60);
+    final int secs = (seconds % 60).round();
+    return '${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  void dispose() {
+    _stopProgressTimer();
+    _stopSimulatedAudioEvents();
+    _glitchTranslateController.dispose();
+    _pulseController.dispose();
+    _conicRotateController.dispose();
+    _titleGlowController.dispose();
+    super.dispose();
+  }
+}
+
+// 3. GlitchBackgroundPainter
+class _GlitchBackgroundPainter extends CustomPainter {
+  final double translateX;
+  final double mouseX;
+  final double mouseY;
+  final Size screenSize;
+
+  _GlitchBackgroundPainter({
+    required this.translateX,
+    required this.mouseX,
+    required this.mouseY,
+    required this.screenSize,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Simulate repeating-linear-gradient with lines
+    final Paint paint = Paint()
+      ..style = PaintingStyle.fill;
+
+    // Calculate dynamic properties based on mouse position
+    final double angleAdjust = mouseX * 0.1; // Not directly used for angle, but for effect
+    final double opacityAdjust = mouseY * 0.0001; // Increase opacity slightly with mouse Y
+
+    final int lineSpacing = 4; // 2px transparent, 2px green = 4px repeat
+    final int lineWidth = 2; // Green line width
+
+    for (double y = 0; y < size.height; y += lineSpacing) {
+      // Calculate opacity for the current line
+      final double currentOpacity = (0.01 + opacityAdjust).clamp(0.01, 0.1); // Clamp to avoid too opaque
+      
+      // Use withAlpha instead of withOpacity for current Flutter versions
+      paint.color = _kCyberGreen.withAlpha((currentOpacity * 255).round());
+
+      // Apply translateX animation and angleAdjust (as a general offset)
+      final double currentXOffset = translateX + (angleAdjust * size.width * 0.01); // Small x shift based on mouseX
+
+      canvas.drawRect(
+        Rect.fromLTWH(currentXOffset, y, size.width, lineWidth.toDouble()),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GlitchBackgroundPainter oldDelegate) {
+    return oldDelegate.translateX != translateX ||
+        oldDelegate.mouseX != mouseX ||
+        oldDelegate.mouseY != mouseY ||
+        oldDelegate.screenSize != screenSize;
+  }
+}
+
+// 4. GlitchBackground Widget
+class GlitchBackground extends StatefulWidget {
+  const GlitchBackground({super.key});
+
+  @override
+  State<GlitchBackground> createState() => _GlitchBackgroundState();
+}
+
+class _GlitchBackgroundState extends State<GlitchBackground> {
+  Size _screenSize = Size.zero;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        _screenSize = constraints.biggest;
+        return MouseRegion(
+          onHover: (PointerHoverEvent event) {
+            final RenderBox renderBox = context.findRenderObject() as RenderBox;
+            final Offset localPosition = renderBox.globalToLocal(event.position);
+            Provider.of<PodcastPlayerModel>(context, listen: false)
+                .updateMousePosition(localPosition, _screenSize);
+          },
+          child: Consumer<PodcastPlayerModel>(
+            builder: (BuildContext context, PodcastPlayerModel model, Widget? child) {
+              return CustomPaint(
+                size: Size.infinite,
+                painter: _GlitchBackgroundPainter(
+                  translateX: model.glitchTranslateValue,
+                  mouseX: model.glitchMouseX,
+                  mouseY: model.glitchMouseY,
+                  screenSize: _screenSize,
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+// 5. ConicGradientPainter (for PodcastPlayer)
+class _ConicGradientPainter extends CustomPainter {
+  final double rotationAngle; // in radians
+  final Color gradientColor;
+  final double opacity;
+
+  _ConicGradientPainter({
+    required this.rotationAngle,
+    required this.gradientColor,
+    required this.opacity,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Offset center = Offset(size.width / 2, size.height / 2);
+
+    final ui.Gradient conicGradient = ui.Gradient.sweep(
+      center,
+      <Color>[
+        gradientColor.withAlpha((0.0 * 255).round()), // Transparent start
+        gradientColor.withAlpha((opacity * 255).round()), // Main color
+        gradientColor.withAlpha((0.0 * 255).round()), // Transparent end
+      ],
+      <double>[0.0, 0.5, 1.0], // Stops for transparent -> color -> transparent
+      TileMode.repeated,
+      rotationAngle, // Start angle
+      rotationAngle + 2 * math.pi, // End angle (full circle)
+    );
+
+    final Paint paint = Paint()..shader = conicGradient;
+
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+  }
+
+  @override
+  bool shouldRepaint(_ConicGradientPainter oldDelegate) {
+    return oldDelegate.rotationAngle != rotationAngle ||
+        oldDelegate.gradientColor != gradientColor ||
+        oldDelegate.opacity != opacity;
+  }
+}
+
+// 6. HeaderWidget
+class HeaderWidget extends StatelessWidget {
+  const HeaderWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double titleFontSize = screenWidth * 0.05.clamp(20.0, 80.0); // clamp min/max actual px
+    final double subtitleFontSize = screenWidth * 0.012.clamp(14.0, 24.0);
+
+    return Consumer<PodcastPlayerModel>(
+      builder: (BuildContext context, PodcastPlayerModel model, Widget? child) {
+        return Column(
+          children: <Widget>[
+            Text(
+              'TACTICAL LEGENDS',
+              style: GoogleFonts.orbitron(
+                fontSize: titleFontSize,
+                fontWeight: FontWeight.w900,
+                color: _kCyberGreen,
+                shadows: <Shadow>[
+                  Shadow(
+                    blurRadius: model.titleGlowValue,
+                    color: _kCyberGreen.withAlpha((0.8 * 255).round()),
+                  ),
+                  Shadow(
+                    blurRadius: model.titleGlowValue / 2,
+                    color: _kCyberGreen.withAlpha((0.5 * 255).round()),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              'RISE OF OISTARIAN',
+              style: GoogleFonts.rajdhani(
+                fontSize: subtitleFontSize,
+                color: _kCyberRed,
+                fontWeight: FontWeight.w300,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// 7. PodcastPlayerWidget
+class PodcastPlayerWidget extends StatefulWidget {
+  const PodcastPlayerWidget({super.key});
+
+  @override
+  State<PodcastPlayerWidget> createState() => _PodcastPlayerWidgetState();
+}
+
+class _PodcastPlayerWidgetState extends State<PodcastPlayerWidget> {
+  bool _isHoveringPlayButton = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<PodcastPlayerModel>(
+      builder: (BuildContext context, PodcastPlayerModel model, Widget? child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: _kBlack.withAlpha((0.8 * 255).round()),
+            border: Border.all(color: _kCyberGreen, width: 2),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: _kCyberGreen.withAlpha((0.3 * 255).round()),
+                blurRadius: 50,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(30),
+          margin: const EdgeInsets.symmetric(vertical: 40),
+          child: Stack(
+            children: <Widget>[
+              // Conic gradient background effect
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: CustomPaint(
+                    painter: _ConicGradientPainter(
+                      rotationAngle: model.conicRotateValue,
+                      gradientColor: _kCyberGreen,
+                      opacity: 0.1,
+                    ),
+                  ),
+                ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  // Play button
+                  MouseRegion(
+                    onEnter: (PointerEnterEvent event) => setState(() => _isHoveringPlayButton = true),
+                    onExit: (PointerExitEvent event) => setState(() => _isHoveringPlayButton = false),
+                    child: GestureDetector(
+                      onTap: model.togglePlayPause,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: model.isPlaying
+                                ? <Color>[_kCyberRed, const Color(0xFFFF5252)]
+                                : <Color>[_kCyberGreen, _kDarkerGreen],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: (_isHoveringPlayButton || model.isPlaying)
+                                  ? _kCyberGreen.withAlpha((0.8 * 255).round())
+                                  : _kCyberGreen.withAlpha((0.5 * 255).round()),
+                              blurRadius: (_isHoveringPlayButton || model.isPlaying) ? 50 : 30,
+                            ),
+                          ],
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          model.isPlaying ? Icons.pause : Icons.play_arrow,
+                          size: 40,
+                          color: _kBlack,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Progress bar
+                  GestureDetector(
+                    onTapUp: (TapUpDetails details) {
+                      final RenderBox renderBox = context.findRenderObject() as RenderBox;
+                      final double tapX = renderBox.globalToLocal(details.globalPosition).dx;
+                      final double progressBarWidth = renderBox.size.width;
+                      model.seek(tapX / progressBarWidth);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _kWhite.withAlpha((0.1 * 255).round()),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: model.currentTime / model.totalTime,
+                          child: Container(
+                            height: 8,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: <Color>[_kCyberGreen, _kCyberRed],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(4),
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  color: _kCyberGreen.withAlpha((0.5 * 255).round()),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Time display
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        model.formatTime(model.currentTime),
+                        style: GoogleFonts.orbitron(fontSize: 14, color: _kCyberGreen),
+                      ),
+                      Text(
+                        model.formatTime(model.totalTime),
+                        style: GoogleFonts.orbitron(fontSize: 14, color: _kCyberGreen),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Volume control
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Icon(Icons.volume_up, color: _kCyberGreen),
+                      const SizedBox(width: 10),
+                      SliderTheme(
+                        data: SliderThemeData(
+                          trackHeight: 6,
+                          activeTrackColor: _kCyberGreen,
+                          inactiveTrackColor: _kWhite.withAlpha((0.1 * 255).round()),
+                          thumbColor: _kCyberGreen,
+                          overlayColor: _kCyberGreen.withAlpha((0.2 * 255).round()),
+                          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                          valueIndicatorShape: const PaddleSliderValueIndicatorShape(),
+                          valueIndicatorColor: _kCyberGreen,
+                          valueIndicatorTextStyle: GoogleFonts.orbitron(color: _kBlack),
+                        ),
+                        child: SizedBox(
+                          width: 150,
+                          child: Slider(
+                            value: model.volume,
+                            min: 0.0,
+                            max: 1.0,
+                            divisions: 100,
+                            label: (model.volume * 100).round().toString(),
+                            onChanged: model.setVolume,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// 8. ScriptSectionWidget
+class ScriptSectionWidget extends StatelessWidget {
+  const ScriptSectionWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 30),
+      // Original BoxDecoration had borderRadius, so use ClipRRect to apply it to the stack contents.
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Stack(
+          children: <Widget>[
+            // Background color for the content area
+            Positioned.fill(
+              child: Container(
+                color: _kBlack.withAlpha((0.6 * 255).round()),
+              ),
+            ),
+            // The left border, drawn as a separate positioned container
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 4, // The original border width
+              child: Container(
+                color: _kCyberRed, // The original border color
+              ),
+            ),
+            // The actual content, with adjusted padding to account for the explicit border
+            // Original padding was all(25). A BoxDecoration border draws inside this padding.
+            // So, content started 25px from the border. Now, with the border at left:0,
+            // the content needs 4px (border width) + 25px (original padding) = 29px left padding.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(29.0, 25.0, 25.0, 25.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const <Widget>[
+                  Text(
+                    'PODCAST SCRIPT',
+                    style: TextStyle(
+                      fontFamily: 'Orbitron', // Using direct font family as GoogleFonts are for design
+                      color: Color(0xFFFF6B6B),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 15),
+                  StageDirectionText(
+                    '[Sound of distant data pulses and echoes of gunfire. Ambient cyber atmosphere.]',
+                  ),
+                  QuoteText(
+                    characterName: 'Narrator',
+                    quote: 'In a world coded in silence... one whisper rewrites the algorithm.',
+                  ),
+                  StageDirectionText(
+                    '[Flash cuts: a shattered memory crystal. A cloaked figure sprinting across Echo Swamp. Neon eyes flicker in the dark.]',
+                  ),
+                  QuoteText(
+                    characterName: 'Zoe\'s voice',
+                    quote: 'They said you were erased, but legends don\'t vanish. They reload.',
+                    styleOverride: TextStyle(fontStyle: FontStyle.italic), // For "glitching" effect implied by CSS
+                  ),
+                  StageDirectionText(
+                    '[Cue synth-heavy combat sequence. OISTARIAN locks in the NeuroPulse Arm. Drones dive, explosions bloom.]',
+                  ),
+                  QuoteText(
+                    characterName: 'Narrator',
+                    quote: 'OISTARIAN—former engineer. Reluctant operative. Relentless myth.',
+                  ),
+                  StageDirectionText(
+                    '[Fast montage: encrypted data walls exploding, a vault marked "EDEN" unlocking, flash of Zoe\'s hologram saying "Protect the Shard."]',
+                  ),
+                  QuoteText(
+                    characterName: 'Narrator',
+                    quote: 'This summer... silence is broken.',
+                  ),
+                  StageDirectionText(
+                    '[Final scene: OISTARIAN stands under a storm-lit sky, whispering "This time, I choose the ending."]',
+                  ),
+                  SizedBox(height: 15),
+                  Center(
+                    child: Text(
+                      'Decode the shadows. Unleash the legend.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontFamily: 'Orbitron',
+                        fontSize: 24,
+                        color: Color(0xFFFF6B6B),
+                        shadows: <Shadow>[
+                          Shadow(
+                            blurRadius: 20,
+                            color: Color(0xFFFF6B6B),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class StageDirectionText extends StatelessWidget {
+  final String text;
+  const StageDirectionText(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Text(
+        text,
+        style: GoogleFonts.rajdhani(
+          color: _kDarkGrey,
+          fontStyle: FontStyle.italic,
+          fontSize: 17,
+        ),
+      ),
+    );
+  }
+}
+
+class QuoteText extends StatelessWidget {
+  final String characterName;
+  final String quote;
+  final TextStyle? styleOverride;
+
+  const QuoteText({
+    super.key,
+    required this.characterName,
+    required this.quote,
+    this.styleOverride,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 15),
+      child: Container(
+        padding: const EdgeInsets.only(left: 20),
+        decoration: BoxDecoration(border: Border(left: BorderSide(color: _kCyberGreen, width: 2))),
+        child: RichText(
+          text: TextSpan(
+            children: <TextSpan>[
+              TextSpan(
+                text: '$characterName:\n',
+                style: GoogleFonts.rajdhani(
+                  color: _kCyberGreen,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 19,
+                ),
+              ),
+              TextSpan(
+                text: quote,
+                style: GoogleFonts.rajdhani(
+                  color: _kWhite,
+                  fontSize: 18,
+                ).merge(styleOverride),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// 9. VisualIndicatorWidget
+class VisualIndicatorWidget extends StatelessWidget {
+  const VisualIndicatorWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<PodcastPlayerModel>(
+      builder: (BuildContext context, PodcastPlayerModel model, Widget? child) {
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: model.pulseOpacity,
+              child: Transform.scale(
+                scale: model.pulseScale,
+                child: Center(
+                  child: Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: _kCyberGreen, width: 3),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// 10. PodcastPlayerScreen (main screen that provides TickerProvider)
+class PodcastPlayerScreen extends StatefulWidget {
+  const PodcastPlayerScreen({super.key});
+
+  @override
+  State<PodcastPlayerScreen> createState() => _PodcastPlayerScreenState();
+}
+
+class _PodcastPlayerScreenState extends State<PodcastPlayerScreen>
+    with SingleTickerProviderStateMixin {
+  late final PodcastPlayerModel _model;
+
+  @override
+  void initState() {
+    super.initState();
+    _model = PodcastPlayerModel(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _model.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<PodcastPlayerModel>.value(
+      value: _model,
+      builder: (BuildContext context, Widget? child) => Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: <Color>[_kDarkBackground1, _kDarkBackground2, _kDarkBackground3],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            children: <Widget>[
+              const GlitchBackground(),
+              SafeArea(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: Column(
+                          children: const <Widget>[
+                            HeaderWidget(),
+                            PodcastPlayerWidget(),
+                            ScriptSectionWidget(),
+                            SizedBox(height: 50), // Extra space at bottom
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const VisualIndicatorWidget(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// 11. MyApp
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Tactical Legends',
+      theme: ThemeData(
+        brightness: Brightness. dark,
+        scaffoldBackgroundColor: Colors .transparent, // Background handled by Container
+        useMaterial3: true,
+        // Default text style for the app if not explicitly set by GoogleFonts
+        textTheme: Typography.whiteMountainView.apply(bodyColor: _kWhite, displayColor: _kWhite),
+      ),
+      home: const PodcastPlayerScreen(),
     );
   }
 }
