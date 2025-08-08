@@ -12155,7 +12155,7 @@ public class PlayerSettings: NetworkBehaviour
 using UnityEngine;
 using Mirror;
 
-public class OistarianCaptain : NetworkBehaviour
+public class OistarianCaptain: NetworkBehaviour
 {
     public float specialAbilityCooldown = 20f;
     private float lastAbilityTime = -Mathf.Infinity;
@@ -12185,7 +12185,7 @@ public class OistarianCaptain : NetworkBehaviour
         {
             lastAbilityTime = Time.time;
             RpcActivateSpecialAbility();
-            // Additional logic, e.g., apply buffs to team
+            // Additional logic, e.g., apply buffs to the team
         }
     }
 
@@ -12283,7 +12283,7 @@ void EndSpecialAbility()
     }
 }
 // Attach UI buttons in the inspector
-public class TeamCommandUI : MonoBehaviour
+public class TeamCommandUI: MonoBehaviour
 {
     public Button focusFireButton;
     public Button defendButton;
@@ -12317,7 +12317,7 @@ public class TeamCommandUI : MonoBehaviour
 
 using UnityEngine;
 
-public class PlayerAgent : MonoBehaviour
+public class PlayerAgent: MonoBehaviour
 {
     public string AgentName = "Oistarian";
     public int Health = 100;
@@ -12444,7 +12444,7 @@ public class PlayerAgent: MonoBehaviour
 
 using UnityEngine;
 
-public class PlayerStealth : MonoBehaviour
+public class PlayerStealth: MonoBehaviour
 {
     [Range(0f, 1f)]
     public float CurrentStealth = 1f; // 0 = fully invisible, 1 = fully visible
@@ -12511,7 +12511,7 @@ public class PlayerStealth : MonoBehaviour
 }
 using UnityEngine;
 
-public class PlayerStealth : MonoBehaviour
+public class PlayerStealth: MonoBehaviour
 {
     [Range(0f, 1f)] public float CurrentStealth = 1f; // 0 = fully invisible, 1 = fully visible
 
@@ -12660,7 +12660,7 @@ Shader "Custom/StealthShader"
                 
 using UnityEngine;
 
-public class RankedManager : MonoBehaviour
+public class RankedManager: MonoBehaviour
 {
     // Define the hierarchy of ranks
     public enum DivisionRank { Recruit, Operative, Cipher, Infiltrator, Phantom, Eclipse }
@@ -13102,7 +13102,7 @@ public class GameManager : MonoBehaviour
 }
 using UnityEngine;
 
-public class SecretOperations : MonoBehaviour
+public class SecretOperations: MonoBehaviour
 {
     [SerializeField]
     private Mission[] secretMissions;
