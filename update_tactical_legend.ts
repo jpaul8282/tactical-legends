@@ -17160,3 +17160,291 @@ Future<void> main() async {
   print('\n--- DEMO COMPLETE ---');
   await gameState.saveState('gamestate.json'); // Simulate final save
 }
+# Voiceover narration
+tts = gTTS(text=briefing, lang='en')
+tts.save("voice.mp3")
+pygame.mixer.music.load("voice.mp3")
+pygame.mixer.music.play()
+
+pygame. time.wait(4000)
+pygame.mixer.music.load("ops_theme.mp3")
+pygame.mixer.music.play(-1)
+
+
+
+
+
+
+
+# Difficulty label
+diff = slider.getValue()
+label = FONT.render(f"Difficulty: {diff}", True, WHITE)
+screen.blit(label, (250, 400))
+
+for event in pygame. event.get():
+    if event.type == pygame.QUIT:
+        running = False
+    elif event.type == pygame.MOUSEBUTTONDOWN:
+        for m in missions:
+            if m["rect"].collidepoint(event.pos):
+                show_briefing(m["title"], diff)
+
+pygame. display.flip()
+manager.update(time_delta)
+screen.blit(bg, (0, 0))
+
+if scene_stage == "gear_selection":
+    manager.draw_ui(screen)
+    selected_primary = primary_dropdown.selected_option
+    selected_gadget = gadget_dropdown.selected_option
+
+    # 🟢 Proceed to next stage after selection
+    if selected_primary and selected_gadget:
+        pygame.time.delay(500)
+        fade_in(bg)  # 🔄 Transition
+        mission_intro = (
+            f"Mission Echo Shield. Your objective: rescue hostages.\n"
+            f"Loadout: {selected_primary} and {selected_gadget} equipped.\n"
+            f"Sergeant Hawk: We move at dawn. No second chances."
+        )
+        play_voice(mission_intro)
+        scene_stage = "mission_brief"
+
+pygame. display.update()
+
+
+
+
+
+
+
+
+
+
+
+def run(self):
+    self.screen.blit(self.bg, (0, 0))
+    for i, line in enumerate(self.dialogue):
+        text = font.render(line, True, (255, 255, 255))
+        self.screen.blit(text, (50, 100 + i * 40))
+    pygame. display.update()
+
+
+class SceneManager:
+    def __init__(self):
+        self.current_scene = None
+
+    def set_scene(self, scene):
+        self.current_scene = scene
+
+    def update(self, events, time_delta):
+        if self.current_scene:
+            self.current_scene.update(events, time_delta)
+
+    def draw(self, screen):
+        if self.current_scene:
+            self.current_scene.draw(screen)
+
+voice_channel = pygame.mixer.Channel(1)
+voice_channel.play(pygame.mixer.Sound("voice.mp3"))
+
+def play_voice(text, filename="voice.mp3"):
+    if not os.path.exists(filename):
+        tts = gTTS(text=text, lang='en')
+        tts.save(filename)
+    voice_channel.play(pygame.mixer.Sound(filename))
+
+class DialogueBox:
+    def __init__(self, lines, choices=None):
+        self.lines = lines
+        self.choices = choices or []
+
+    def render(self, screen):
+        for i, line in enumerate(self.lines):
+            text = FONT.render(line, True, WHITE)
+            screen.blit(text, (50, 100 + i * 40))
+        for i, choice in enumerate(self.choices):
+            btn = pygame_gui.elements.UIButton(
+                relative_rect=pygame.Rect((50, 300 + i * 40), (300, 30)),
+                text=choice["text"],
+                manager=manager
+            )
+
+class EmotionalState:
+    def __init__(self):
+        self.relationship_score = 100
+        self.trauma_score = 0
+
+    def apply_choice(self, effect):
+        self.relationship_score += effect
+        self.trauma_score += abs(effect) // 2
+
+import json
+
+def save_game(data, filename="save.json"):
+    with open(filename, "w") as f:
+        json.dump(data, f)
+
+def load_game(filename="save.json"):
+    with open(filename, "r") as f:
+        return json.load(f)
+
+legendary_ops_center/
+├── assets/
+│   ├── images/
+│   │   ├── rambo_bg.jpg
+│   │   ├── sergeant_hawk.png
+│   │   └── ...
+│   ├── audio/
+│   │   ├── ops_theme.mp3
+│   │   └── voice/
+│   │       └── *.mp3
+├── scenes/
+│   ├── home_scene.py
+│   ├── mission_scene.py
+│   └── scene_manager.py
+├── ui/
+│   ├── gear_ui.py
+│   ├── dialogue_ui.py
+│   └── transitions.py
+├── systems/
+│   ├── audio.py
+│   ├── emotional_state.py
+│   └── save_load.py
+├── main.py
+└── config.py
+import pygame
+
+WIDTH, HEIGHT = 800, 600
+WHITE, GOLD, DARK = (255, 255, 255), (255, 215, 0), (20, 20, 20)
+FONT = pygame.font.SysFont("impact", 32)
+
+import os
+from gtts import gTTS
+import pygame
+
+voice_channel = pygame.mixer.Channel(1)
+
+def play_voice(text, filename="voice.mp3"):
+    path = os.path.join("assets", "audio", "voice", filename)
+    if not os.path.exists(path):
+        tts = gTTS(text=text, lang='en')
+        tts.save(path)
+    voice_channel.play(pygame.mixer.Sound(path))
+
+class EmotionalState:
+    def __init__(self):
+        self.relationship_score = 100
+        self.trauma_score = 0
+
+    def apply_choice(self, effect):
+        self.relationship_score += effect
+        self.trauma_score += abs(effect) // 2
+
+import pygame
+import pygame_gui
+
+def create_gear_ui(manager):
+    primary = pygame_gui.elements.UIDropDownMenu(
+        options_list=["M4A1", "Sniper", "Shotgun"],
+        starting_option="M4A1",
+        relative_rect=pygame.Rect((50, 100), (200, 30)),
+        manager=manager
+    )
+    gadget = pygame_gui.elements.UIDropDownMenu(
+        options_list=["Grenade", "Drone", "Smoke"],
+        starting_option="Grenade",
+        relative_rect=pygame.Rect((50, 150), (200, 30)),
+        manager=manager
+    )
+    return primary, gadget
+
+import pygame
+from config import FONT, WHITE
+
+class HomeScene:
+    def __init__(self, screen):
+        self.screen = screen
+        self.bg = pygame.image.load("assets/images/home_bg.png")
+        self.dialogue = [
+            "Wife: You missed dinner again.",
+            "Daughter: I drew you something... but you weren’t there."
+        ]
+
+    def draw(self):
+        self.screen.blit(self.bg, (0, 0))
+        for i, line in enumerate(self.dialogue):
+            text = FONT.render(line, True, WHITE)
+            self.screen.blit(text, (50, 100 + i * 40))
+
+class SceneManager:
+    def __init__(self):
+        self.current_scene = None
+
+    def set_scene(self, scene):
+        self.current_scene = scene
+
+    def update(self, events, time_delta):
+        if self.current_scene:
+            self.current_scene.update(events, time_delta)
+
+    def draw(self, screen):
+        if self.current_scene:
+            self.current_scene.draw(screen)
+
+import pygame, pygame_gui
+from config import WIDTH, HEIGHT
+from ui.gear_ui import create_gear_ui
+from systems.audio import play_voice
+from scenes.home_scene import HomeScene
+from scenes.scene_manager import SceneManager
+
+pygame.init()
+pygame. mixer.init()
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+manager = pygame_gui.UIManager((WIDTH, HEIGHT))
+clock = pygame.time.Clock()
+
+primary_dropdown, gadget_dropdown = create_gear_ui(manager)
+scene_manager = SceneManager()
+scene_stage = "gear_selection"
+
+running = True
+while running:
+    time_delta = clock.tick(30)/1000.0
+    for event in pygame. event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        manager.process_events(event)
+
+    manager.update(time_delta)
+    screen.fill((30, 30, 30))
+
+    if scene_stage == "gear_selection":
+        manager.draw_ui(screen)
+        selected_primary = primary_dropdown.selected_option
+        selected_gadget = gadget_dropdown.selected_option
+
+        if selected_primary and selected_gadget:
+            pygame. time.delay(500)
+            mission_intro = (
+                f"Mission Echo Shield. Loadout: {selected_primary} and {selected_gadget}."
+            )
+            play_voice(mission_intro)
+            scene_manager.set_scene(HomeScene(screen))
+            scene_stage = "home"
+
+    scene_manager.draw(screen)
+    pygame. display.update()
+
+using UnityEngine;
+
+public class PlayerController: MonoBehaviour
+{
+    public int PlayerIndex { get; set; }
+
+    void Update()
+    {
+        // Player control logic based on PlayerIndex
+    }
+}
