@@ -19801,3 +19801,735 @@ app.get('/session_status', async (req, res) => {
     customer_email: customer.email
   });
 });
+{
+"feature": "Comprehensive Terrain System for Middle-East Maps",
+"description": "Realistic terrain rules for forests, hills, and rivers to deepen tactical depth in Middle-East scenarios.",
+"terrains": [
+{
+"type": "Forest",
+"effects": {
+"movement": {
+"modifier": "slow",
+"details": "Units move at 60% of their base speed on forest tiles."
+},
+"pathfinding": {
+"penalty": "high",
+"details": "AI/pathfinding favors routes avoiding forests unless strategically necessary."
+},
+"visibility": {
+"modifier": "reduced",
+"details": "Line-of-sight is reduced by 40%; stealth and enemy detection are harder."
+},
+"combat": {
+"defense_bonus": 20,
+"attack_penalty": 10,
+"details": "Defending units receive +20% defense in forests; attacking units incur -10% attack effectiveness due to cover."
+}
+}
+},
+{
+"type": "Hill",
+"effects": {
+"movement": {
+"modifier": "uphill_slow",
+"details": "Ascending hills reduces speed to 70%; descending retains normal speed."
+},
+"pathfinding": {
+"penalty": "moderate",
+"details": "Pathfinding prefers gentler slopes; steep hills are avoided unless strategically advantageous."
+},
+"visibility": {
+"modifier": "increased",
+"details": "Elevation grants +2 tiles of line-of-sight range (or equivalent platform measure)."
+},
+"combat": {
+"attack_bonus": 15,
+"defense_bonus": 15,
+"details": "Units on higher ground gain +15% to both attack and defense against lower-elevation units."
+}
+}
+},
+{
+"type": "River",
+"effects": {
+"movement": {
+"modifier": "restricted",
+"details": "Crossing rivers is only possible at designated bridges or fords; crossing speed at these points is 40% of base."
+},
+"pathfinding": {
+"penalty": "high",
+"details": "Pathfinding strongly avoids direct river crossings unless a designated crossing point is present."
+},
+"visibility": {
+"modifier": "neutral",
+"details": "Rivers do not affect unit visibility directly."
+},
+"combat": {
+"defense_bonus": 25,
+"attack_penalty": 15,
+"details": "Defending units on riverbanks gain +25% defense; attacking units crossing rivers suffer -15% due to terrain disadvantage."
+}
+}
+}
+],
+"implementation_notes": [
+"Integrate terrain modifiers into movement, pathfinding, and line-of-sight computations.",
+"Adjust visibility calculations to account for terrain and elevation interplay (e.g., hill advantage with forest adjacency).",
+"Apply combat modifiers contextually based on unit position relative to terrain (e.g., defender on forested hill vs. attacker on open ground).",
+"Ensure terrain rules apply to all unit types by default, with explicit exemptions per scenario or unit class."
+],
+"balance_notes": [
+"Calibrate absolute values (percentages, tile counts) through playtesting to maintain pacing and strategic variety.",
+"Provide configuration flags to enable/disable specific terrains for tutorials or varied campaigns."
+],
+"goal": "Increase realism and tactical challenge in Middle-East scenarios by leveraging terrain effects."
+}
+git@github.com:jurgen-paul/tactical-legends.git
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+
+/// Converts HSL (Hue, Saturation, Lightness) color values to a Flutter Color.
+/// H (hue) is in degrees [0, 360).
+/// S (saturation) is a percentage [0, 100].
+/// L (lightness) is a percentage [0, 100].
+Color _hslToColor(double h, double s, double l) {
+  return HSLColor.fromAHSL(1.0, h, s / 100.0, l / 100.0).toColor();
+}
+
+// Colors derived from the provided CSS HSL values for the light theme.
+final Color _kLightBgColor = _hslToColor(223, 10, 90);
+final Color _kLightFgColor = _hslToColor(223, 10, 10);
+
+// Success checkmark colors, dynamically chosen based on theme brightness.
+final Color _kSuccess1Color = _hslToColor(126, 90, 40); // Used for dark theme spinner
+final Color _kSuccess2Color = _hslToColor(126, 90, 24); // Used for light theme spinner
+
+// Confetti dot colors.
+final Color _kPeriwinkleColor = _hslToColor(240, 90, 70);
+final Color _kLightBlueColor = _hslToColor(210, 90, 70);
+final Color _kOrangeColor = _hslToColor(15, 90, 70);
+final Color _kMagentaColor = _hslToColor(300, 90, 70);
+final Color _kLightGreenColor = _hslToColor(105, 40, 70);
+final Color _kLightTealColor = _hslToColor(150, 40, 70);
+final Color _kPurpleColor = _hslToColor(270, 90, 70);
+
+/// Custom [Curve] implementation for cubic-bezier functions defined in CSS.
+class _CubicBezierCurve extends Curve {
+  final double x1, y1, x2, y2;
+
+  const _CubicBezierCurve(this.x1, this.y1, this.x2, this.y2);
+
+  @override
+  double transformInternal(double t) {
+    // This is a simplified numerical solution for cubic bezier.
+    // Given t (time), we find the corresponding x value on the bezier curve.
+    // Then we use that same t to find the y value.
+    // The input 't' for transformInternal is usually linear (0 to 1).
+    // We need to find the 'internal t' (let's call it u) that produces the input 't'.
+    // Then use that 'u' to find the output.
+    double uStart = 0.0;
+    double uEnd = 1.0;
+    for (int i = 0; i < 100; i++) { // Max iterations to find 'u'
+      double uMid = (uStart + uEnd) / 2.0;
+      double bezierX = _getBezierCoordinate(uMid, 0.0, x1, x2, 1.0);
+      if ((t - bezierX).abs() < 0.0001) {
+        return _getBezierCoordinate(uMid, 0.0, y1, y2, 1.0);
+      }
+      if (bezierX < t) {
+        uStart = uMid;
+      } else {
+        uEnd = uMid;
+      }
+    }
+    // Fallback if not converged (should not happen with 100 iterations)
+    return _getBezierCoordinate(uStart, 0.0, y1, y2, 1.0);
+  }
+
+  // Helper to calculate a single coordinate of a cubic bezier point.
+  double _getBezierCoordinate(double t, double p0, double p1, double p2, double p3) {
+    return (1 - t) * (1 - t) * (1 - t) * p0 +
+        3 * (1 - t) * (1 - t) * t * p1 +
+        3 * (1 - t) * t * t * p2 +
+        t * t * t * p3;
+  }
+}
+
+// Custom cubic bezier curves matching CSS definitions.
+final Curve _kEaseInCubic = const _CubicBezierCurve(0.32, 0, 0.67, 0);
+final Curve _kEaseOutCubic = const _CubicBezierCurve(0.33, 1, 0.68, 1);
+final Curve _kEaseInOutCubic = const _CubicBezierCurve(0.65, 0, 0.35, 1);
+
+// Constants for SVG coordinate system (48x48 viewBox).
+const double _kSvgWidth = 48.0;
+const double _kSvgHeight = 48.0;
+const double _kCenterX = _kSvgWidth / 2;
+const double _kCenterY = _kSvgHeight / 2;
+
+// Worm circle properties.
+const double _kWormRadius = 22.0;
+const double _kWormCircumference = 2 * math.pi * _kWormRadius;
+const double _kWormDashOffsetStart = -51.84;
+const double _kWormDashOffsetEnd = -138.23;
+const double _kWormInitialRotationDeg = -119.0;
+
+// Checkmark path properties.
+const double _kCheckDashOffsetStart = -36.7;
+const double _kCheckDashOffsetEnd = 13.7;
+
+// Pop start circle properties.
+const double _kPopStartRadius = 20.0;
+
+// Pop end circle properties.
+const double _kPopEndRadius = 18.0;
+
+// Dot properties.
+const double _kDotRadius = 1.5;
+
+// Define the checkmark path from SVG 'd' attribute.
+final Path _kCheckPath = Path()
+  ..moveTo(17, 25)
+  ..lineTo(22, 30)
+  ..cubicTo(22, 30, 32.2, 19.8, 37.3, 14.7)
+  ..cubicTo(41.8, 10.2, 39, 7.9, 39, 7.9);
+
+/// The main widget for the animated spinner.
+class AnimatedSpinner extends StatefulWidget {
+  const AnimatedSpinner({super.key});
+
+  @override
+  State<AnimatedSpinner> createState() => _AnimatedSpinnerState();
+}
+
+class _AnimatedSpinnerState extends State<AnimatedSpinner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  // Animation instances for various properties.
+  late Animation<double> _wormRotationAnimation;
+  late Animation<double> _wormDashOffsetAnimation;
+  late Animation<double> _checkDashOffsetAnimation;
+  late Animation<double> _checkScaleAnimation;
+  late Animation<double> _popStartOpacityAnimation;
+  late Animation<double> _popStartScaleAnimation;
+  late Animation<double> _popEndOpacityAnimation;
+  late Animation<double> _popEndRadiusAnimation;
+  late Animation<double> _popEndStrokeWidthAnimation;
+  late Animation<double> _popDotTranslateYAnimation;
+  late List<Animation<double>> _popDotGroupOpacities;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 4000), // 4 seconds total animation.
+    )..repeat(); // The original animation loops.
+
+    _setupAnimations();
+  }
+
+  /// Sets up all the Tween and CurvedAnimation for the spinner components.
+  void _setupAnimations() {
+    // Worm animation: rotation and stroke dash offset.
+    _wormRotationAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kWormInitialRotationDeg,
+          end: _kWormInitialRotationDeg + 3 * 360,
+        ).chain(CurveTween(curve: Curves.linear)),
+        weight: 60.0, // 0-60% of total duration
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kWormInitialRotationDeg + 3 * 360,
+          end: _kWormInitialRotationDeg + 3.2 * 360,
+        ).chain(CurveTween(curve: Curves.easeOutSine)),
+        weight: 4.0, // 60-64%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kWormInitialRotationDeg + 3.2 * 360,
+          end: _kWormInitialRotationDeg + 3.2 * 360,
+        ).chain(CurveTween(curve: Curves.linear)),
+        weight: 36.0, // 64-100%
+      ),
+    ]).animate(_controller);
+
+    _wormDashOffsetAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kWormDashOffsetStart,
+          end: _kWormDashOffsetStart,
+        ).chain(CurveTween(curve: Curves.linear)),
+        weight: 64.0, // 0-64%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kWormDashOffsetStart,
+          end: _kWormDashOffsetEnd,
+        ).chain(CurveTween(curve: Curves.linear)),
+        weight: 8.5, // 64-72.5%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kWormDashOffsetEnd,
+          end: _kWormDashOffsetEnd,
+        ).chain(CurveTween(curve: Curves.linear)),
+        weight: 27.5, // 72.5-100%
+      ),
+    ]).animate(_controller);
+
+    // Checkmark animation: stroke dash offset and scale.
+    _checkDashOffsetAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kCheckDashOffsetStart,
+          end: _kCheckDashOffsetStart,
+        ).chain(CurveTween(curve: Curves.linear)),
+        weight: 64.0, // 0-64%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kCheckDashOffsetStart,
+          end: _kCheckDashOffsetEnd,
+        ).chain(CurveTween(curve: Curves.linear)),
+        weight: 11.0, // 64-75%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kCheckDashOffsetEnd,
+          end: _kCheckDashOffsetEnd,
+        ).chain(CurveTween(curve: _kEaseInOutCubic)),
+        weight: 2.0, // 75-77%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kCheckDashOffsetEnd,
+          end: _kCheckDashOffsetEnd,
+        ).chain(CurveTween(curve: _kEaseInOutCubic)),
+        weight: 2.0, // 77-79%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kCheckDashOffsetEnd,
+          end: _kCheckDashOffsetEnd,
+        ).chain(CurveTween(curve: _kEaseInCubic)),
+        weight: 8.0, // 79-87%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(
+          begin: _kCheckDashOffsetEnd,
+          end: _kCheckDashOffsetEnd,
+        ).chain(CurveTween(curve: Curves.linear)),
+        weight: 13.0, // 87-100%
+      ),
+    ]).animate(_controller);
+
+    _checkScaleAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 1.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 77.0, // 0-77%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 0.4).chain(CurveTween(curve: _kEaseInOutCubic)),
+        weight: 2.0, // 77-79%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.4, end: 1.4).chain(CurveTween(curve: _kEaseInCubic)),
+        weight: 8.0, // 79-87%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.4, end: 1.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 6.0, // 87-93%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 1.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 7.0, // 93-100%
+      ),
+    ]).animate(_controller);
+
+    // Pop start animation: opacity and scale of the inner filled circle.
+    _popStartOpacityAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 0.0),
+        weight: 76.0, // 0-76%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 1.0).chain(CurveTween(curve: _kEaseInOutCubic)),
+        weight: 6.5, // 76-82.5%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 0.0), // Jumps to 0 immediately after 82.5%
+        weight: 17.5, // 82.5-100%
+      ),
+    ]).animate(_controller);
+
+    _popStartScaleAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.35, end: 0.35).chain(CurveTween(curve: Curves.linear)),
+        weight: 76.0, // 0-76%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.35, end: 1.0).chain(CurveTween(curve: _kEaseInOutCubic)),
+        weight: 6.5, // 76-82.5%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 1.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 17.5, // 82.5-100%
+      ),
+    ]).animate(_controller);
+
+    // Pop end animation: opacity, radius, and stroke width of the outer ring.
+    _popEndOpacityAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 0.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 82.5, // 0-82.5%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 1.5, // 82.5-84%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 16.0, // 84-100%
+      ),
+    ]).animate(_controller);
+
+    _popEndRadiusAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: _kPopEndRadius, end: _kPopEndRadius).chain(CurveTween(curve: Curves.linear)),
+        weight: 84.0, // 0-84%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: _kPopEndRadius, end: 19.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 16.0, // 84-100%
+      ),
+    ]).animate(_controller);
+
+    _popEndStrokeWidthAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 4.0, end: 4.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 84.0, // 0-84%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 4.0, end: 3.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 16.0, // 84-100%
+      ),
+    ]).animate(_controller);
+
+    // Pop dot animation: vertical translation for all dots.
+    _popDotTranslateYAnimation = TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 6.0, end: 6.0).chain(CurveTween(curve: _kEaseOutCubic)),
+        weight: 80.0, // 0-80%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 6.0, end: 0.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 10.0, // 80-90%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 0.0).chain(CurveTween(curve: Curves.linear)),
+        weight: 10.0, // 90-100%
+      ),
+    ]).animate(_controller);
+
+    // Pop dot group opacities (two distinct animations for the two types of dot groups).
+    _popDotGroupOpacities = <Animation<double>>[];
+    // Group 1 opacity animation.
+    _popDotGroupOpacities.add(TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 0.0),
+        weight: 82.5, // 0-82.5%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        weight: 2.5, // 82.5-85%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 1.0),
+        weight: 2.5, // 85-87.5%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 0.0),
+        weight: 2.5, // 87.5-90%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 0.0),
+        weight: 10.0, // 90-100%
+      ),
+    ]).animate(_controller));
+
+    // Group 2 opacity animation.
+    _popDotGroupOpacities.add(TweenSequence<double>([
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 0.0),
+        weight: 82.5, // 0-82.5%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        weight: 2.5, // 82.5-85%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 1.0),
+        weight: 5.0, // 85-90%
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 1.0, end: 0.0),
+        weight: 10.0, // 90-100%
+      ),
+    ]).animate(_controller));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Determine the base color of the spinner based on the theme brightness,
+    // mimicking the `currentcolor` and media query behavior from CSS.
+    final Color currentSpinnerColor = Theme.of(context).brightness == Brightness.light
+        ? _kSuccess2Color
+        : _kSuccess1Color;
+
+    return Center(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (BuildContext context, Widget? child) {
+          return CustomPaint(
+            size: const Size(200, 200), // Display size of the spinner.
+            painter: _SpinnerPainter(
+              wormRotation: _wormRotationAnimation.value,
+              wormDashOffset: _wormDashOffsetAnimation.value,
+              checkDashOffset: _checkDashOffsetAnimation.value,
+              checkScale: _checkScaleAnimation.value,
+              popStartOpacity: _popStartOpacityAnimation.value,
+              popStartScale: _popStartScaleAnimation.value,
+              popEndOpacity: _popEndOpacityAnimation.value,
+              popEndRadius: _popEndRadiusAnimation.value,
+              popEndStrokeWidth: _popEndStrokeWidthAnimation.value,
+              popDotTranslateY: _popDotTranslateYAnimation.value,
+              popDotGroupOpacities: _popDotGroupOpacities.map<double>((Animation<double> anim) => anim.value).toList(),
+              spinnerColor: currentSpinnerColor,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// A [CustomPainter] that draws the spinner components based on animation values.
+class _SpinnerPainter extends CustomPainter {
+  final double wormRotation;
+  final double wormDashOffset;
+  final double checkDashOffset;
+  final double checkScale;
+  final double popStartOpacity;
+  final double popStartScale;
+  final double popEndOpacity;
+  final double popEndRadius;
+  final double popEndStrokeWidth;
+  final double popDotTranslateY;
+  final List<double> popDotGroupOpacities;
+  final Color spinnerColor;
+
+  _SpinnerPainter({
+    required this.wormRotation,
+    required this.wormDashOffset,
+    required this.checkDashOffset,
+    required this.checkScale,
+    required this.popStartOpacity,
+    required this.popStartScale,
+    required this.popEndOpacity,
+    required this.popEndRadius,
+    required this.popEndStrokeWidth,
+    required this.popDotTranslateY,
+    required this.popDotGroupOpacities,
+    required this.spinnerColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Scale factor to map SVG's 48x48 viewBox to the widget's size.
+    final double scaleFactor = size.width / _kSvgWidth;
+    canvas.save();
+    canvas.scale(scaleFactor);
+
+    final Paint strokePaint = Paint()
+      ..color = spinnerColor
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 4;
+
+    // --- Draw spinner__worm ---
+    canvas.save();
+    canvas.translate(_kCenterX, _kCenterY);
+    canvas.rotate(wormRotation * math.pi / 180); // Convert degrees to radians
+    canvas.translate(-_kCenterX, -_kCenterY);
+
+    final Path wormPath = Path()
+      ..addOval(Rect.fromCircle(center: const Offset(_kCenterX, _kCenterY), radius: _kWormRadius));
+
+    final ui.PathMetric wormMetric = wormPath.computeMetrics().first;
+    // The worm shrinks from a visible segment to invisible.
+    // The visible length is _kWormCircumference - abs(wormDashOffset).
+    final Path wormSegment = wormMetric.extractPath(0, _kWormCircumference - wormDashOffset.abs());
+
+    canvas.drawPath(
+      wormSegment,
+      strokePaint,
+    );
+    canvas.restore();
+
+    // --- Draw spinner__check ---
+    canvas.save();
+    canvas.translate(_kCenterX, _kCenterY);
+    canvas.scale(checkScale);
+    canvas.translate(-_kCenterX, -_kCenterY);
+
+    final Path checkPath = _kCheckPath;
+    final ui.PathMetric checkMetric = checkPath.computeMetrics().first;
+
+    // The checkmark grows from invisible to partially visible (length 23).
+    // The visible length is checkMetric.length - checkDashOffset.
+    final Path animatedCheckPath = checkMetric.extractPath(
+      0,
+      (checkMetric.length - checkDashOffset).clamp(0.0, checkMetric.length), // Ensure valid range
+    );
+
+    canvas.drawPath(
+      animatedCheckPath,
+      strokePaint, // spinnerColor is already set on strokePaint
+    );
+    canvas.restore();
+
+    // --- Draw spinner__pop-end (outer ring) ---
+    canvas.drawCircle(
+      const Offset(_kCenterX, _kCenterY),
+      popEndRadius,
+      Paint()
+        ..color = _kLightGreenColor.withAlpha((255 * popEndOpacity).round())
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = popEndStrokeWidth,
+    );
+
+    // --- Draw spinner__pop-start (inner filled circle) ---
+    canvas.save();
+    canvas.translate(_kCenterX, _kCenterY);
+    canvas.scale(popStartScale);
+    canvas.translate(-_kCenterX, -_kCenterY);
+    canvas.drawCircle(
+      const Offset(_kCenterX, _kCenterY),
+      _kPopStartRadius,
+      Paint()
+        ..color = _kLightGreenColor.withAlpha((255 * popStartOpacity).round())
+        ..style = PaintingStyle.fill,
+    );
+    canvas.restore();
+
+    // --- Draw spinner__pop-dot-groups (confetti dots) ---
+    // There are 7 groups, each rotated incrementally.
+    // Each group has 2 dots with specific offsets and colors.
+    final List<Color> dotColors1 = <Color>[
+      _kPeriwinkleColor, _kOrangeColor, _kLightGreenColor, _kPurpleColor,
+      _kLightTealColor, _kPeriwinkleColor, _kPurpleColor,
+    ];
+    final List<Color> dotColors2 = <Color>[
+      _kLightBlueColor, _kMagentaColor, _kLightTealColor, _kMagentaColor,
+      _kLightBlueColor, _kLightBlueColor, _kLightTealColor,
+    ];
+
+    for (int i = 0; i < 7; i++) {
+      final double rotation = i * 51.43; // Rotation for each dot group
+      canvas.save();
+      canvas.translate(_kCenterX, _kCenterY);
+      canvas.rotate(rotation * math.pi / 180);
+      canvas.translate(-_kCenterX, -_kCenterY);
+
+      // Dot 1 (cx="22" cy="5")
+      canvas.drawCircle(
+        Offset(22, 5 + popDotTranslateY),
+        _kDotRadius,
+        Paint()
+          ..color = dotColors1[i].withAlpha((255 * popDotGroupOpacities[0]).round())
+          ..style = PaintingStyle.fill,
+      );
+
+      // Dot 2 (cx="26" cy="2")
+      canvas.drawCircle(
+        Offset(26, 2 + popDotTranslateY),
+        _kDotRadius,
+        Paint()
+          ..color = dotColors2[i].withAlpha((255 * popDotGroupOpacities[1]).round())
+          ..style = PaintingStyle.fill,
+      );
+      canvas.restore();
+    }
+
+    canvas.restore(); // Restore the initial scale for the entire painter
+  }
+
+  @override
+  bool shouldRepaint(_SpinnerPainter oldDelegate) {
+    // Only repaint if any of the animated values have changed.
+    return oldDelegate.wormRotation != wormRotation ||
+        oldDelegate.wormDashOffset != wormDashOffset ||
+        oldDelegate.checkDashOffset != checkDashOffset ||
+        oldDelegate.checkScale != checkScale ||
+        oldDelegate.popStartOpacity != popStartOpacity ||
+        oldDelegate.popStartScale != popStartScale ||
+        oldDelegate.popEndOpacity != popEndOpacity ||
+        oldDelegate.popEndRadius != popEndRadius ||
+        oldDelegate.popEndStrokeWidth != popEndStrokeWidth ||
+        oldDelegate.popDotTranslateY != popDotTranslateY ||
+        oldDelegate.popDotGroupOpacities[0] != popDotGroupOpacities[0] ||
+        oldDelegate.popDotGroupOpacities[1] != popDotGroupOpacities[1] ||
+        oldDelegate.spinnerColor != spinnerColor;
+  }
+}
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.light,
+        primaryColor: _kLightFgColor,
+        canvasColor: _kLightBgColor,
+        colorScheme: ColorScheme.light(
+          primary: _kLightFgColor,
+          surface: _kLightBgColor, // Changed from background to surface
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: _kLightBgColor, // In dark theme, fg becomes lighter, so success1 color is used.
+        canvasColor: _kLightFgColor, // bg becomes darker
+        colorScheme: ColorScheme.dark(
+          primary: _kLightBgColor,
+          surface: _kLightFgColor, // Changed from background to surface
+        ),
+        useMaterial3: true,
+      ),
+      themeMode: ThemeMode.system, // Respects system dark mode preference
+      home: const Scaffold(
+        backgroundColor: Colors.transparent, // Background handled by Theme
+        body: AnimatedSpinner(),
+      ),
+    );
+  }
+}
