@@ -18282,3 +18282,1279 @@ unlockSkill(hero, 'blade_fury');    // Unlock Blade Fury (requires Sword Mastery
 console.log(hero);
 
 export { Skill, Unit, addExperience, unlockSkill, canUnlockSkill, calculateLevel };
+mkdir legendary_ops_center
+cd legendary_ops_center
+
+mkdir assets assets/images assets/audio assets/audio/voice
+mkdir scenes ui systems
+pip install pygame pygame_gui gTTS
+python main.py
+ui/dialogue_ui.py
+systems/save_load.py
+import pygame
+import pygame_gui
+from config import FONT, WHITE
+
+class DialogueBox:
+    def __init__(self, manager, dialogue_data, emotional_state):
+        self.manager = manager
+        self.dialogue_data = dialogue_data
+        self.emotional_state = emotional_state
+        self.buttons = []
+        self.texts = []
+
+    def render(self, screen):
+        self.buttons.clear()
+        self.texts.clear()
+
+        # Display dialogue line
+        line = self.dialogue_data["text"]
+        text_surface = FONT.render(line, True, WHITE)
+        screen.blit(text_surface, (50, 100))
+        self.texts.append(text_surface)
+
+        # Display choices
+        for i, choice in enumerate(self.dialogue_data["choices"]):
+            btn = pygame_gui.elements.UIButton(
+                relative_rect=pygame.Rect((50, 200 + i * 50), (300, 40)),
+                text=choice["text"],
+                manager=self.manager
+            )
+            self.buttons.append((btn, choice["effect"]))
+
+    def handle_event(self, event):
+        for btn, effect in self.buttons:
+            if event.type == pygame_gui.UI_BUTTON_PRESSED and event.ui_element == btn:
+                self.emotional_state.apply_choice(effect)
+                return True  # Dialogue complete
+        return False
+
+import json
+import os
+
+SAVE_PATH = "save_data.json"
+
+def save_game(data):
+    with open(SAVE_PATH, "w") as f:
+        json.dump(data, f)
+
+def load_game():
+    if os.path.exists(SAVE_PATH):
+        with open(SAVE_PATH, "r") as f:
+            return json.load(f)
+    return {}
+
+from systems.emotional_state import EmotionalState
+from systems.save_load import save_game, load_game
+from ui.dialogue_ui import DialogueBox
+
+emotions = EmotionalState()
+dialogue_data = {
+    "text": "Wife: You're late again.",
+    "choices": [
+        {"text": "I'm sorry. I had no choice.", "effect": -5},
+        {"text": "This mission matters more.", "effect": -15}
+    ]
+}
+dialogue_box = DialogueBox(manager, dialogue_data, emotions)
+dialogue_box.render(screen)
+scene_stage = "dialogue"
+
+if scene_stage == "dialogue":
+    manager.draw_ui(screen)
+    dialogue_box.render(screen)
+
+    for event in pygame. event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        manager.process_events(event)
+        if dialogue_box.handle_event(event):
+            save_game({
+                "relationship_score": emotions.relationship_score,
+                "trauma_score": emotions.trauma_score,
+                "last_choice": dialogue_data["text"]
+            })
+            scene_stage = "post_dialogue"
+
+{
+  "relationship_score": 45,
+  "trauma_score": 82,
+  "last_choice": "Wife: You're late again."
+}
+
+data = load_game()
+if data:
+    print("Loaded save:", data)
+
+import pygame
+from config import FONT, WHITE
+
+class FlashbackScene:
+    def __init__(self, screen, text):
+        self.screen = screen
+        self.bg = pygame.image.load("assets/images/flashback.png")
+        self.text = text
+
+    def draw(self):
+        self.screen.blit(self.bg, (0, 0))
+        flash_text = FONT.render(self.text, True, WHITE)
+        self.screen.blit(flash_text, (50, 500))
+        pygame. display.update()
+        pygame. time.delay(3000)
+
+from scenes.flashback_scene import FlashbackScene
+
+if emotions.trauma_score > 80:
+    flashback = FlashbackScene(screen, "She was turning six. I promised I'd be there...")
+    flashback.draw()
+
+import pygame
+from config import FONT, WHITE
+
+class CombatScene:
+    def __init__(self, screen, gear):
+        self.screen = screen
+        self.gear = gear
+        self.bg = pygame.image.load("assets/images/combat_bg.png")
+
+    def draw(self):
+        self.screen.blit(self.bg, (0, 0))
+        summary = f"Engaging with {self.gear['Primary']} and {self.gear['Gadget']}..."
+        text = FONT.render(summary, True, WHITE)
+        self.screen.blit(text, (50, 100))
+        pygame. display.update()
+        pygame. time.delay(2000)
+
+def gear_effects(gear, emotions):
+    if gear["Primary"] == "Shotgun":
+        emotions.trauma_score += 10
+    if gear["Gadget"] == "Grenade":
+        emotions.relationship_score -= 20
+
+{
+  "scene": "home",
+  "dialogue": [
+    {
+      "text": "Wife: You're late again.",
+      "condition": "relationship_score < 60",
+      "choices": [
+        { "text": "I'm sorry. I had no choice.", "effect": -5 },
+        { "text": "This mission matters more.", "effect": -15 }
+      ]
+    }
+  ]
+}
+
+import json
+
+def load_dialogue(path):
+    with open(path, "r") as f:
+        return json.load(f)["dialogue"]
+
+from systems.dialogue_loader import load_dialogue
+
+dialogue_script = load_dialogue("dialogue/home_dialogue.json")
+for entry in dialogue_script:
+    if emotions.relationship_score < 60:
+        dialogue_box = DialogueBox(manager, entry, emotions)
+        dialogue_box.render(screen)
+        scene_stage = "dialogue"
+
+[
+  {
+    "title": "Echo Shield",
+    "objective": "Rescue hostages in a war-torn zone.",
+    "risk": "High",
+    "effects": { "relationship": -20, "trauma": +30 }
+  },
+  {
+    "title": "Stay Home",
+    "objective": "Skip mission to reconnect with family.",
+    "risk": "Low",
+    "effects": { "relationship": +10, "trauma": -10 }
+  }
+]
+
+import json
+
+def load_missions(path="missions/missions.json"):
+    with open(path, "r") as f:
+        return json.load(f)
+
+from systems.mission_loader import load_missions
+
+missions = load_missions()
+selected_mission = None
+
+def apply_mission_effects(mission, emotions):
+    effects = mission["effects"]
+    emotions.relationship_score += effects["relationship"]
+    emotions.trauma_score += effects["trauma"]
+
+import pygame
+
+def fade_in(screen, surface, speed=5):
+    fade = pygame.Surface(surface.get_size())
+    fade.fill((0, 0, 0))
+    for alpha in range(0, 255, speed):
+        fade.set_alpha(alpha)
+        screen.blit(surface, (0, 0))
+        screen.blit(fade, (0, 0))
+        pygame. display.update()
+        pygame .time.delay(30)
+
+def animate_combat(screen, gear):
+    for i in range(1, 6):
+        frame = pygame.image.load(f"assets/images/combat_frame{i}.png")
+        screen.blit(frame, (0, 0))
+        pygame. display.update()
+        pygame .time.delay(200)
+    summary = f"Combat complete with {gear['Primary']} and {gear['Gadget']}."
+    text = pygame.font.SysFont("impact", 32).render(summary, True, (255, 255, 255))
+    screen.blit(text, (50, 500))
+    pygame. display.update()
+    pygame .time.delay(2000)
+
+import pygame
+import pygame_gui
+from systems.save_load import save_game, load_game
+
+def create_save_menu(manager):
+    save_btn = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((600, 50), (150, 40)),
+        text="Save Game",
+        manager=manager
+    )
+    load_btn = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((600, 100), (150, 40)),
+        text="Load Game",
+        manager=manager
+    )
+    return save_btn, load_btn
+
+def handle_save_load(event, emotions):
+    if event.type == pygame_gui.UI_BUTTON_PRESSED:
+        if event.ui_element.text == "Save Game":
+            save_game({
+                "relationship_score": emotions.relationship_score,
+                "trauma_score": emotions.trauma_score
+            })
+        elif event.ui_element.text == "Load Game":
+            data = load_game()
+            emotions.relationship_score = data.get("relationship_score", 100)
+            emotions.trauma_score = data.get("trauma_score", 0)
+
+import pygame
+from config import FONT, WHITE
+
+class EndingScene:
+    def __init__(self, screen, emotions):
+        self.screen = screen
+        self.emotions = emotions
+        self.bg = pygame.image.load("assets/images/ending_bg.png")
+
+    def draw(self):
+        self.screen.blit(self.bg, (0, 0))
+        if self.emotions.relationship_score < 40:
+            ending = "You chose duty over family. She's gone."
+        elif self.emotions.trauma_score > 80:
+            ending = "The war never left you. You live in silence."
+        else:
+            ending = "You found balance. Peace, at last."
+
+        text = FONT.render(ending, True, WHITE)
+        self.screen.blit(text, (50, 500))
+        pygame.display.update()
+        pygame.time.delay(5000)
+
+from scenes.ending_scene import EndingScene
+
+if game_complete:
+    ending = EndingScene(screen, emotions)
+    ending.draw()
+
+{
+  "npc": "Sergeant Hawk",
+  "dialogue": [
+    {
+      "text": "Hawk: You ready for this?",
+      "choices": [
+        { "text": "Always.", "effect": 0 },
+        { "text": "Not sure anymore.", "effect": +10 }
+      ]
+    },
+    {
+      "text": "Hawk: You hesitated back there.",
+      "condition": "trauma_score > 50",
+      "choices": [
+        { "text": "I saw her face.", "effect": +20 },
+        { "text": "I’m fine.", "effect": -10 }
+      ]
+    }
+  ]
+
+def load_npc_dialogue(path, emotions):
+    import json
+    with open(path, "r") as f:
+        data = json.load(f)
+    valid_lines = []
+    for entry in data["dialogue"]:
+        cond = entry.get("condition")
+        if not cond or eval(cond, {}, {"trauma_score": emotions.trauma_score}):
+            valid_lines.append(entry)
+    return valid_lines
+
+import pygame
+
+class TacticalMap:
+    def __init__(self, screen):
+        self.screen = screen
+        self.map_img = pygame.image.load("assets/images/map.png")
+        self.mission_points = {
+            "Echo Shield": (200, 150),
+            "Night Ember": (500, 300)
+        }
+
+    def draw(self):
+        self.screen.blit(self.map_img, (0, 0))
+        for name, pos in self.mission_points.items():
+            pygame.draw.circle(self.screen, (255, 0, 0), pos, 10)
+            label = pygame.font.SysFont("impact", 24).render(name, True, (255, 255, 255))
+            self.screen.blit(label, (pos[0] + 15, pos[1] - 10))
+
+from ui.tactical_map import TacticalMap
+
+map_ui = TacticalMap(screen)
+map_ui.draw()
+
+import pygame
+from config import FONT, WHITE
+
+class Cutscene:
+    def __init__(self, screen, frames, narration):
+        self.screen = screen
+        self.frames = frames  # List of image paths
+        self.narration = narration  # List of voice lines
+
+    def play(self):
+        for i, frame_path in enumerate(self.frames):
+            frame = pygame.image.load(frame_path)
+            self.screen.blit(frame, (0, 0))
+            pygame.display.update()
+            pygame.time.delay(1000)
+
+            from systems.audio import play_voice
+            play_voice(self.narration[i])
+            pygame.time.delay(3000)
+
+cutscene = Cutscene(
+    screen,
+    frames=["assets/images/cut1.png", "assets/images/cut2.png"],
+    narration=[
+        "The war began with silence.",
+        "And silence is how it ends."
+    ]
+)
+cutscene.play()
+
+import json
+
+class ScriptEngine:
+    def __init__(self, path, emotions):
+        with open(path, "r") as f:
+            self.script = json.load(f)
+        self.emotions = emotions
+        self.index = 0
+
+    def get_next_line(self):
+        while self.index < len(self.script):
+            entry = self.script[self.index]
+            self.index += 1
+            cond = entry.get("condition")
+            if not cond or eval(cond, {}, {
+                "relationship_score": self.emotions.relationship_score,
+                "trauma_score": self.emotions.trauma_score
+            }):
+                return entry
+        return None
+
+[
+  {
+    "text": "Wife: You promised you'd be careful.",
+    "condition": "relationship_score < 60",
+    "choices": [
+      { "text": "I know. I'm sorry.", "effect": -5 },
+      { "text": "I had no choice.", "effect": -15 }
+    ]
+  },
+  {
+    "text": "Daughter: Are you coming home this time?",
+    "condition": "trauma_score < 50",
+    "choices": [
+      { "text": "Yes. I promise.", "effect": +10 },
+      { "text": "I can't say.", "effect": -5 }
+    ]
+  }
+]
+pip install pyinstaller
+pyinstaller --onefile --windowed main.py
+import pygame
+from config import WHITE
+
+TILE_SIZE = 40
+GRID_WIDTH, GRID_HEIGHT = 20, 15
+
+class TacticalCombat:
+    def __init__(self, screen):
+        self.screen = screen
+        self.grid = [[0 for _ in range(GRID_WIDTH)] for _ in range(GRID_HEIGHT)]
+        self.player_pos = [5, 5]
+        self.enemy_pos = [15, 10]
+        self.cover_tiles = [(7, 5), (10, 8), (12, 12)]
+
+    def draw_grid(self):
+        for y in range(GRID_HEIGHT):
+            for x in range(GRID_WIDTH):
+                rect = pygame.Rect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                pygame.draw.rect(self.screen, (50, 50, 50), rect, 1)
+                if (x, y) in self.cover_tiles:
+                    pygame.draw.rect(self.screen, (100, 100, 100), rect)
+
+    def draw_units(self):
+        px, py = self.player_pos
+        ex, ey = self.enemy_pos
+        pygame.draw.rect(self.screen, (0, 255, 0), (px*TILE_SIZE, py*TILE_SIZE, TILE_SIZE, TILE_SIZE))
+        pygame.draw.rect(self.screen, (255, 0, 0), (ex*TILE_SIZE, ey*TILE_SIZE, TILE_SIZE, TILE_SIZE))
+
+    def move_player(self, dx, dy):
+        new_x = self.player_pos[0] + dx
+        new_y = self.player_pos[1] + dy
+        if 0 <= new_x < GRID_WIDTH and 0 <= new_y < GRID_HEIGHT:
+            self.player_pos = [new_x, new_y]
+
+    def update(self, events):
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w: self.move_player(0, -1)
+                if event.key == pygame.K_s: self.move_player(0, 1)
+                if event.key == pygame.K_a: self.move_player(-1, 0)
+                if event.key == pygame.K_d: self.move_player(1, 0)
+
+    def draw(self):
+        self.draw_grid()
+        self.draw_units()
+
+def is_in_cover(pos, cover_tiles):
+    return pos in cover_tiles
+
+import pygame
+import json
+
+class LevelEditor:
+    def __init__(self, screen):
+        self.screen = screen
+        self.points = []
+
+    def add_point(self, pos, label):
+        self.points.append({"pos": pos, "label": label})
+
+    def draw(self):
+        for p in self.points:
+            pygame.draw.circle(self.screen, (0, 255, 255), p["pos"], 10)
+            text = pygame.font.SysFont("arial", 20).render(p["label"], True, (255, 255, 255))
+            self.screen.blit(text, (p["pos"][0] + 10, p["pos"][1]))
+
+    def save(self, path="missions/custom_map.json"):
+        with open(path, "w") as f:
+            json.dump(self.points, f)
+
+import requests
+
+def upload_save(data):
+    requests.post("https://your-api.com/save", json=data)
+
+def download_save():
+    return requests.get("https://your-api.com/save").json()
+
+class TacticalCombat:
+    def __init__(self, screen):
+        self.screen = screen
+        self.player_pos = [5, 5]
+        self.enemy_pos = [15, 10]
+        self.enemy_path = [(15, 10), (14, 10), (13, 10), (12, 10)]
+        self.enemy_index = 0
+        self.cover_tiles = [(7, 5), (10, 8), (12, 12)]
+
+    def update_enemy(self):
+        self.enemy_index = (self.enemy_index + 1) % len(self.enemy_path)
+        self.enemy_pos = list(self.enemy_path[self.enemy_index])
+
+    def check_attack(self):
+        px, py = self.player_pos
+        ex, ey = self.enemy_pos
+        if abs(px - ex) <= 1 and abs(py - ey) <= 1:
+            return True  # Enemy attacks
+        return False
+
+    def update(self, events):
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_w: self.move_player(0, -1)
+                if event.key == pygame.K_s: self.move_player(0, 1)
+                if event.key == pygame.K_a: self.move_player(-1, 0)
+                if event.key == pygame.K_d: self.move_player(1, 0)
+        self.update_enemy()
+        if self.check_attack():
+            print("Enemy attacks!")
+
+{
+  "start": {
+    "mission": "Echo Shield",
+    "next": {
+      "success": "Night Ember",
+      "failure": "Stay Home"
+    }
+  },
+  "Night Ember": {
+    "mission": "Night Ember",
+    "next": {
+      "success": "Final Stand",
+      "failure": "PTSD Flashback"
+    }
+  }
+}
+
+import json
+
+class CampaignManager:
+    def __init__(self, path="campaign/campaign.json"):
+        with open(path, "r") as f:
+            self.tree = json.load(f)
+        self.current_node = "start"
+
+    def get_current_mission(self):
+        return self.tree[self.current_node]["mission"]
+
+    def advance(self, outcome):
+        self.current_node = self.tree[self.current_node]["next"][outcome]
+
+campaign = CampaignManager()
+mission = campaign.get_current_mission()
+
+# After mission:
+campaign.advance("success")  # or "failure"
+
+def fade_out(screen, speed=5):
+    fade = pygame.Surface(screen.get_size())
+    fade.fill((0, 0, 0))
+    for alpha in range(255, 0, -speed):
+        fade.set_alpha(alpha)
+        screen.blit(fade, (0, 0))
+        pygame.display.update()
+        pygame.time.delay(30)
+
+button = pygame_gui.elements.UIButton(...)
+button.set_active_effect("hover", {"bg_color": "#FFD700"})
+
+def typewriter_text(screen, text, pos, font, color, delay=50):
+    for i in range(len(text)):
+        partial = font.render(text[:i+1], True, color)
+        screen.blit(partial, pos)
+        pygame.display.update()
+        pygame.time.delay(delay)
+
+class Character:
+    def __init__(self, name):
+        self.name = name
+        self.level = 1
+        self.xp = 0
+        self.xp_to_next = 100
+        self.skills = []
+
+    def gain_xp(self, amount):
+        self.xp += amount
+        if self.xp >= self.xp_to_next:
+            self.level_up()
+
+    def level_up(self):
+        self.level += 1
+        self.xp -= self.xp_to_next
+        self.xp_to_next = int(self.xp_to_next * 1.5)
+        print(f"{self.name} leveled up to {self.level}!")
+        self.unlock_skill()
+
+    def unlock_skill(self):
+        new_skill = f"Skill_{self.level}"
+        self.skills.append(new_skill)
+        print(f"{self.name} unlocked {new_skill}!")
+
+player = Character("Echo")
+player.gain_xp(50)
+player.gain_xp(60)  # Triggers level-up
+
+class DialogueManager:
+    def __init__(self):
+        self.memory = {}
+        self.dialogue_tree = {
+            "intro": {
+                "text": "Do you trust me?",
+                "choices": {
+                    "Yes": "trust_path",
+                    "No": "doubt_path"
+                }
+            },
+            "trust_path": {
+                "text": "Thank you. I won’t forget this.",
+                "emotion": "grateful"
+            },
+            "doubt_path": {
+                "text": "I see. Maybe I was wrong about you.",
+                "emotion": "hurt"
+            }
+        }
+
+    def get_dialogue(self, node):
+        return self.dialogue_tree[node]["text"]
+
+    def choose(self, node, choice):
+        next_node = self.dialogue_tree[node]["choices"][choice]
+        emotion = self.dialogue_tree[next_node]["emotion"]
+        self.memory["relationship"] = emotion
+        return next_node
+
+dm = DialogueManager()
+node = "intro"
+print(dm.get_dialogue(node))
+node = dm.choose(node, "Yes")  # or "No"
+print(dm.get_dialogue(node))
+print("Emotion stored:", dm.memory["relationship"])
+
+class BaseScene:
+    def __init__(self, name, objectives, enemies, environment):
+        self.name = name
+        self.objectives = objectives
+        self.enemies = enemies
+        self.environment = environment
+
+    def load(self):
+        print(f"Loading scene: {self.name}")
+        print(f"Objectives: {self.objectives}")
+        print(f"Enemies: {self.enemies}")
+        print(f"Environment: {self.environment}")
+
+from scenes.templates.base_scene import BaseScene
+
+mission_echo = BaseScene(
+    name="Echo Shield",
+    objectives=["Protect the convoy", "Survive 5 turns"],
+    enemies=["Sniper", "Grunt", "Drone"],
+    environment="Urban Ruins"
+)
+
+mission_echo.load()
+
+class Unit:
+    def __init__(self, name, pos):
+        self.name = name
+        self.pos = pos
+        self.overwatch_tile = None
+
+    def set_overwatch(self, tile):
+        self.overwatch_tile = tile
+
+    def check_overwatch(self, enemy_pos):
+        if enemy_pos == self.overwatch_tile:
+            print(f"{self.name} fires overwatch at {enemy_pos}!")
+
+def is_flanked(attacker_pos, defender_pos, defender_facing):
+    dx = attacker_pos[0] - defender_pos[0]
+    dy = attacker_pos[1] - defender_pos[1]
+    direction = (dx, dy)
+    return direction != defender_facing
+
+class SuppressionZone:
+    def __init__(self, origin, radius):
+        self.origin = origin
+        self.radius = radius
+
+    def affects(self, target_pos):
+        ox, oy = self.origin
+        tx, ty = target_pos
+        return abs(ox - tx) <= self.radius and abs(oy - ty) <= self.radius
+
+class MoralitySystem:
+    def __init__(self):
+        self.alignment = 0  # -100 (ruthless) to +100 (heroic)
+
+    def apply_choice(self, impact):
+        self.alignment += impact
+        self.alignment = max(-100, min(100, self.alignment))
+
+    def get_alignment_label(self):
+        if self.alignment > 50: return "Heroic"
+        elif self.alignment < -50: return "Ruthless"
+        else: return "Neutral"
+
+morality = MoralitySystem()
+morality.apply_choice(-30)  # e.g. sacrificed civilians
+morality.apply_choice(+50)  # e.g. spared enemy
+
+print("Current alignment:", morality.get_alignment_label())
+
+import pygame_gui
+
+class MissionEditor:
+    def __init__(self, manager):
+        self.manager = manager
+        self.tiles = []
+        self.selected_tile = None
+        self.create_ui()
+
+    def create_ui(self):
+        self.tile_selector = pygame_gui.elements.UIDropDownMenu(
+            options_list=["Grass", "Wall", "Cover", "Spawn"],
+            starting_option="Grass",
+            relative_rect=pygame.Rect((10, 10), (150, 30)),
+            manager=self.manager
+        )
+
+    def handle_click(self, pos):
+        tile_type = self.tile_selector.selected_option
+        self.tiles.append({"type": tile_type, "pos": pos})
+        print(f"Placed {tile_type} at {pos}")
+
+import json
+
+def save_mission(tiles, filename="mission.json"):
+    with open(filename, "w") as f:
+        json.dump(tiles, f)
+
+class RelationshipManager:
+    def __init__(self):
+        self.relationships = {}  # e.g. {("Echo", "Vera"): 50}
+
+    def adjust(self, char_a, char_b, amount):
+        key = tuple(sorted([char_a, char_b]))
+        self.relationships[key] = self.relationships.get(key, 0) + amount
+        self.relationships[key] = max(-100, min(100, self.relationships[key]))
+
+    def get_status(self, char_a, char_b):
+        key = tuple(sorted([char_a, char_b]))
+        score = self.relationships.get(key, 0)
+        if score > 50: return "Loyal"
+        elif score < -50: return "Hostile"
+        else: return "Neutral"
+
+rm = RelationshipManager()
+rm.adjust("Echo", "Vera", +30)  # Helped in mission
+rm.adjust("Echo", "Vera", -60)  # Ignored distress call
+
+print("Echo ↔ Vera:", rm.get_status("Echo", "Vera"))
+
+class FogOfWar:
+    def __init__(self, map_size):
+        self.visible_tiles = set()
+        self.map_size = map_size
+
+    def update_visibility(self, unit_pos, vision_range):
+        self.visible_tiles.clear()
+        ux, uy = unit_pos
+        for x in range(ux - vision_range, ux + vision_range + 1):
+            for y in range(uy - vision_range, uy + vision_range + 1):
+                if 0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]:
+                    self.visible_tiles.add((x, y))
+
+    def is_visible(self, tile):
+        return tile in self.visible_tiles
+
+class StealthUnit:
+    def __init__(self, pos, stealth=True):
+        self.pos = pos
+        self.stealth = stealth
+
+    def check_detection(self, enemy_pos, detection_range):
+        if not self.stealth: return True
+        dx = abs(self.pos[0] - enemy_pos[0])
+        dy = abs(self.pos[1] - enemy_pos[1])
+        return dx <= detection_range and dy <= detection_range
+
+class Codex:
+    def __init__(self):
+        self.entries = {}  # e.g. {"The Ember War": {"unlocked": False, "text": "..."}}
+
+    def add_entry(self, title, text):
+        self.entries[title] = {"unlocked": False, "text": text}
+
+    def unlock(self, title):
+        if title in self.entries:
+            self.entries[title]["unlocked"] = True
+
+    def get_unlocked_entries(self):
+        return {k: v["text"] for k, v in self.entries.items() if v["unlocked"]}
+
+codex = Codex()
+codex.add_entry("The Ember War", "A conflict that reshaped the continent...")
+codex.unlock("The Ember War")
+
+for title, text in codex.get_unlocked_entries().items():
+    print(f"{title}: {text}")
+
+class WeatherSystem:
+    def __init__(self):
+        self.current = "Clear"
+
+    def set_weather(self, condition):
+        self.current = condition
+
+    def get_modifiers(self):
+        if self.current == "Rain":
+            return {"accuracy": -10, "movement": -1}
+        elif self.current == "Fog":
+            return {"vision": -3}
+        elif self.current == "Snow":
+            return {"movement": -2}
+        return {}
+
+class TerrainTile:
+    def __init__(self, type):
+        self.type = type
+
+    def get_modifiers(self):
+        if self.type == "Mud": return {"movement": -2}
+        if self.type == "HighGround": return {"accuracy": +15}
+        if self.type == "Forest": return {"stealth": +20}
+        return {}
+
+class BanterSystem:
+    def __init__(self):
+        self.triggers = {
+            "kill": ["Nice shot!", "That one's down!", "Target neutralized."],
+            "heal": ["Thanks, I needed that.", "You're a lifesaver."],
+            "miss": ["Damn!", "I had that!", "Next time..."]
+        }
+
+    def get_line(self, event_type):
+        import random
+        return random.choice(self.triggers.get(event_type, ["..."]))
+
+banter = BanterSystem()
+print("Echo:", banter.get_line("kill"))
+
+import json
+
+class SaveSystem:
+    def __init__(self, filename="savegame.json"):
+        self.filename = filename
+
+    def save(self, game_state):
+        with open(self.filename, "w") as f:
+            json.dump(game_state, f)
+
+    def load(self):
+        with open(self.filename, "r") as f:
+            return json.load(f)
+
+game_state = {
+    "campaign_node": "Night Ember",
+    "player_stats": {"level": 3, "xp": 120},
+    "relationships": {("Echo", "Vera"): 40},
+    "morality": 25,
+    "weather": "Fog"
+}
+
+class CutsceneTrigger:
+    def __init__(self, trigger_type, condition, action):
+        self.trigger_type = trigger_type  # e.g. "enter_tile", "mission_complete"
+        self.condition = condition        # e.g. tile coords or mission name
+        self.action = action              # function to call
+
+    def check_trigger(self, game_state):
+        if self.trigger_type == "enter_tile" and game_state["player_pos"] == self.condition:
+            self.action()
+        elif self.trigger_type == "mission_complete" and game_state["mission"] == self.condition:
+            self.action()
+
+def pan_camera(screen, start_pos, end_pos, speed=5):
+    for i in range(0, 101, speed):
+        x = start_pos[0] + (end_pos[0] - start_pos[0]) * i // 100
+        y = start_pos[1] + (end_pos[1] - start_pos[1]) * i // 100
+        draw_scene_at(screen, (x, y))
+        pygame.display.update()
+        pygame.time.delay(30)
+
+class TimelineManager:
+    def __init__(self):
+        self.timeline = []
+        self.current_index = 0
+
+    def add_event(self, label, data):
+        self.timeline.append({"label": label, "data": data})
+
+    def jump_to(self, label):
+        for i, event in enumerate(self.timeline):
+            if event["label"] == label:
+                self.current_index = i
+                return event["data"]
+        return None
+
+timeline = TimelineManager()
+timeline.add_event("Prologue", {"scene": "Echo Shield"})
+timeline.add_event("Flashback", {"scene": "Childhood Trauma"})
+timeline.add_event("Present", {"scene": "Final Stand"})
+
+flashback_data = timeline.jump_to("Flashback")
+
+class DebugConsole:
+    def __init__(self):
+        self.commands = {
+            "set_weather": self.set_weather,
+            "teleport": self.teleport,
+            "give_xp": self.give_xp
+        }
+
+    def execute(self, command_str, game_state):
+        parts = command_str.split()
+        cmd = parts[0]
+        args = parts[1:]
+        if cmd in self.commands:
+            self.commands[cmd](game_state, *args)
+
+    def set_weather(self, game_state, condition):
+        game_state["weather"] = condition
+        print(f"Weather set to {condition}")
+
+    def teleport(self, game_state, x, y):
+        game_state["player_pos"] = (int(x), int(y))
+        print(f"Teleported to {(x, y)}")
+
+    def give_xp(self, game_state, amount):
+        game_state["player_stats"]["xp"] += int(amount)
+        print(f"Gave {amount} XP")
+
+console = DebugConsole()
+console.execute("set_weather Rain", game_state)
+console.execute("teleport 10 5", game_state)
+
+class SubtitleManager:
+    def __init__(self):
+        self.queue = []  # List of (text, duration)
+
+    def add_line(self, text, duration):
+        self.queue.append((text, duration))
+
+    def play(self, screen, font, pos):
+        for text, duration in self.queue:
+            rendered = font.render(text, True, (255, 255, 255))
+            screen.blit(rendered, pos)
+            pygame.display.update()
+            pygame.time.delay(duration)
+
+import pygame.mixer
+
+def play_voiceover(file_path):
+    pygame.mixer.init()
+    sound = pygame.mixer.Sound(file_path)
+    sound.play()
+
+subtitle = SubtitleManager()
+subtitle.add_line("We were never meant to survive this.", 3000)
+play_voiceover("audio/line1.ogg")
+subtitle.play(screen, font, (50, 500))
+
+class NarrativeNode:
+    def __init__(self, id, text, choices):
+        self.id = id
+        self.text = text
+        self.choices = choices  # Dict of {choice_text: next_node_id}
+
+class FlowchartManager:
+    def __init__(self):
+        self.nodes = {}
+
+    def add_node(self, node):
+        self.nodes[node.id] = node
+
+    def get_next(self, current_id, choice):
+        node = self.nodes[current_id]
+        return node.choices.get(choice)
+
+import os
+import json
+
+class ModLoader:
+    def __init__(self, mod_folder="mods"):
+        self.mods = []
+        self.load_mods(mod_folder)
+
+    def load_mods(self, folder):
+        for mod_name in os.listdir(folder):
+            mod_path = os.path.join(folder, mod_name, "mod.json")
+            if os.path.exists(mod_path):
+                with open(mod_path) as f:
+                    mod_data = json.load(f)
+                    self.mods.append(mod_data)
+
+{
+  "name": "Echo's Reckoning",
+  "new_missions": ["Echo_Revenge"],
+  "assets": {
+    "sprites": ["echo_custom.png"],
+    "audio": ["echo_theme.ogg"]
+  }
+}
+
+PHONEME_MAP = {
+    "A": "mouth_open",
+    "E": "mouth_smile",
+    "O": "mouth_round",
+    "M": "mouth_closed"
+}
+
+class LipSyncController:
+    def __init__(self, animation_system):
+        self.animation_system = animation_system
+
+    def sync_to_text(self, text):
+        for char in text.upper():
+            if char in PHONEME_MAP:
+                mouth_shape = PHONEME_MAP[char]
+                self.animation_system.set_mouth(mouth_shape)
+                pygame.time.delay(100)
+
+class FacialAnimator:
+    def set_mouth(self, shape):
+        print(f"Animating mouth: {shape}")
+
+    def set_emotion(self, emotion):
+        print(f"Animating emotion: {emotion}")
+
+import json
+
+class LocalizationManager:
+    def __init__(self, lang="en"):
+        with open(f"localization/{lang}.json") as f:
+            self.strings = json.load(f)
+
+    def get(self, key):
+        return self.strings.get(key, f"[{key}]")
+
+
+  "mission_start": "Begin Mission",
+  "dialogue_001": "We were never meant to survive this."
+}
+
+loc = LocalizationManager("fr")
+print(loc.get("mission_start"))  # → "Commencer la mission"
+
+import os
+
+class AssetPipeline:
+    def __init__(self, asset_folder="assets"):
+        self.models = []
+        self.shaders = []
+        self.vfx = []
+        self.load_assets(asset_folder)
+
+    def load_assets(self, folder):
+        for file in os.listdir(folder):
+            if file.endswith(".obj") or file.endswith(".fbx"):
+                self.models.append(file)
+            elif file.endswith(".glsl") or file.endswith(".shader"):
+                self.shaders.append(file)
+            elif file.endswith(".vfx.json"):
+                self.vfx.append(file)
+
+{
+  "name": "Explosion",
+  "particles": 50,
+  "color": "orange",
+  "duration": 1.5
+}
+
+class TimelineTrack:
+    def __init__(self, target, property):
+        self.target = target
+        self.property = property
+        self.keyframes = []  # List of (time, value)
+
+    def add_keyframe(self, time, value):
+        self.keyframes.append((time, value))
+        self.keyframes.sort()
+
+class TimelinePlayer:
+    def __init__(self, tracks):
+        self.tracks = tracks
+        self.time = 0
+
+    def update(self, delta_time):
+        self.time += delta_time
+        for track in self.tracks:
+            for t, value in track.keyframes:
+                if t <= self.time:
+                    setattr(track.target, track.property, value)
+
+camera = Camera()
+track = TimelineTrack(camera, "position")
+track.add_keyframe(0, (0, 0))
+track.add_keyframe(1000, (100, 50))
+
+player = TimelinePlayer([track])
+player.update(500)  # halfway through pan
+
+import random
+
+class AIDialogueGenerator:
+    def __init__(self):
+        self.templates = {
+            "greeting": [
+                "Hey {name}, ready for another mission?",
+                "Good to see you, {name}. Stay sharp.",
+                "Welcome back, {name}. We’ve got trouble."
+            ],
+            "reaction": [
+                "That was reckless, {name}.",
+                "You saved us out there, {name}.",
+                "I’m not sure I trust your judgment anymore."
+            ]
+        }
+
+    def generate(self, type, name):
+        return random.choice(self.templates[type]).format(name=name)
+
+dialogue = AIDialogueGenerator()
+print(dialogue.generate("greeting", "Echo"))
+
+import os
+import shutil
+
+class BuildManager:
+    def __init__(self, project_dir):
+        self.project_dir = project_dir
+
+    def build_for_platform(self, platform):
+        output_dir = f"build/{platform}"
+        shutil.copytree(self.project_dir, output_dir, dirs_exist_ok=True)
+
+        if platform == "PC":
+            self.package_pc(output_dir)
+        elif platform == "Mobile":
+            self.package_mobile(output_dir)
+        elif platform == "Console":
+            self.package_console(output_dir)
+
+    def package_pc(self, path):
+        print(f"Packaging for PC at {path}")
+        # Add .exe wrapping, config files, etc.
+
+    def package_mobile(self, path):
+        print(f"Packaging for Mobile at {path}")
+        # Add .apk or .ipa generation hooks
+
+    def package_console(self, path):
+        print(f"Packaging for Console at {path}")
+        # Add SDK integration (e.g. Xbox, PlayStation)
+
+builder = BuildManager("project/")
+builder.build_for_platform("PC")
+
+class AnalyticsTracker:
+    def __init__(self):
+        self.events = []
+
+    def log_event(self, event_type, data):
+        self.events.append({"type": event_type, "data": data})
+
+    def export(self, filename="analytics.json"):
+        import json
+        with open(filename, "w") as f:
+            json.dump(self.events, f)
+
+class Heatmap:
+    def __init__(self, map_size):
+        self.grid = [[0 for _ in range(map_size[1])] for _ in range(map_size[0])]
+
+    def record_position(self, x, y):
+        self.grid[x][y] += 1
+
+    def export_csv(self, filename="heatmap.csv"):
+        import csv
+        with open(filename, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerows(self.grid)
+
+import requests
+
+class CloudSaveManager:
+    def __init__(self, api_url):
+        self.api_url = api_url
+
+    def upload_save(self, save_data, user_id):
+        requests.post(f"{self.api_url}/upload", json={"user": user_id, "data": save_data})
+
+    def download_save(self, user_id):
+        response = requests.get(f"{self.api_url}/download/{user_id}")
+        return response.json()
+
+class TrailerEditor:
+    def __init__(self):
+        self.timeline = []
+
+    def add_clip(self, asset, start_time, duration):
+        self.timeline.append({"asset": asset, "start": start_time, "duration": duration})
+
+    def render(self):
+        for clip in self.timeline:
+            print(f"Rendering {clip['asset']} from {clip['start']} for {clip['duration']}ms")
+
+name: Build Game
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      - name: Run Build Script
+        run: python build.py
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: game-build
+          path: build/
+
+class VersionManager:
+    def __init__(self):
+        self.version = "1.0.0"
+        self.changelog = []
+
+    def bump(self, type):
+        major, minor, patch = map(int, self.version.split("."))
+        if type == "major": major += 1; minor = 0; patch = 0
+        elif type == "minor": minor += 1; patch = 0
+        elif type == "patch": patch += 1
+        self.version = f"{major}.{minor}.{patch}"
+
+    def add_changelog(self, entry):
+        self.changelog.append(entry)
+
+import shutil
+import zipfile
+
+def compress_assets(folder, output="assets.zip"):
+    with zipfile.ZipFile(output, "w") as zipf:
+        for root, _, files in os.walk(folder):
+            for file in files:
+                zipf.write(os.path.join(root, file))
+
+def apply_platform_settings(platform):
+    if platform == "Mobile":
+        print("Reducing texture resolution, disabling shadows")
+    elif platform == "Console":
+        print("Enabling controller support, optimizing shaders")
+
+
