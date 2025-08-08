@@ -17448,3 +17448,753 @@ public class PlayerController: MonoBehaviour
         // Player control logic based on PlayerIndex
     }
 }
+import 'dart:math';
+
+/// Represents the visibility state of a cell on the map.
+enum CellState {
+  hidden, // Completely obscured, not yet seen.
+  visible, // Currently within a unit's line of sight.
+  explored; // Was visible at some point, but currently not.
+}
+
+/// Represents a single cell on the game grid.
+class Cell {
+  CellState state;
+  final int x;
+  final int y;
+
+  Cell({required this.x, required this.y, this.state = CellState.hidden});
+}
+
+/// Represents a position on the game grid.
+class Position {
+  final int x;
+  final int y;
+
+  const Position(this.x, this.y);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Position && runtimeType == other.runtimeType && x == other.x && y == other.y;
+
+  @override
+  int get hashCode => x.hashCode ^ y.hashCode;
+
+  @override
+  String toString() => '($x, $y)';
+}
+
+/// Defines the signature for ability functions.
+///
+/// An ability function takes the `Unit` using the ability (self) and a map
+/// of dynamic arguments. It returns a map containing a 'message' string
+/// and an integer 'cooldown'.
+typedef AbilityFunction = Map<String, dynamic> Function(Unit self, Map<String, dynamic> args);
+
+/// A private helper class to store the definition of an ability.
+class _AbilityDefinition {
+  final String name;
+  final AbilityFunction function;
+  final int defaultCooldown;
+
+  _AbilityDefinition({required this.name, required this.function, required this.defaultCooldown});
+}
+
+/// Represents a unit on the map that has a vision range and various abilities.
+class Unit {
+  String name;
+  Position position;
+  int vision; // Manhattan distance vision range, inherited from original Dart Unit
+
+  final Map<String, _AbilityDefinition> _abilities = {};
+  final Map<String, int> cooldowns = {}; // Tracks current cooldowns for abilities
+  int maxHp;
+  int hp;
+  String? team;
+  final Map<String, int> statusEffects = {}; // e.g., {'stunned': 2}
+  int shield = 0;
+  int energy = 100; // Futuristic energy bar
+  bool cloaked = false;
+  final List<String> augmentations = [];
+
+  // New fields added to loosely represent narrative "emotional_state" scores
+  int relationshipScore;
+  int traumaScore;
+
+  Unit({
+    required this.name,
+    required int x,
+    required int y,
+    required this.vision,
+    this.maxHp = 100,
+    this.team,
+    this.relationshipScore = 75, // Default for demonstration
+    this.traumaScore = 0, // Default for demonstration
+  })  : position = Position(x, y),
+        hp = maxHp;
+
+  /// Sets an ability for this unit, making it available for use.
+  ///
+  /// [abilityName]: The name to refer to this ability.
+  /// [abilityFunc]: The function that implements the ability's logic.
+  /// [cooldown]: The number of turns the ability will be on cooldown after use.
+  void setAbility(String abilityName, AbilityFunction abilityFunc, int cooldown) {
+    _abilities[abilityName] = _AbilityDefinition(name: abilityName, function: abilityFunc, defaultCooldown: cooldown);
+    cooldowns[abilityName] = 0; // Initialize cooldown for this ability
+  }
+
+  /// Checks if a unit can currently use a specific ability.
+  ///
+  /// Returns true if the ability is not on cooldown and the unit is not stunned.
+  bool canUseAbility(String abilityName) {
+    return (cooldowns[abilityName] ?? 0) == 0 && (statusEffects['stunned'] ?? 0) == 0;
+  }
+
+  /// Attempts to use a specified ability.
+  ///
+  /// [abilityName]: The name of the ability to use.
+  /// [args]: A map of arguments to pass to the ability function.
+  /// Returns a map containing a 'message' and the 'cooldown' set by the ability.
+  Map<String, dynamic> useAbility(String abilityName, [Map<String, dynamic> args = const {}]) {
+    final abilityDef = _abilities[abilityName];
+    if (abilityDef == null) {
+      return {'message': 'Ability "$abilityName" not found.', 'cooldown': 0};
+    }
+
+    if (!canUseAbility(abilityName)) {
+      if ((statusEffects['stunned'] ?? 0) > 0) {
+        return {'message': '$name is stunned and cannot act.', 'cooldown': 0};
+      }
+      return {'message': 'Ability $abilityName is on cooldown for ${cooldowns[abilityName]} more turns.', 'cooldown': 0};
+    }
+
+    final result = abilityDef.function(this, args);
+    // Use the cooldown returned by the ability function, or its default if not specified.
+    final int returnedCooldown = result['cooldown'] ?? abilityDef.defaultCooldown;
+    cooldowns[abilityName] = returnedCooldown;
+    return result;
+  }
+
+  /// Reduces the unit's HP based on damage, accounting for shield.
+  /// Returns a message detailing the outcome.
+  String takeDamage(int amount) {
+    final int damageTaken = max(0, amount - shield);
+    hp = max(0, hp - damageTaken);
+    shield = max(0, shield - amount);
+    // Taking damage increases trauma score
+    traumaScore = min(100, traumaScore + (damageTaken ~/ 10));
+    return '$name takes $damageTaken damage! HP: $hp';
+  }
+
+  /// Increases the unit's HP, up to its maximum HP.
+  /// Returns a message detailing the outcome.
+  String heal(int amount) {
+    final int actualHeal = min(maxHp - hp, amount);
+    hp = min(maxHp, hp + amount);
+    // Healing reduces trauma score
+    traumaScore = max(0, traumaScore - (actualHeal ~/ 20));
+    return '$name heals $amount HP! HP: $hp';
+  }
+
+  /// Adds a status effect to the unit with a specified duration.
+  void addStatus(String status, int turns) {
+    statusEffects[status] = turns;
+  }
+
+  /// Handles end-of-turn logic: decrements cooldowns, status effect durations,
+  /// and regenerates energy.
+  void endTurn() {
+    // Decrement ability cooldowns
+    cooldowns.forEach((key, value) {
+      if (value > 0) {
+        cooldowns[key] = value - 1;
+      }
+    });
+
+    // Decrement status effect durations and remove expired ones
+    final List<String> expiredStatuses = [];
+    statusEffects.forEach((status, duration) {
+      statusEffects[status] = duration - 1;
+      if (statusEffects[status]! <= 0) {
+        expiredStatuses.add(status);
+      }
+    });
+    for (final status in expiredStatuses) {
+      statusEffects.remove(status);
+      if (status == 'cloaked') {
+        removeCloak(); // Specifically handle cloak removal
+      }
+    }
+
+    // Energy regeneration for futuristic units
+    energy = min(100, energy + 10);
+  }
+
+  /// Activates the unit's cloak device for a specified number of turns.
+  void setCloak(int turns) {
+    cloaked = true;
+    addStatus("cloaked", turns);
+  }
+
+  /// Deactivates the unit's cloak device.
+  void removeCloak() {
+    cloaked = false;
+  }
+}
+
+// --- Super Soldier Futuristic Abilities ---
+// These functions implement the logic for various unit abilities.
+// They must conform to the `AbilityFunction` typedef.
+
+Map<String, dynamic> nanoHeal(Unit user, Map<String, dynamic> args) {
+  final targetUnit = args['target_unit'] as Unit;
+  final amount = args['amount'] as int? ?? 40;
+  if (user.energy < 20) {
+    return {"message": "${user.name} lacks energy for Nano-Heal.", "cooldown": 0};
+  }
+  user.energy -= 20;
+  final msg = targetUnit.heal(amount);
+  return {"message": "${user.name} uses Nano-Heal! $msg", "cooldown": 2};
+}
+
+Map<String, dynamic> plasmaBlast(Unit user, Map<String, dynamic> args) {
+  final targetUnit = args['target_unit'] as Unit;
+  final damage = args['damage'] as int? ?? 50;
+  if (user.energy < 30) {
+    return {"message": "${user.name} lacks energy for Plasma Blast.", "cooldown": 0};
+  }
+  final dist = (user.position.x - targetUnit.position.x).abs() + (user.position.y - targetUnit.position.y).abs();
+  if (dist > 6) {
+    return {"message": "Target is out of plasma blast range.", "cooldown": 0};
+  }
+  user.energy -= 30;
+  final msg = targetUnit.takeDamage(damage);
+  // Using Plasma Blast increases the user's trauma score slightly
+  user.traumaScore = min(100, user.traumaScore + 5);
+  return {"message": "${user.name} fires Plasma Blast! $msg", "cooldown": 3};
+}
+
+Map<String, dynamic> adaptiveShield(Unit user, Map<String, dynamic> args) {
+  final amount = args['amount'] as int? ?? 40;
+  final duration = args['duration'] as int? ?? 2;
+  if (user.energy < 25) {
+    return {"message": "${user.name} lacks energy for Adaptive Shield.", "cooldown": 0};
+  }
+  user.energy -= 25;
+  user.shield += amount;
+  user.addStatus("shielded", duration);
+  return {"message": "${user.name} deploys Adaptive Shield for $duration turns!", "cooldown": 4};
+}
+
+Map<String, dynamic> cloakDevice(Unit user, Map<String, dynamic> args) {
+  final duration = args['duration'] as int? ?? 2;
+  if (user.energy < 30) {
+    return {"message": "${user.name} lacks energy for Cloak Device.", "cooldown": 0};
+  }
+  user.energy -= 30;
+  user.setCloak(duration);
+  return {"message": "${user.name} activates Cloak Device and is invisible for $duration turns!", "cooldown": 5};
+}
+
+Map<String, dynamic> overclock(Unit user, Map<String, dynamic> args) {
+  if (user.energy < 40) {
+    return {"message": "${user.name} lacks energy for Overclock.", "cooldown": 0};
+  }
+  user.energy -= 40;
+
+  int cooldown = 6; // Default cooldown
+  String message = "${user.name} overclocks: doubled damage for 2 turns!";
+
+  // Example of 'condition' based on traumaScore influencing 'effect'
+  if (user.traumaScore > 60) {
+    message = "${user.name} overclocks, but the strain takes its toll: doubled damage for 2 turns, but higher cooldown due to stress!";
+    cooldown = 8; // Longer cooldown if unit is highly traumatized
+    user.traumaScore = min(100, user.traumaScore + 10); // Overclocking while traumatized increases trauma significantly
+  } else {
+    // If trauma is low, using this powerful ability might even slightly reduce trauma
+    user.traumaScore = max(0, user.traumaScore - 5);
+  }
+
+  user.addStatus("overclocked", 2);
+  return {"message": message, "cooldown": cooldown};
+}
+
+Map<String, dynamic> tacticalBlink(Unit user, Map<String, dynamic> args) {
+  final gridSize = args['grid_size'] as Position;
+  if (user.energy < 15) {
+    return {"message": "${user.name} lacks energy for Tactical Blink.", "cooldown": 0};
+  }
+  user.energy -= 15;
+  final random = Random();
+  final int minX = max(0, user.position.x - 3);
+  final int maxX = min(gridSize.x - 1, user.position.x + 3);
+  final int minY = max(0, user.position.y - 3);
+  final int maxY = min(gridSize.y - 1, user.position.y + 3);
+
+  // Ensure valid range for random.nextInt, handling cases where min > max
+  final newX = (maxX >= minX) ? random.nextInt(maxX - minX + 1) + minX : user.position.x;
+  final newY = (maxY >= minY) ? random.nextInt(maxY - minY + 1) + minY : user.position.y;
+
+  user.position = Position(newX, newY);
+  // Tactical Blink might cause minor stress, increasing trauma
+  user.traumaScore = min(100, user.traumaScore + 2);
+  return {"message": "${user.name} blinks tactically to ${user.position}!", "cooldown": 2};
+}
+
+Map<String, dynamic> empPulse(Unit user, Map<String, dynamic> args) {
+  final units = args['units'] as List<Unit>; // List of all units on the map
+  final rangeLimit = args['range_limit'] as int? ?? 2;
+  if (user.energy < 35) {
+    return {"message": "${user.name} lacks energy for EMP Pulse.", "cooldown": 0};
+  }
+  user.energy -= 35;
+  final List<String> affected = [];
+  int enemiesStunned = 0;
+  for (final target in units) {
+    // A unit typically doesn't stun itself
+    if (target == user) continue;
+    final dist = (user.position.x - target.position.x).abs() + (user.position.y - target.position.y).abs();
+    if (dist <= rangeLimit) {
+      target.addStatus("stunned", 1); // Stun for 1 turn
+      affected.add(target.name);
+      enemiesStunned++;
+    }
+  }
+  // Using EMP pulse on multiple units, especially if it affects allies, increases trauma
+  if (enemiesStunned > 0) {
+    user.traumaScore = min(100, user.traumaScore + (enemiesStunned * 3));
+  }
+  return {"message": "${user.name} emits EMP Pulse! Stunned: ${affected.join(', ')}", "cooldown": 5};
+}
+
+Map<String, dynamic> naniteSwarm(Unit user, Map<String, dynamic> args) {
+  final targetUnit = args['target_unit'] as Unit;
+  if (user.energy < 25) {
+    return {"message": "${user.name} lacks energy for Nanite Swarm.", "cooldown": 0};
+  }
+  user.energy -= 25;
+  targetUnit.addStatus("nanite_infection", 2); // Damage over time for 2 turns
+  // Inflicting damage over time might increase trauma score
+  user.traumaScore = min(100, user.traumaScore + 4);
+  return {"message": "${user.name} infects ${targetUnit.name} with Nanite Swarm (2 turns damage over time)!", "cooldown": 4};
+}
+
+/// Represents the game map, containing a grid of cells.
+class GameMap {
+  final int width;
+  final int height;
+  final List<List<Cell>> grid;
+
+  /// Initializes a new game map with all cells set to hidden.
+  GameMap({required this.width, required this.height})
+      : grid = List.generate(
+          height,
+          (y) => List.generate(
+            width,
+            (x) => Cell(x: x, y: y, state: CellState.hidden),
+          ),
+        );
+
+  /// Prints a console representation of the fog of war map.
+  ///
+  /// '■' = hidden (unseen and unexplored)
+  /// '#' = explored (was seen, but not currently)
+  /// '.' = visible (currently in sight)
+  void printFogOfWar() {
+    for (int y = 0; y < height; y++) {
+      String row = "";
+      for (int x = 0; x < width; x++) {
+        final cell = grid[y][x];
+        switch (cell.state) {
+          case CellState.hidden:
+            row += "■";
+            break;
+          case CellState.explored:
+            row += "#";
+            break;
+          case CellState.visible:
+            row += ".";
+            break;
+        }
+      }
+      print(row);
+    }
+  }
+}
+
+/// Manages the fog of war logic for the game map.
+class FogOfWarSystem {
+  /// Updates the fog of war based on the current positions and vision of units.
+  ///
+  /// Cells that were previously 'visible' but are no longer in sight become 'explored'.
+  /// Cells within a unit's vision range become 'visible'.
+  ///
+  /// [gameMap]: The map to update.
+  /// [units]: A list of units whose vision will reveal the map.
+  void updateVisibility(GameMap gameMap, List<Unit> units) {
+    // First, transition all currently visible cells to 'explored'.
+    // This step ensures that areas previously seen but no longer in current vision
+    // retain their 'explored' status, rather than reverting to 'hidden'.
+    for (int y = 0; y < gameMap.height; y++) {
+      for (int x = 0; x < gameMap.width; x++) {
+        final cell = gameMap.grid[y][x];
+        if (cell.state == CellState.visible) {
+          cell.state = CellState.explored;
+        }
+      }
+    }
+
+    // Then, reveal cells within the vision range of each unit.
+    // Vision is calculated using Manhattan distance for a diamond shape.
+    for (final unit in units) {
+      // Iterate over a square region defined by the unit's vision range.
+      for (int dy = -unit.vision; dy <= unit.vision; dy++) {
+        for (int dx = -unit.vision; dx <= unit.vision; dx++) {
+          final nx = unit.position.x + dx;
+          final ny = unit.position.y + dy;
+
+          // Check if the calculated coordinate is within the map bounds
+          // and if it's within the unit's vision (Manhattan distance).
+          if (nx >= 0 && ny >= 0 && nx < gameMap.width && ny < gameMap.height && (dx.abs() + dy.abs()) <= unit.vision) {
+            gameMap.grid[ny][nx].state = CellState.visible;
+          }
+        }
+      }
+    }
+  }
+}
+
+// --- Narrative and Lore Data ---
+
+// Mission Definitions
+const Map<String, dynamic> missionDustProtocol = {
+  "terrain": "Shifting dunes, electromagnetic storms",
+  "enemies": ["Echo Wraiths", "Vault Sentinels"],
+  "gear_required": ["Sand Pulse Boots", "Echo Scanner"],
+  "tactical_twist": "Vault only opens during solar flare window"
+};
+
+const Map<String, dynamic> missionMinaretCipher = {
+  "puzzle_type": "Visual decryption",
+  "interface": "Zoe’s Tactical UI overlays ancient script",
+  "threats": ["Memory Hijackers", "Echo Disruptors"],
+  "reward": "Vault Sigma access key"
+};
+
+const Map<String, dynamic> missionNeuralMirage = {
+  "map_type": "Echo-generated illusion grid",
+  "challenge": "Distinguish real vs synthetic memories",
+  "boss": "OISTARIAN Echo Architect",
+  "outcome": "Unlock Zoe’s Echo Sync ability"
+};
+
+const Map<String, dynamic> missionSkylineReversal = {
+  "entry_method": "Vertical Echo Climb",
+  "interface": "Zoe’s dual-agent combat rig",
+  "enemies": ["Vault Guardians", "Echo Loopers"],
+  "finale": "Drop the Eden Vault Map"
+};
+
+// Vault Eden Data
+const Map<String, dynamic> vaultEdenPuzzle = {
+  "layers": [
+    {"type": "Neural Cipher Grid", "challenge": "Align memory shards to form Zoe’s childhood echo"},
+    {"type": "Echo Frequency Lock", "challenge": "Match pulse tones to Eden’s encrypted rhythm"},
+    {"type": "Synthetic Truth Maze", "challenge": "Navigate false memories to reach the core"}
+  ],
+  "final_key": "ZOE-ECHO-REWRITE",
+  "reward": "Vault Eden opens, revealing the Echo Reversal truth"
+};
+
+const List<String> finalShowdownScript = [
+  "Zoe stands atop the frozen ridge, Echo Sync pulsing through her veins.",
+  "OISTARIAN: You were never meant to remember.",
+  "Zoe: That’s why I rewrote the ending.",
+  "*Vault Eden erupts in light, memories cascade across the sky.*",
+  "System: Echo Reversal complete. Truth restored."
+];
+
+const Map<String, dynamic> vaultEdenArchive = {
+  "Memory Shard 01": {
+    "origin": "Zoe’s childhood echo",
+    "type": "Emotional",
+    "access": "Unlocked"
+  },
+  "Memory Shard 02": {
+    "origin": "OISTARIAN betrayal",
+    "type": "Synthetic",
+    "access": "Encrypted"
+  },
+  "Memory Shard 03": {
+    "origin": "Echo Reversal protocol",
+    "type": "Tactical",
+    "access": "Unlocked"
+  },
+  "Memory Shard 04": {
+    "origin": "Vault Eden bloom",
+    "type": "Visionary",
+    "access": "Hidden"
+  }
+};
+
+const Map<String, dynamic> echoPulseFinale = {
+  "activation": "Final Echo Pulse from Vault Eden core",
+  "visual": "Aurora wave erupting across neural grid",
+  "soundtrack": "‘Memory Rewritten’ — ethereal synth fusion",
+  "effect": "Echo harmonization restores fractured timelines",
+  "Zoe_dialogue": "I didn’t just survive the echo… I became it."
+};
+
+const Map<String, dynamic> edenBloomAnimation = {
+  "stage_1": "Core pulse expands into fractal light",
+  "stage_2": "Memory petals bloom from the neural vines",
+  "stage_3": "Eden's truth archive unlocks",
+  "Zoe": {
+    "pose": "Silhouetted against the bloom",
+    "action": "Final memory merge"
+  }
+};
+
+const Map<String, dynamic> truthReversalProtocol = {
+  "step_1": "Activate Eden’s Vault override",
+  "step_2": "Inject Zoe’s Echo Rewrite key",
+  "step_3": "Recode all synthetic memories",
+  "result": "System-wide restoration of historical truth"
+};
+
+const Map<String, dynamic> vaultEdenDeepFile = {
+  "Echo Core": "ZOE-ECHO-REWRITE",
+  "Truth Archive": ["Memory Shard 01", "Memory Shard 03", "Vault Bloom Sequence"],
+  "Hidden Layer": {
+    "OISTARIAN Signature": "Phase 3 - Echo Storm",
+    "Zoe’s Final Sync": "Echo Pulse Finale"
+  },
+  "Memorial Protocol": "Activated"
+};
+
+// Memorial Data and Narrative
+const String memorialProtocolNarrative = """
+🕯️ Memorial Protocol: Eden Ben Rub, Osher Barzilay & All We’ve Lost
+On October 7, 2023, the world changed. Among the many lives tragically taken in the Hamas attack, we remember:
+- Sgt. Osher Simha Barzilay, 19, a gifted neuroscience student and MDA volunteer, who dreamed of becoming a brain surgeon
+- Eden Ben Rub, whose name echoes in remembrance alongside countless others lost that day
+Their stories are etched into the Vault Eden memorial layer — not as data, but as light. A national ceremony held in Tel Aviv honored their memory with music, poetry, and unity.
+""";
+
+const Map<String, dynamic> memorialArchiveUi = {
+  "interface": "Vault Eden Memory Console",
+  "sections": [
+    {"title": "October 7 Echoes", "type": "Timeline", "entries": ["Eden Ben Rub", "Osher Barzilay", "Others lost"]},
+    {"title": "Personal Shards", "type": "Audio/Visual", "entries": ["Family messages", "Volunteer stories"]},
+    {"title": "Global Resonance", "type": "Tributes", "entries": ["Poems", "Art", "Music"]}
+  ],
+  "interaction": "Scroll, tap, and echo playback"
+};
+
+const List<String> echoBloomPoem = [
+  "In Eden’s vault, the echoes bloom,",
+  "Soft petals of memory in digital gloom.",
+  "Names like stars in a fractured sky,",
+  "We remember, we honor, we never say goodbye.",
+  "October’s silence, broken by flame,",
+  "Each light a soul, each soul a name."
+];
+
+const Map<String, dynamic> tributeWall = {
+  "title": "October 7 Memorial Wall",
+  "panels": [
+    {"name": "Eden Ben Rub", "age": "Unknown", "role": "Civilian"},
+    {"name": "Osher Barzilay", "age": "19", "role": "Soldier, MDA Volunteer"},
+    {"name": "Unnamed Souls", "age": "Various", "role": "Victims of Terror"}
+  ],
+  "interaction": "Hover to reveal personal echoes",
+  "visuals": "Stone-textured panels with glowing inscriptions"
+};
+
+const Map<String, String> elegyTrack = {
+  "title": "Echo Bloom Elegy",
+  "composer": "Neural Harmonics Collective",
+  "style": "Ambient synth + memory tones",
+  "emotion": "Resonant sorrow, luminous hope"
+};
+
+const List<String> remembranceFlamePoem = [
+  "From Eden’s flame, the echoes rise,",
+  "Names like embers in twilight skies.",
+  "October’s sorrow, etched in light,",
+  "We carry their memory into the night.",
+  "Each flicker a soul, each glow a vow,",
+  "To remember, to honor, here and now."
+];
+
+const List<String> echoConstellationElegy = [
+  "Above Eden’s vault, the stars align,",
+  "Each name a beacon, each soul divine.",
+  "October’s echoes drift through space,",
+  "A silent vow, a glowing trace.",
+  "We chart their light, we hold their flame,",
+  "In every star, we speak their name."
+];
+
+const Map<String, dynamic> vaultSkyAltar = {
+  "structure": "Floating altar of neural crystal and echo vines",
+  "location": "Above Vault Eden’s bloom core",
+  "features": [
+    "Memory shard offerings",
+    "Echo lanterns suspended in orbit",
+    "Names etched in aurora light"
+  ],
+  "interaction": "Tap to release tribute light pulses"
+};
+
+const List<String> auroraRequiemPoem = [
+  "Vault Eden breathes in spectral light,",
+  "Auroras bloom through memory’s night.",
+  "October’s echoes shimmer and rise,",
+  "A requiem sung in celestial skies.",
+  "Each pulse a name, each glow a vow,",
+  "We remember — then, now, and always."
+];
+
+/// Main function to demonstrate the Fog of War system and Unit abilities.
+void main() {
+  print('--- Fog of War System & Unit Abilities Demo ---');
+
+  // Initialize a 8x8 map to align with the implied grid size from the HTML description.
+  final gameMap = GameMap(width: 8, height: 8);
+  final fogOfWarSystem = FogOfWarSystem();
+
+  print('\nInitial Map (All Hidden):');
+  gameMap.printFogOfWar();
+
+  // Define player units with their positions, vision ranges, and abilities.
+  // Ensure unit positions are within the new 8x8 map bounds (0-7 for x and y).
+  final novaCyborg = Unit(name: "Nova Cyborg", x: 3, y: 3, maxHp: 150, vision: 2, traumaScore: 40); // Set initial trauma for demo
+  novaCyborg.setAbility("Nano Heal", nanoHeal, 2);
+  novaCyborg.setAbility("Plasma Blast", plasmaBlast, 3);
+  novaCyborg.setAbility("Adaptive Shield", adaptiveShield, 4);
+  novaCyborg.setAbility("Cloak Device", cloakDevice, 5);
+  novaCyborg.setAbility("Overclock", overclock, 6);
+  novaCyborg.setAbility("Tactical Blink", tacticalBlink, 2);
+  novaCyborg.setAbility("EMP Pulse", empPulse, 5);
+  novaCyborg.setAbility("Nanite Swarm", naniteSwarm, 4);
+
+  final atlasSoldier = Unit(name: "Atlas Soldier", x: 7, y: 1, maxHp: 120, vision: 1);
+  final quantumMedic = Unit(name: "Quantum Medic", x: 1, y: 2, maxHp: 100, vision: 1);
+
+  final playerUnits = <Unit>[novaCyborg, atlasSoldier, quantumMedic];
+
+  // --- Fog of War Demonstration ---
+  print('\n--- Fog of War Demonstration ---');
+  print('\nMap after placing units (Initial visibility):');
+  fogOfWarSystem.updateVisibility(gameMap, playerUnits);
+  gameMap.printFogOfWar();
+
+  print('\nSimulating Unit Movement...');
+  novaCyborg.position = Position(1, 1);
+  atlasSoldier.position = Position(6, 5); // Adjusted to stay within 8x8 bounds if it was previously outside
+
+  print('\nMap after units moved (Old visible areas become explored):');
+  fogOfWarSystem.updateVisibility(gameMap, playerUnits);
+  gameMap.printFogOfWar();
+
+  print('\nAdding a new unit...');
+  final sentinelDrone = Unit(name: "Sentinel Drone", x: 0, y: 6, vision: 3);
+  playerUnits.add(sentinelDrone);
+
+  print('\nMap after adding a new unit:');
+  fogOfWarSystem.updateVisibility(gameMap, playerUnits);
+  gameMap.printFogOfWar();
+
+  // --- Unit Abilities Demonstration ---
+  print('\n--- Unit Abilities Demonstration ---');
+
+  print('\n${novaCyborg.name} initial state: HP: ${novaCyborg.hp}, Energy: ${novaCyborg.energy}, Shield: ${novaCyborg.shield}, Status: ${novaCyborg.statusEffects}, Trauma: ${novaCyborg.traumaScore}');
+  print('${atlasSoldier.name} initial state: HP: ${atlasSoldier.hp}, Energy: ${atlasSoldier.energy}, Shield: ${atlasSoldier.shield}, Status: ${atlasSoldier.statusEffects}, Trauma: ${atlasSoldier.traumaScore}');
+  print('${quantumMedic.name} initial state: HP: ${quantumMedic.hp}, Energy: ${quantumMedic.energy}, Shield: ${quantumMedic.shield}, Status: ${quantumMedic.statusEffects}, Trauma: ${quantumMedic.traumaScore}');
+  print('${sentinelDrone.name} initial state: HP: ${sentinelDrone.hp}, Energy: ${sentinelDrone.energy}, Shield: ${sentinelDrone.shield}, Status: ${sentinelDrone.statusEffects}, Trauma: ${sentinelDrone.traumaScore}');
+
+  print('\nTurn 1 Actions:');
+  Map<String, dynamic> result;
+
+  // Nova Cyborg uses Nano Heal on itself
+  result = novaCyborg.useAbility("Nano Heal", {'target_unit': novaCyborg});
+  print(result['message']);
+  print('Nova Cyborg HP: ${novaCyborg.hp}, Trauma: ${novaCyborg.traumaScore}');
+
+  // Nova Cyborg uses Plasma Blast on Atlas Soldier
+  result = novaCyborg.useAbility("Plasma Blast", {'target_unit': atlasSoldier});
+  print(result['message']);
+  print('Atlas Soldier HP: ${atlasSoldier.hp}, Trauma: ${atlasSoldier.traumaScore}');
+  print('Nova Cyborg Trauma: ${novaCyborg.traumaScore}');
+
+  // Nova Cyborg deploys Adaptive Shield
+  result = novaCyborg.useAbility("Adaptive Shield");
+  print(result['message']);
+  print('Nova Cyborg Shield: ${novaCyborg.shield}, Status: ${novaCyborg.statusEffects}');
+
+  // Nova Cyborg activates Cloak Device
+  result = novaCyborg.useAbility("Cloak Device");
+  print(result['message']);
+  print('Nova Cyborg Cloaked: ${novaCyborg.cloaked}, Status: ${novaCyborg.statusEffects}');
+
+  // Nova Cyborg Overclocks - should trigger higher cooldown due to initial traumaScore
+  result = novaCyborg.useAbility("Overclock");
+  print(result['message']);
+  print('Nova Cyborg Status: ${novaCyborg.statusEffects}, Cooldowns: ${novaCyborg.cooldowns['Overclock']}, Trauma: ${novaCyborg.traumaScore}');
+
+  // Nova Cyborg uses Tactical Blink (needs grid size for boundaries)
+  result = novaCyborg.useAbility("Tactical Blink", {'grid_size': Position(gameMap.width, gameMap.height)});
+  print(result['message']);
+  print('Nova Cyborg New Position: ${novaCyborg.position}, Trauma: ${novaCyborg.traumaScore}');
+
+  // Nova Cyborg emits EMP Pulse, affecting nearby units
+  result = novaCyborg.useAbility("EMP Pulse", {'units': playerUnits});
+  print(result['message']);
+  print('Atlas Soldier Status: ${atlasSoldier.statusEffects}');
+  print('Quantum Medic Status: ${quantumMedic.statusEffects}');
+  print('Nova Cyborg Trauma: ${novaCyborg.traumaScore}');
+
+
+  // Nova Cyborg uses Nanite Swarm on Quantum Medic
+  result = novaCyborg.useAbility("Nanite Swarm", {'target_unit': quantumMedic});
+  print(result['message']);
+  print('Quantum Medic Status: ${quantumMedic.statusEffects}');
+  print('Nova Cyborg Trauma: ${novaCyborg.traumaScore}');
+
+  print('\n--- End of Turn 1 ---');
+  // All units end their turn
+  for (final unit in playerUnits) {
+    unit.endTurn();
+  }
+
+  print('\nAfter End Turn 1:');
+  print('Nova Cyborg Energy: ${novaCyborg.energy}, Cooldowns: ${novaCyborg.cooldowns}, Status: ${novaCyborg.statusEffects}, Trauma: ${novaCyborg.traumaScore}');
+  print('Atlas Soldier Energy: ${atlasSoldier.energy}, Cooldowns: ${atlasSoldier.cooldowns}, Status: ${atlasSoldier.statusEffects}, Trauma: ${atlasSoldier.traumaScore}');
+  print('Quantum Medic Energy: ${quantumMedic.energy}, Cooldowns: ${quantumMedic.cooldowns}, Status: ${quantumMedic.statusEffects}, Trauma: ${quantumMedic.traumaScore}');
+
+  print('\nTurn 2 Actions: Testing cooldowns and stun effects.');
+  result = novaCyborg.useAbility("Plasma Blast", {'target_unit': atlasSoldier}); // Should still be on cooldown
+  print(result['message']);
+
+  // Atlas Soldier is stunned from the EMP Pulse, attempting to use a non-existent ability
+  // This will first report 'ability not found', then display the stun status if it exists.
+  // For demo purposes, let's assume Atlas Soldier has an ability like 'Basic Attack'
+  atlasSoldier.setAbility("Basic Attack", (self, args) => {'message': '${self.name} uses Basic Attack!', 'cooldown': 1}, 1);
+  result = atlasSoldier.useAbility("Basic Attack");
+  print(result['message']);
+
+  print('\n--- End of Turn 2 ---');
+  // All units end their turn
+  for (final unit in playerUnits) {
+    unit.endTurn();
+  }
+
+  print('\nAfter End Turn 2:');
+  print('Nova Cyborg Energy: ${novaCyborg.energy}, Cooldowns: ${novaCyborg.cooldowns}, Status: ${novaCyborg.statusEffects}, Trauma: ${novaCyborg.traumaScore}');
+  print('Atlas Soldier Energy: ${atlasSoldier.energy}, Cooldowns: ${atlasSoldier.cooldowns}, Status: ${atlasSoldier.statusEffects}, Trauma: ${atlasSoldier.traumaScore}');
+  print('Quantum Medic Energy: ${quantumMedic.energy}, Cooldowns: ${quantumMedic.cooldowns}, Status: ${quantumMedic.statusEffects}, Trauma: ${quantumMedic.traumaScore}');
+
+  print('\n--- Demo Complete ---');
+}
