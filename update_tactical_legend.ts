@@ -19664,3 +19664,40 @@ class RevenueManager:
         data = self.sales[mod_name]
         return data["units"] * data["price"] * cut
 
+// Load environment variables securely
+require('dotenv').config();
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+const Stripe = require('stripe');
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+app.post('/create-subscription', async (req, res) => {
+  const { customerId, priceId } = req.body;
+
+  if (!customerId || !priceId) {
+    return res.status(400).json({ error: 'Missing customerId or priceId' });
+  }
+
+  try {
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      // Optional metadata can help with attribution
+      metadata: { organization_id: process.env.ORGANIZATION_ID || 'unknown' },
+    });
+
+    res.json({ subscriptionId: subscription.id, status: subscription.status });
+  } catch (error) {
+    console.error('Error creating subscription:', error);
+    // Normalize error for client
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Start server (adjust port as needed)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
