@@ -14350,3 +14350,1403 @@ public class WeaponDatabase : MonoBehaviour
         return gear.ToArray();
     }
 }
+import 'dart:async';
+import 'dart:math';
+
+// --- GameState Class ---
+/// Central game state management for OISTARIAN's journey.
+class GameState {
+  int trustScore;
+  bool voiceHeard;
+  int missionsCompleted;
+  bool echoShieldActive;
+  bool finalLiberationUnlocked;
+  String currentScene;
+
+  GameState({
+    this.trustScore = 82,
+    this.voiceHeard = false,
+    this.missionsCompleted = 47,
+    this.echoShieldActive = false,
+    this.finalLiberationUnlocked = false,
+    this.currentScene = "VaultOfEchoes",
+  });
+
+  /// Saves the current game state.
+  /// (File operations are not supported in this environment, skipping save.)
+  Future<void> saveState(String filename) async {
+    print('Simulating save: Game state would be saved to $filename');
+    // Actual file saving logic removed due to environment constraints.
+  }
+
+  /// Loads game state. If not found, uses default state.
+  /// (File operations are not supported in this environment, using default state.)
+  Future<void> loadState(String filename) async {
+    print('Simulating load: Attempting to load game state from $filename (using default state due to environment constraints).');
+    // Actual file loading logic removed due to environment constraints.
+    // Ensure default state is set if no loading happens.
+    trustScore = 82;
+    voiceHeard = false;
+    missionsCompleted = 47;
+    echoShieldActive = false;
+    finalLiberationUnlocked = false;
+    currentScene = "VaultOfEchoes";
+  }
+}
+
+// --- Scene Management ---
+
+/// Abstract base class for all game scenes.
+abstract class Scene {
+  final SceneManager sceneManager;
+  bool setupComplete = false;
+
+  Scene(this.sceneManager);
+
+  /// Initializes scene resources. Simulates asset loading.
+  Future<void> setup();
+
+  /// Updates scene logic based on delta time.
+  Future<void> update(double dt);
+
+  /// Renders the scene to the console.
+  void render();
+
+  /// Handles user input for the scene.
+  Future<void> handleInput(String input);
+
+  /// Clears the console screen by printing newlines.
+  /// This is a cross-platform workaround for console clearing
+  /// without relying on platform-specific commands.
+  void clearConsole() {
+    print('\n' * 50); // Print 50 newlines to push content up and 'clear' the screen
+  }
+}
+
+/// Manages scene transitions and game flow.
+class SceneManager {
+  Map<String, Scene> scenes = {};
+  Scene? currentScene;
+  final GameState gameState;
+
+  SceneManager(this.gameState);
+
+  /// Registers a scene with the manager.
+  void registerScene(String name, Scene scene) {
+    scenes[name] = scene;
+  }
+
+  /// Switches to a different scene by name.
+  Future<void> switchScene(String sceneName) async {
+    if (scenes.containsKey(sceneName)) {
+      currentScene = scenes[sceneName];
+      gameState.currentScene = sceneName;
+      print('\n--- Switching to scene: ${sceneName.toUpperCase()} ---');
+      await currentScene!.setup();
+    } else {
+      print('Error: Scene "$sceneName" not found!');
+    }
+  }
+
+  /// Updates the current scene.
+  Future<void> update(double dt) async {
+    if (currentScene != null) {
+      await currentScene!.update(dt);
+    }
+  }
+
+  /// Renders the current scene.
+  void render() {
+    if (currentScene != null) {
+      currentScene!.render();
+    }
+  }
+
+  /// Handles events for the current scene.
+  Future<void> handleInput(String input) async {
+    if (currentScene != null) {
+      await currentScene!.handleInput(input);
+    }
+  }
+}
+
+// --- Helper Systems ---
+
+/// Simulates frame-based animations by printing text.
+class AnimationSystem {
+  final List<String> frameDescriptions;
+  final double frameDuration;
+  int currentFrame;
+  double timer;
+  bool playing;
+  bool loop;
+
+  AnimationSystem(this.frameDescriptions, this.frameDuration,
+      {this.loop = true})
+      : currentFrame = 0,
+        timer = 0.0,
+        playing = true;
+
+  void update(double dt) {
+    if (!playing || frameDescriptions.isEmpty) {
+      return;
+    }
+
+    timer += dt;
+    if (timer >= frameDuration) {
+      currentFrame += 1;
+      timer = 0.0;
+
+      if (currentFrame >= frameDescriptions.length) {
+        if (loop) {
+          currentFrame = 0;
+        } else {
+          currentFrame = frameDescriptions.length - 1;
+          playing = false;
+        }
+      }
+    }
+  }
+
+  String getCurrentFrameDescription() {
+    if (frameDescriptions.isNotEmpty &&
+        currentFrame >= 0 &&
+        currentFrame < frameDescriptions.length) {
+      return frameDescriptions[currentFrame];
+    }
+    return 'Empty animation frame';
+  }
+
+  void reset() {
+    currentFrame = 0;
+    timer = 0.0;
+    playing = true;
+  }
+}
+
+/// Manages dialogue sequences with timing.
+class DialogueSystem {
+  final List<String> dialogueLines;
+  final double lineDuration;
+  int currentLine;
+  double timer;
+  bool complete;
+
+  DialogueSystem(this.dialogueLines, this.lineDuration)
+      : currentLine = 0,
+        timer = 0.0,
+        complete = false;
+
+  void update(double dt) {
+    if (complete) {
+      return;
+    }
+
+    timer += dt;
+    if (timer >= lineDuration) {
+      currentLine += 1;
+      timer = 0.0;
+
+      if (currentLine >= dialogueLines.length) {
+        complete = true;
+        currentLine = dialogueLines.length - 1; // Stay on last line
+      }
+    }
+  }
+
+  String getCurrentLine() {
+    if (currentLine >= 0 && currentLine < dialogueLines.length) {
+      return dialogueLines[currentLine];
+    }
+    return '';
+  }
+
+  void skipToNext() {
+    if (!complete) {
+      currentLine += 1;
+      timer = 0.0; // Reset timer for next line
+      if (currentLine >= dialogueLines.length) {
+        complete = true;
+        currentLine = dialogueLines.length - 1;
+      }
+    }
+  }
+}
+
+// --- Scene Implementations ---
+
+/// Cinematic start to the Vault mission with fade-in and voiceover.
+class VaultStartMission extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  double timer = 0;
+  int alpha = 255; // Simulates fade
+  bool voicePlayed = false;
+  String voiceClipStatus = "Loading...";
+
+  VaultStartMission(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Simulating loading assets for VaultStartMission...');
+    // Simulate loading voice clip
+    try {
+      voiceClipStatus = "Voice clip loaded: assets/start_mission_voice.wav";
+      setupComplete = true;
+    } catch (e) {
+      voiceClipStatus = "Voice clip failed to load.";
+      print("Warning: $voiceClipStatus - $e");
+    }
+    await Future.delayed(const Duration(milliseconds: 50)); // Small delay for setup
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    timer += dt;
+    if (timer > 0.5 && !voicePlayed && setupComplete) {
+      print('>> Playing: "MISSION START" voiceover <<');
+      voicePlayed = true;
+    }
+    if (alpha > 0) {
+      alpha = max(0, alpha - (60 * dt).toInt()); // Simulate fade
+    }
+    if (timer > 4) {
+      await sceneManager.switchScene("VaultOfEchoes");
+    }
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- VAULT START MISSION ---');
+    print('');
+    print('Screen fading in. Alpha: $alpha/255');
+    print('');
+    print('MISSION START: Infiltrate the Vault of Echoes');
+    print('');
+    if (voicePlayed) {
+      print('>> Voiceover playing: "$voiceClipStatus" <<');
+    } else {
+      print('>> Preparing voiceover <<');
+    }
+    print('');
+    print('Mission will proceed shortly...');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    // No interaction; it's a cinematic
+    print("This is a cinematic sequence. No interaction needed.");
+  }
+}
+
+/// Main vault infiltration scene.
+class VaultOfEchoesScene extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  VaultOfEchoesScene(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Simulating loading assets for VaultOfEchoesScene...');
+    try {
+      // Simulate loading image and sound.
+      print("Background loaded: assets/vault_bg.jpg");
+      print("Voice clip loaded: assets/voice_whisper.wav");
+      setupComplete = true;
+    } catch (e) {
+      print("Warning: Asset loading failed for VaultOfEchoesScene - $e");
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    // Add dynamic lighting or heartbeat pulse simulation here if desired.
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- VAULT OF ECHOES ---');
+    if (setupComplete) {
+      print('Background: Vault Core Chamber');
+    } else {
+      print('Background: Generic Dark Chamber');
+    }
+    print('');
+    print('The Vault awaits. Do you trust the voice?');
+    print('');
+    print('Instructions:');
+    print("  'T' to Trust the Voice (requires Trust Score > 80)");
+    print("  'S' to Silence the Voice");
+    print('');
+    print('Current Trust Score: ${sceneManager.gameState.trustScore}');
+    print('Voice Heard Status: ${sceneManager.gameState.voiceHeard}');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    final trustScore = sceneManager.gameState.trustScore;
+
+    if (input.toLowerCase() == 't') {
+      if (trustScore > 80) {
+        sceneManager.gameState.voiceHeard = true;
+        sceneManager.gameState.echoShieldActive = true;
+        print('>> You trust the voice. Activating Echo Shield. <<');
+        if (setupComplete) {
+          print('>> Playing: "whisper" voice clip <<');
+        }
+        await sceneManager.switchScene("EchoShieldUnlocked");
+      } else {
+        print('Your trust score is too low to fully trust the voice.');
+      }
+    } else if (input.toLowerCase() == 's') {
+      sceneManager.gameState.finalLiberationUnlocked = false; // Locks it
+      print('>> You chose to silence the voice. Final Liberation protocol locked. <<');
+      await sceneManager.switchScene("ZoesSilence");
+    } else {
+      print('Invalid input. Please choose "T" or "S".');
+    }
+  }
+}
+
+/// Emotional corridor scene with Zoe's memory.
+class ZoesSilenceScene extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  bool playedClip = false;
+
+  ZoesSilenceScene(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Simulating loading assets for ZoesSilenceScene...');
+    try {
+      print("Background loaded: assets/zoe_corridor.jpg");
+      print("Voice clip loaded: assets/zoe_voicemail.wav");
+      setupComplete = true;
+    } catch (e) {
+      print("Warning: Asset loading failed for ZoesSilenceScene - $e");
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    // No specific time-based updates for this scene's logic.
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- ZOE\'S SILENCE ---');
+    if (setupComplete) {
+      print('Background: Dusty Corridor, A Child\'s Shadow');
+    } else {
+      print('Background: Empty Room');
+    }
+    print('');
+    print('The corridor. The child. The silence.');
+    print('');
+    if (!playedClip) {
+      print("Instructions: Press 'V' to play Zoe's voicemail.");
+    } else {
+      print("Instructions: Press 'E' to continue to Echo Protocol.");
+      print('Zoe\'s voicemail has been played.');
+    }
+    print('');
+    print('Voice Heard Status (after choice): ${sceneManager.gameState.voiceHeard}');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    if (input.toLowerCase() == 'v' && !playedClip) {
+      if (setupComplete) {
+        print('>> Playing: "Zoe\'s voicemail" <<');
+      } else {
+        print('>> Simulating playing Zoe\'s voicemail (assets not loaded) <<');
+      }
+      playedClip = true;
+      sceneManager.gameState.voiceHeard = true; // Playing the voicemail changes this
+      print('Zoe\'s voicemail played. You have acknowledged her echo.');
+    } else if (input.toLowerCase() == 'e' && playedClip) {
+      print('Proceeding to Echo Protocol...');
+      await sceneManager.switchScene("EchoProtocol");
+    } else if (input.toLowerCase() == 'v' && playedClip) {
+      print('Voicemail already played.');
+    } else {
+      print('Invalid input. Follow the instructions.');
+    }
+  }
+}
+
+/// Tactical gear management interface.
+class GearUpgradeUI extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  final Map<String, Map<String, dynamic>> gear = {
+    "Whisper & Roar": {
+      "level": 2,
+      "mods": ["thermal_scope", "sound_suppressor"]
+    },
+    "NeuroPulse Arm": {
+      "level": 3,
+      "mods": ["shock_pulse", "grapple_hook", "echo_shield"]
+    }
+  };
+
+  GearUpgradeUI(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Initializing GearUpgradeUI...');
+    setupComplete = true; // No external assets to load for this UI
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    // No time-based updates for a static UI.
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- OISTARIAN GEAR LOADOUT ---');
+    print('');
+    print('----------------------------------');
+    for (var entry in gear.entries) {
+      final gearName = entry.key;
+      final stats = entry.value;
+      print('$gearName - Level ${stats["level"]}');
+      print('  Mods: ${(stats["mods"] as List).join(', ')}');
+      print('----------------------------------');
+    }
+    print('');
+    print('Current game state info:');
+    print('  Echo Shield Active: ${sceneManager.gameState.echoShieldActive}');
+    print('  Final Liberation Unlocked: ${sceneManager.gameState.finalLiberationUnlocked}');
+    print('');
+    print('Instructions: Press ESC to return to Tactical Briefing.');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    if (input.toLowerCase() == 'esc') {
+      print('Exiting Gear Upgrade UI.');
+      await sceneManager.switchScene("EchoProtocol"); // Changed to EchoProtocol
+    } else {
+      print('Invalid input. Press ESC to return.');
+    }
+  }
+}
+
+/// Mini-game for decrypting Zoe's memory shard.
+class NeuralGlassDecryption extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  List<int> glyphs;
+  final List<int> target;
+  int selected;
+  double timer;
+  bool success;
+  bool gameOver;
+
+  NeuralGlassDecryption(super.sceneManager) // Calls super constructor
+      : target = [3, 7, 2, 5, 1], // Zoe's emotional frequency
+        glyphs = [3, 7, 2, 5, 1], // Pre-solved for demo purposes
+        selected = 0,
+        timer = 60.0,
+        success = false,
+        gameOver = false;
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Neural Glass Decryption mini-game...');
+    // If the game is just starting, reset glyphs to random,
+    // otherwise if coming back to it, keep current.
+    success = (glyphs.toString() == target.toString()); // Mark as success immediately
+    gameOver = success; // End game if already successful
+    setupComplete = true; // No external assets
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    if (gameOver) return;
+
+    // Check for success immediately if glyphs match
+    if (glyphs.toString() == target.toString()) {
+      success = true;
+      gameOver = true;
+      print('\nDECRYPTION SUCCESSFUL!');
+      return; // Stop processing timer
+    }
+
+    timer -= dt;
+    if (timer <= 0) {
+      gameOver = true;
+      print('\nTIME UP!');
+    }
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- NEURAL GLASS DECRYPTION ---');
+    print('');
+    print('Objective: Align emotional frequencies to decode Zoe\'s memory shard.');
+    print('Time Remaining: ${timer.toInt()}s');
+    print('');
+    print('Glyphs:');
+    print('  ${glyphs.map((g) => g.toString().padLeft(2, '0')).join(' ')}');
+    print('  ${'  ' * selected}^^'); // Indicator for selected glyph
+    print('');
+    if (gameOver) {
+      if (success) {
+        print('Result: DECRYPTION SUCCESSFUL - Zoe\'s echo unlocked.');
+      } else {
+        print('Result: DECRYPTION FAILED - Memory shard destabilized.');
+      }
+      print('Press ENTER to continue...');
+    } else {
+      print('Instructions:');
+      print("  LEFT/RIGHT arrow keys: Select glyph");
+      print("  UP/DOWN arrow keys: Adjust glyph value");
+    }
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    if (gameOver) {
+      if (input.toLowerCase() == 'enter') {
+        if (success) {
+          sceneManager.gameState.finalLiberationUnlocked = true;
+          print('Final Liberation protocol unlocked!');
+          await sceneManager.switchScene("FinalLiberation");
+        } else {
+          print('Decryption failed. Returning to a previous state or main menu...');
+          await sceneManager.switchScene("TacticalBriefing"); // Or another scene
+        }
+      }
+      return;
+    }
+
+    // Basic interpretation of arrow keys for console input.
+    if (input.toLowerCase() == 'left') {
+      selected = (selected - 1 + glyphs.length) % glyphs.length;
+    } else if (input.toLowerCase() == 'right') {
+      selected = (selected + 1) % glyphs.length;
+    } else if (input.toLowerCase() == 'up') {
+      glyphs[selected] = (glyphs[selected] + 1) % 10;
+    } else if (input.toLowerCase() == 'down') {
+      glyphs[selected] = (glyphs[selected] - 1 + 10) % 10;
+    } else {
+      print('Invalid input for decryption mini-game.');
+    }
+  }
+}
+
+/// Tactical breach sequence with Yamam unit.
+class YamamBreachScene extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  String phase = "thermal_scan";
+  double phaseTimer = 0.0;
+  late AnimationSystem thermalAnim;
+  late AnimationSystem breachAnim;
+  late AnimationSystem extractionAnim;
+
+  YamamBreachScene(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Yamam Breach Sequence...');
+    thermalAnim = AnimationSystem(
+        ["Thermal scan frame 1", "Thermal scan frame 2", "Thermal scan frame 3"],
+        0.5,
+        loop: true);
+    breachAnim = AnimationSystem([
+      "Breach frame 1",
+      "Breach frame 2",
+      "Breach frame 3",
+      "Breach frame 4",
+      "Breach frame 5"
+    ], 0.2, loop: true);
+    extractionAnim = AnimationSystem([
+      "Extraction frame 1",
+      "Extraction frame 2",
+      "Extraction frame 3"
+    ], 0.4, loop: true);
+
+    try {
+      print("Sound loaded: assets/flashbang.wav");
+      print("Sound loaded: assets/breach_audio.wav");
+      setupComplete = true;
+    } catch (e) {
+      print("Warning: Asset loading failed for YamamBreachScene - $e");
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    phaseTimer += dt;
+
+    if (phase == "thermal_scan") {
+      thermalAnim.update(dt);
+      if (phaseTimer > 3.0) {
+        phase = "flashbang";
+        phaseTimer = 0.0;
+        if (setupComplete) {
+          print('>> Playing: Flashbang sound <<');
+        }
+      }
+    } else if (phase == "flashbang") {
+      if (phaseTimer > 0.5) {
+        phase = "breach";
+        phaseTimer = 0.0;
+        if (setupComplete) {
+          print('>> Playing: Breach sound <<');
+        }
+      }
+    } else if (phase == "breach") {
+      breachAnim.update(dt);
+      if (phaseTimer > 4.0) {
+        phase = "extraction";
+        phaseTimer = 0.0;
+      }
+    } else if (phase == "extraction") {
+      extractionAnim.update(dt);
+      if (phaseTimer > 6.0) {
+        await sceneManager.switchScene("HostageReunion");
+      }
+    }
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- YAMAM BREACH SEQUENCE ---');
+    print('Current Phase: ${phase.toUpperCase()}');
+    print('Phase Time: ${phaseTimer.toStringAsFixed(1)}s');
+    print('');
+
+    String statusText = '';
+    String frameDesc = '';
+
+    if (phase == "thermal_scan") {
+      frameDesc = thermalAnim.getCurrentFrameDescription();
+      statusText = "THERMAL SCAN: Detecting hostage signatures...";
+      print('Display: Thermal Overlay (Reddish hues)');
+    } else if (phase == "flashbang") {
+      statusText = "FLASHBANG DEPLOYED";
+      print('Display: Intense White Flash');
+    } else if (phase == "breach") {
+      frameDesc = breachAnim.getCurrentFrameDescription();
+      statusText = "YAMAM BREACH IN PROGRESS...";
+      print('Display: Yamam Operatives Breaching Door');
+    } else if (phase == "extraction") {
+      frameDesc = extractionAnim.getCurrentFrameDescription();
+      statusText = "HOSTAGES SECURED - EXTRACTION UNDER FIRE";
+      print('Display: Hostages Escorted, Heartbeat Monitor Pulsing');
+    }
+
+    print('Animation Frame: $frameDesc');
+    print('');
+    print(statusText);
+    print('');
+    print('MISSION TIME: ${phaseTimer.toInt()}s');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    print('Cinematic in progress. Please wait.');
+  }
+}
+
+/// Climactic final scene with Zoe reunion.
+class FinalLiberationScene extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  late DialogueSystem dialogue;
+  late AnimationSystem animation;
+
+  FinalLiberationScene(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Final Liberation Scene...');
+    final dialogueLines = [
+      "OISTARIAN: The silence ends here.",
+      "Zoe: You were never just a shadow.",
+      "OISTARIAN: I archived the pain. Now I choose the light.",
+      "Zoe: Then let’s rewrite the legend. Together.",
+      "System: Final Liberation protocol complete."
+    ];
+    dialogue = DialogueSystem(dialogueLines, 3.0);
+
+    final animationFrames = List.generate(
+        5, (i) => "Liberation Scene Frame ${i + 1} (OISTARIAN and Zoe)");
+    animation = AnimationSystem(animationFrames, 0.3, loop: true);
+
+    try {
+      print("Music loaded: assets/reunion_theme.wav");
+      setupComplete = true;
+    } catch (e) {
+      print("Warning: Asset loading failed for FinalLiberationScene - $e");
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    dialogue.update(dt);
+    animation.update(dt);
+
+    if (dialogue.complete && dialogue.timer > 2.0) {
+      await sceneManager.switchScene("LegacyArchive");
+    }
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- FINAL LIBERATION ---');
+    print('Scene: ${animation.getCurrentFrameDescription()}');
+    print('');
+    print('Dialogue:');
+    print('  "${dialogue.getCurrentLine()}"');
+    print('');
+    if (dialogue.complete) {
+      print('All dialogue complete. Press ENTER to proceed to Legacy Archive...');
+    } else {
+      print('Press SPACE to skip dialogue line.');
+    }
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    if (input.toLowerCase() == 'space') {
+      dialogue.skipToNext();
+      if (dialogue.complete) {
+        print('Dialogue skipped to end.');
+      }
+    } else if (dialogue.complete && input.toLowerCase() == 'enter') {
+      await sceneManager.switchScene("LegacyArchive");
+    } else {
+      print('Invalid input. Use SPACE to advance dialogue.');
+    }
+  }
+}
+
+/// Interactive map of all 5 vault locations.
+class VaultMapInterface extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  int selectedVault;
+  final Map<String, Map<String, dynamic>> vaults = {
+    "Vault Alpha": {
+      "location": "Echo Swamp",
+      "status": "Locked",
+      "key": "Precision Analyzer",
+      "description": "Wetlands facility hiding emotional resonance data"
+    },
+    "Vault Sigma": {
+      "location": "Sterile Land",
+      "status": "Unlocked",
+      "key": "Ultra Analyzer",
+      "description": "Decontaminated zone with neural processing cores"
+    },
+    "Vault Omega": {
+      "location": "Agna Desert",
+      "status": "Corrupted",
+      "key": "Code Breaker",
+      "description": "Desert outpost with damaged memory banks"
+    },
+    "Vault Zeta": {
+      "location": "Fortress",
+      "status": "Hidden",
+      "key": "Neural Sync",
+      "description": "Heavily fortified military installation"
+    },
+    "Vault Eden": {
+      "location": "White-Night Gulch",
+      "status": "Encrypted",
+      "key": "Zoe's Echo",
+      "description": "Final repository containing Zoe's memory fragments"
+    }
+  };
+  late List<String> vaultList;
+
+  VaultMapInterface(super.sceneManager) : selectedVault = 0 { // Calls super constructor
+    vaultList = vaults.keys.toList();
+  }
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Vault Map Interface...');
+    setupComplete = true; // No assets
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    // No time-based updates.
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- OISTARIAN VAULT NETWORK ---');
+    print('');
+    print('----------------------------------------------------');
+    print('|  VAULT NAME    | LOCATION          | STATUS     |');
+    print('----------------------------------------------------');
+
+    for (int i = 0; i < vaultList.length; i++) {
+      final vaultName = vaultList[i];
+      final vaultData = vaults[vaultName]!;
+      final prefix = (i == selectedVault) ? '>>' : '  ';
+      final suffix = (i == selectedVault) ? '<<' : '  ';
+      final statusColor = _getStatusColor(vaultData['status'] as String);
+
+      print(
+          '$prefix ${vaultName.padRight(14)} | ${vaultData['location'].padRight(17)} | $statusColor${(vaultData['status'] as String).padRight(10)}${_resetColor()}$suffix');
+    }
+    print('----------------------------------------------------');
+    print('');
+
+    final selectedVaultName = vaultList[selectedVault];
+    final selectedVaultData = vaults[selectedVaultName]!;
+
+    print('--- SELECTED VAULT DETAILS ---');
+    print('  Name: ${selectedVaultName}');
+    print('  Location: ${selectedVaultData['location']}');
+    print('  Status: ${selectedVaultData['status']}');
+    print('  Required Key: ${selectedVaultData['key']}');
+    print('  Description: ${selectedVaultData['description']}');
+    print('');
+    print('Instructions:');
+    print('  LEFT/RIGHT arrow keys: Select vault');
+    print('  ENTER: Access selected vault (if unlocked)');
+    print('  ESC: Return to Tactical Briefing');
+  }
+
+  String _getStatusColor(String status) {
+    switch (status) {
+      case "Unlocked":
+        return '\x1B[32m'; // Green
+      case "Locked":
+      return '\x1B[31m'; // Red
+      case "Corrupted":
+        return '\x1B[33m'; // Yellow
+      case "Hidden":
+        return '\x1B[37m'; // White
+      case "Encrypted":
+        return '\x1B[35m'; // Magenta
+      default:
+        return '\x1B[0m'; // Reset
+    }
+  }
+
+  String _resetColor() {
+    return '\x1B[0m'; // Reset color
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    // For console, assume typing "left", "right", "enter", "esc"
+    if (input.toLowerCase() == 'left') {
+      selectedVault = (selectedVault - 1 + vaultList.length) % vaultList.length;
+    } else if (input.toLowerCase() == 'right') {
+      selectedVault = (selectedVault + 1) % vaultList.length;
+    } else if (input.toLowerCase() == 'enter') {
+      final selectedVaultName = vaultList[selectedVault];
+      final selectedVaultData = vaults[selectedVaultName]!;
+      if (selectedVaultData["status"] == "Unlocked") {
+        print('Accessing ${selectedVaultName}...');
+        // In a real game, this might transition to a specific vault scene
+        await sceneManager.switchScene("NeuralGlassDecryption"); // Example transition
+      } else {
+        print('Access Denied: ${selectedVaultName} is ${selectedVaultData["status"]}.');
+        print('Required key: ${selectedVaultData["key"]}');
+      }
+    } else if (input.toLowerCase() == 'esc') {
+      print('Returning to Tactical Briefing.');
+      await sceneManager.switchScene("TacticalBriefing");
+    } else {
+      print('Invalid input. Use LEFT/RIGHT, ENTER, or ESC.');
+    }
+  }
+}
+
+/// Mission briefing interface with intel and objectives.
+class TacticalBriefingUI extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  final Map<String, dynamic> missionData = {
+    "operation_name": "Operation Arnon",
+    "location": "Nuseirat, Gaza",
+    "objective": "Hostage Rescue & Memory Shard Retrieval",
+    "hostages": ["Noa Argamani", "Almog Meir Jan", "Andrey Kozlov", "Shlomi Ziv"],
+    "intel": [
+      "Two separate civilian buildings",
+      "Heavy Hamas defensive positions",
+      "Biometric locks on holding cells",
+      "Feint operations in Bureij and Deir al-Balah"
+    ],
+    "assets": [
+      "Yamam tactical unit",
+      "OISTARIAN neural link sync",
+      "Echo Shield technology",
+      "Emergency extraction vehicles"
+    ],
+    "risks": [
+      "Civilian casualties",
+      "Equipment failure under fire",
+      "Emotional trigger protocols",
+      "Memory shard instability"
+    ]
+  };
+
+  String currentSection = "overview";
+  final List<String> sections = ["overview", "intel", "assets", "risks"];
+  int currentSectionIndex = 0;
+
+  TacticalBriefingUI(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Tactical Briefing UI...');
+    setupComplete = true; // No assets
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    // No time-based updates.
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- MOSSAD TACTICAL BRIEFING ---');
+    print('');
+    print('Operation: ${missionData['operation_name'].padRight(20)} AO: ${missionData['location']}');
+    print('----------------------------------------------------');
+
+    // Section tabs
+    final tabLine = sections
+        .map((s) => s.toUpperCase().padLeft(10).padRight(12))
+        .toList();
+    tabLine[currentSectionIndex] = '>>${tabLine[currentSectionIndex].trim()}<<';
+    print(tabLine.join(' '));
+    print('----------------------------------------------------');
+    print('');
+
+    // Content area
+    switch (currentSection) {
+      case "overview":
+        _renderOverview();
+        break;
+      case "intel":
+        _renderIntel();
+        break;
+      case "assets":
+        _renderAssets();
+        break;
+      case "risks":
+        _renderRisks();
+        break;
+    }
+    print('');
+    print('----------------------------------------------------');
+    print('Controls: TAB: Switch sections | ENTER: Begin mission');
+    print('          M: Vault map         | ESC: Main menu/Return');
+    print('----------------------------------------------------');
+  }
+
+  void _renderOverview() {
+    print('PRIMARY OBJECTIVE: ${missionData['objective']}');
+    print('');
+    print('TARGET HOSTAGES:');
+    (missionData['hostages'] as List).forEach((h) => print('  • $h'));
+    print('');
+    print('MISSION TIMELINE:');
+    print('  0400: Insert via Nuseirat breach');
+    print('  0410: Sync with Yamam unit');
+    print('  0420: Locate hostage positions');
+    print('  0430: Simultaneous extraction');
+    print('  0445: Emergency evac protocol');
+  }
+
+  void _renderIntel() {
+    print('OPERATIONAL INTELLIGENCE:');
+    (missionData['intel'] as List).forEach((i) => print('  ▶ $i'));
+    print('');
+    print('THREAT ASSESSMENT: HIGH');
+    print('  • Enemy combatants: 15-20 Hamas operatives');
+    print('  • Defensive positions: Rooftop and street level');
+    print('  • Civilian presence: High risk of collateral damage');
+    print('  • Escape routes: Limited due to urban environment');
+  }
+
+  void _renderAssets() {
+    print('AVAILABLE ASSETS:');
+    (missionData['assets'] as List).forEach((a) => print('  ✓ $a'));
+    print('');
+    print('OISTARIAN LOADOUT STATUS:');
+    print('  ► Whisper & Roar: Operational (Thermal scope active)');
+    print('  ► NeuroPulse Arm: Enhanced (Echo Shield integrated)');
+    print('  ► Neural Interface: Synced with Yamam tactical net');
+    print('  ► Emergency Beacon: Active (Zoe frequency locked)');
+  }
+
+  void _renderRisks() {
+    print('RISK ASSESSMENT:');
+    (missionData['risks'] as List).forEach((r) => print('  ⚠ $r'));
+    print('');
+    print('CONTINGENCY PROTOCOLS:');
+    print('  • Equipment failure → Manual override via neural backup');
+    print('  • Emotional trigger → Zoe echo stabilization protocol');
+    print('  • Extraction compromise → Secondary evac route Alpha-7');
+    print('  • Memory shard corruption → Emergency data reconstruction');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    if (input.toLowerCase() == 'tab') {
+      currentSectionIndex = (currentSectionIndex + 1) % sections.length;
+      currentSection = sections[currentSectionIndex];
+    } else if (input.toLowerCase() == 'enter') {
+      print('Initiating Operation Arnon...');
+      await sceneManager.switchScene("YamamBreach");
+    } else if (input.toLowerCase() == 'm') {
+      print('Opening Vault Map...');
+      await sceneManager.switchScene("VaultMap");
+    } else if (input.toLowerCase() == 'esc') {
+      print('Returning to Main Menu or previous context...');
+      // For now, let's go back to a 'start' like scene, or exit
+      await sceneManager.switchScene("VaultStartMission"); // Or a main menu scene
+    } else {
+      print('Invalid input. Use TAB, ENTER, M, or ESC.');
+    }
+  }
+}
+
+/// A scene for when Echo Shield is unlocked.
+class EchoShieldUnlocked extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  EchoShieldUnlocked(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Echo Shield Unlocked scene...');
+    setupComplete = true; // No assets
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    // Short cinematic, then move on.
+    await Future.delayed(const Duration(seconds: 3));
+    await sceneManager.switchScene("EchoProtocol");
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- ECHO SHIELD UNLOCKED ---');
+    print('');
+    print('      _.-._');
+    print('     / O O \\');
+    print('    (   >   )');
+    print('     \\  _  /');
+    print('      `---`');
+    print('');
+    print('OISTARIAN: The voice is clear. The shield is active.');
+    print('           Neural-spectral defenses online. Target acquired.');
+    print('');
+    print('System: Echo Shield Protocol - ACTIVE.');
+    print('');
+    print('Proceeding to Echo Protocol in 3 seconds...');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    print('This is a cinematic scene. Please wait.');
+  }
+}
+
+/// A scene representing the Echo Protocol mission.
+class EchoProtocol extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  EchoProtocol(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Echo Protocol scene...');
+    setupComplete = true;
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    // Simulate mission progression.
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- ECHO PROTOCOL IN PROGRESS ---');
+    print('');
+    print('You are now embedded with Mossad tactical units.');
+    print('Objective: Retrieve memory shard tied to Zoe’s final message.');
+    print('');
+    print('Current Gear: Echo Shield Status: ${sceneManager.gameState.echoShieldActive ? "ACTIVE" : "INACTIVE"}');
+    print('Voice Heard: ${sceneManager.gameState.voiceHeard ? "YES" : "NO"}');
+    print('');
+    print('Press "G" to check gear, "B" for tactical briefing, "D" to attempt decryption.');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    if (input.toLowerCase() == 'g') {
+      print('Accessing Gear Upgrade UI...');
+      await sceneManager.switchScene("GearUpgrade");
+    } else if (input.toLowerCase() == 'b') {
+      print('Reviewing Tactical Briefing...');
+      await sceneManager.switchScene("TacticalBriefing");
+    } else if (input.toLowerCase() == 'd') {
+      print('Attempting Neural Glass Decryption...');
+      await sceneManager.switchScene("NeuralGlassDecryption");
+    } else {
+      print('Invalid input. Please choose G, B, or D.');
+    }
+  }
+}
+
+/// A short scene after hostages are reunited.
+class HostageReunion extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  HostageReunion(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Hostage Reunion scene...');
+    setupComplete = true;
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    await Future.delayed(const Duration(seconds: 3)); // Short display
+    await sceneManager.switchScene("FinalLiberation");
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- HOSTAGE REUNION ---');
+    print('');
+    print('    /\\__/\\');
+    print('   ( o.o )');
+    print('  / > O < \\');
+    print(' /    ^    \\');
+    print('(___/~~~\\___)');
+    print('');
+    print('The faces of the rescued. The sound of relief.');
+    print('Hostages reunited. Zoe’s echo pulsing within the NeuroPulse Arm.');
+    print('');
+    print('System: Operation Arnon - Hostages SECURED.');
+    print('');
+    print('Proceeding to Final Liberation in 3 seconds...');
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    print('Cinematic in progress. Please wait.');
+  }
+}
+
+/// Scene for archiving OISTARIAN's legacy.
+class LegacyArchive extends Scene { // Changed from implements to extends
+  @override
+  bool setupComplete = false;
+
+  final List<String> logs = [
+    "Legacy File: OISTARIAN",
+    "Missions Completed: 47",
+    "Cover Identity: Data Engineer",
+    "True Role: Mossad Tactical Liaison",
+    "Emotional Core: Zoe — Final Echo Synced",
+    "Status: Returned Home. Legacy Archived."
+  ];
+  int currentIndex = 0;
+  double timer = 0.0;
+
+  LegacyArchive(super.sceneManager); // Calls super constructor
+
+  @override
+  Future<void> setup() async {
+    print('Initializing Legacy Archive...');
+    setupComplete = true;
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
+
+  @override
+  Future<void> update(double dt) async {
+    timer += dt;
+    if (timer > 1.5 && currentIndex < logs.length - 1) {
+      currentIndex++;
+      timer = 0.0;
+    } else if (currentIndex == logs.length - 1 && timer > 3.0) {
+      print('\nLegacy Archived. Game Over - Thank you for playing.');
+      // In a real game, this might lead to credits or main menu
+      await sceneManager.switchScene("VaultStartMission"); // Loop back for demonstration
+    }
+  }
+
+  @override
+  void render() {
+    clearConsole();
+    print('--- LEGACY ARCHIVE ---');
+    print('');
+    print('Processing OISTARIAN\'s Operational Log...');
+    print('-----------------------------------------');
+    for (int i = 0; i <= currentIndex; i++) {
+      print(logs[i]);
+    }
+    print('-----------------------------------------');
+    print('');
+    if (currentIndex < logs.length - 1) {
+      print('Archiving data... please wait.');
+    } else {
+      print('Legacy Archiving Complete. Press ENTER to continue.');
+    }
+  }
+
+  @override
+  Future<void> handleInput(String input) async {
+    if (currentIndex == logs.length - 1 && input.toLowerCase() == 'enter') {
+      await sceneManager.switchScene("VaultStartMission");
+    } else {
+      print('Archiving in progress. Please wait.');
+    }
+  }
+}
+
+/// Helper class for simulating user actions in a non-interactive environment.
+class SimulatedAction {
+  final double delay; // Time in seconds before this action's input is processed
+  final String input; // The simulated input string
+
+  SimulatedAction(this.delay, this.input);
+}
+
+// --- Main Game Loop ---
+Future<void> main() async {
+  print('ZOE-FILE: Rise of OISTARIAN (Console Edition)\n');
+
+  final gameState = GameState();
+  await gameState.loadState('gamestate.json'); // Attempt to load previous state
+
+  // Force starting intro scene for the demo flow if it's the very first run
+  if (gameState.currentScene == "VaultOfEchoes") {
+    gameState.currentScene = "VaultStartMission";
+  }
+
+  final sceneManager = SceneManager(gameState);
+
+  // Register all scenes
+  sceneManager.registerScene("VaultStartMission", VaultStartMission(sceneManager));
+  sceneManager.registerScene("VaultOfEchoes", VaultOfEchoesScene(sceneManager));
+  sceneManager.registerScene("ZoesSilence", ZoesSilenceScene(sceneManager));
+  sceneManager.registerScene("GearUpgrade", GearUpgradeUI(sceneManager));
+  sceneManager.registerScene("NeuralGlassDecryption", NeuralGlassDecryption(sceneManager));
+  sceneManager.registerScene("YamamBreach", YamamBreachScene(sceneManager));
+  sceneManager.registerScene("FinalLiberation", FinalLiberationScene(sceneManager));
+  sceneManager.registerScene("VaultMap", VaultMapInterface(sceneManager));
+  sceneManager.registerScene("TacticalBriefing", TacticalBriefingUI(sceneManager));
+  sceneManager.registerScene("EchoShieldUnlocked", EchoShieldUnlocked(sceneManager));
+  sceneManager.registerScene("EchoProtocol", EchoProtocol(sceneManager));
+  sceneManager.registerScene("HostageReunion", HostageReunion(sceneManager));
+  sceneManager.registerScene("LegacyArchive", LegacyArchive(sceneManager));
+
+  // Start with the scene from the loaded game state, or default to intro.
+  await sceneManager.switchScene(gameState.currentScene);
+
+  // Define a sequence of simulated actions to demonstrate game flow
+  final List<SimulatedAction> actions = [
+    // VaultStartMission (auto-transitions after 4s)
+    SimulatedAction(5.0, ''), // Wait for VaultStartMission to finish transition
+
+    // VaultOfEchoes (input 'T' transitions to EchoShieldUnlocked)
+    SimulatedAction(1.0, 'T'), // Trust the voice
+
+    // EchoShieldUnlocked (auto-transitions after 3s)
+    SimulatedAction(4.0, ''), // Wait for EchoShieldUnlocked to proceed
+
+    // EchoProtocol (input 'D' transitions to NeuralGlassDecryption)
+    SimulatedAction(1.0, 'D'),
+
+    // NeuralGlassDecryption (pre-solved, just needs 'enter' to proceed)
+    SimulatedAction(1.0, 'enter'), // Complete decryption
+
+    // FinalLiberationScene (auto-advances through dialogue, then to LegacyArchive)
+    SimulatedAction(1.0, 'space'), // Skip dialogue line 1
+    SimulatedAction(1.0, 'space'), // Skip dialogue line 2
+    SimulatedAction(1.0, 'space'), // Skip dialogue line 3
+    SimulatedAction(1.0, 'space'), // Skip dialogue line 4
+    SimulatedAction(1.0, 'space'), // Skip dialogue line 5 (dialogue complete)
+    SimulatedAction(4.0, 'enter'), // Wait for final transition message, then proceed
+
+    // LegacyArchive (auto-advances logs, then needs 'enter' to loop back/finish)
+    SimulatedAction(6.0, 'enter'), // Wait for logs to display, then 'enter' to restart demo
+  ];
+
+  const double targetFrameRate = 60.0;
+  const double frameDuration = 1.0 / targetFrameRate; // ~0.0166 seconds per frame
+
+  for (final action in actions) {
+    double timeToAdvance = action.delay;
+    while (timeToAdvance > 0) {
+      double dt = min(frameDuration, timeToAdvance);
+      if (dt <= 0) break; // Ensure positive dt to prevent infinite loop
+
+      sceneManager.render(); // Render current state
+      await Future.delayed(Duration(milliseconds: (dt * 1000).round())); // Simulate frame time
+      await sceneManager.update(dt); // Update game logic
+
+      timeToAdvance -= dt;
+    }
+
+    // After the delay, apply the simulated input
+    if (action.input.isNotEmpty) {
+      print('\n--- USER INPUT SIMULATED: "${action.input}" ---\n');
+      await sceneManager.handleInput(action.input);
+      // Give a small pause for scene reaction and rendering
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+  }
+
+  print('\n--- DEMO COMPLETE ---');
+  await gameState.saveState('gamestate.json'); // Simulate final save
+}
