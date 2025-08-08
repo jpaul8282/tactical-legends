@@ -19701,3 +19701,103 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+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
+
+
+stripe=payment.git
+
+const stripe = require('stripe')('pk_live_51N6VqfKhtgX1QVUWfWSuOwdymCk1O7uakaGlwSktqZWBtVbFTjziPmT19xRDfbiHTkMKHwtpeKOSWHnQqAz0fccf0071hPdRdp'); // Your Stripe secret key
+
+async function createSubscription(customerId, priceId) {
+  try {
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      metadata: { organization_id: 'org_6RsNhnGbSQ3s7rFPAoYfQjA' },
+    });
+    console.log('Subscription created:', subscription.id);
+  } catch (error) {
+    console.error('Error creating subscription:', error);
+  }
+}
+
+// Example usage
+const customerId = 'cus_xxxxxxxxxxxxx'; // Replace with your customer ID
+const priceId = 'price_xxxxxxxxxxxxx'; // Replace with your price ID
+
+createSubscription(customerId, priceId);
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Accept a payment</title>
+    <meta name="description" content="A demo of a payment on Stripe" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
+    <!-- Add the Stripe.js script here -->
+    <script src="https://js.stripe.com/basil/stripe.js"></script>
+    <script src="checkout.js" defer></script>
+  </head>
+  <body>
+    <!-- Display a payment form -->
+      <div id="checkout">
+        <!-- Checkout inserts the payment form here -->
+      </div>
+  </body>
+</html>
+// Initialize Stripe.js
+const stripe = Stripe('pk_test_51NhSasLmABSdrxf5tnzYd7cC6m4BnD7KYugUrP8GqeRI1BAxCsirnUYnhzRmffzH8gA6KqXIPWf6D1AKJdcSBAl400ZkwcOFDE');
+
+initialize();
+
+// Fetch Checkout Session and retrieve the client secret
+async function initialize() {
+  const fetchClientSecret = async () => {
+    const response = await fetch("/create-checkout-session", {
+      method: "POST",
+    });
+    const { clientSecret } = await response.json();
+    return clientSecret;
+  };
+
+  // Initialize Checkout
+  const checkout = await stripe.initEmbeddedCheckout({
+    fetchClientSecret,
+  });
+
+  // Mount Checkout
+  checkout.mount('#checkout');
+}
+// Retrieve a Checkout Session
+// Use the session ID
+initialize();
+
+async function initialize() {
+  const queryString = window.location.search;
+  const urlParams = new URLSearchParams(queryString);
+  const sessionId = urlParams.get('session_id');
+  const response = await fetch(`/session-status?session_id=${sessionId}`);
+  const session = await response.json();
+// Handle the session according to its status
+  if (session.status == 'open') {
+    // Remount embedded Checkout
+    window.location.replace('http://localhost:4242/checkout.html')
+  } else if (session.status == 'complete') {
+    document.getElementById('success').classList.remove('hidden');
+    document.getElementById('customer-email').textContent = session.customer_email;
+    // Show success page
+    // Optionally use session.payment_status or session.customer_email
+    // to customize the success page
+  }
+}
+// Add an endpoint to fetch the Checkout Session status
+app.get('/session_status', async (req, res) => {
+  const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+  const customer = await stripe.customers.retrieve(session.customer);
+
+  res.send({
+    status: session.status,
+    payment_status: session.payment_status,
+    customer_email: customer.email
+  });
+});
