@@ -1,0 +1,100 @@
+Directory structure (Unity-focused, top-level)
+
+TacticalLegend/
+Assets/
+Scripts/
+Core/
+CampaignManager.cs
+Gadgets.cs
+Weapons.cs
+AIController.cs
+MissionConfigLoader.cs
+Player/
+PlayerLoadout.cs
+CloakController.cs
+DroneController.cs
+ShieldController.cs
+Coop/
+CoopManager.cs
+RoleDefinitions.cs
+UI/
+HUDController.cs
+QuickReferenceUI.cs
+Audio/
+MusicManager.cs
+SFXManager.cs
+Prefabs/
+PlayerCharacter.prefab
+Drone.prefab
+CloakEffect.prefab
+ShieldWall.prefab
+MissionObjectiveMarker.prefab
+Scenes/
+MainMenu.unity
+SandboxTest.unity
+MissionHub.unity
+Materials/
+Animations/
+Audio/
+Music/
+SFX/
+Data/
+ScriptableObjects/
+MissionConfig.asset
+FactionConfig.asset
+GadgetConfig.asset
+WeaponConfig.asset
+SkinConfig.asset
+JSON/
+MissionConfig.json
+FactionConfig.json
+ProjectSettings/
+Docs/
+design.md
+API_reference.md
+Samples/
+MissionConfig.example.json
+FactionConfig.example.json
+GadgetConfig.example.json
+.github/
+workflows/
+ci.yml
+README.md
+LICENSE
+Key Unity-specific content notes
+
+ScriptableObjects:
+Use ScriptableObject types for MissionConfig, FactionConfig, GadgetConfig, WeaponConfig, SkinConfig to enable easy in-editor tweaking and data-driven design.
+Example: public class MissionConfig : ScriptableObject { public string id; public string name; public Environment environment; public List<Objective> objectives; public int difficulty; public int moralityImpact; public BranchingRules branchingRules; }
+Data-driven config:
+MissionConfig.json and other JSON files can be parsed at startup to populate in-memory data or used as backup data; ScriptableObjects can be generated from these at import time or via editor tooling.
+Scenes and prefabs:
+Provide a SandboxTest scene to rapidly iterate weapon/gadget physics.
+MissionHub for mission selection and branching UI.
+Input:
+Map PS/PC controls in a simple InputManager or using Unity's new Input System for cross-platform mapping.
+Build:
+Target PC, PS5/PS4 if desired, with platform-specific input prompts in UI.
+Core gameplay systems (Unity-oriented)
+
+Gadgets and weapons
+Drones: reconnaissance, hacking modules, turret-like support
+Energy shields: deployable shield walls with cooldown and regeneration
+Cloaks: cloak duration, cooldown, and detection risk
+Hacking: device interactions, gate controls, turret disablement
+Weapons: modular carbine with upgrade paths (ammo types, scopes, stability)
+Perks/Mods: cooldown reductions, drone battery efficiency, movement modifiers
+Solo progression
+Early, mid, late-game loadouts
+Mission pacing aligned to branching outcomes
+Coop progression
+Roles: Lead Scout, Anchor, Ghost, Tech Specialist
+Shared cooldowns and synergy bonuses
+Coordinated breaches, hacks, and retreats
+Morality and faction branching
+GlobalMorality: -100 to +100
+= 50: Dawn Accord paths
+
+< 0: Echo Collapse paths
+0–49: Grey Protocol
+FactionTrust: 0–100 per faction; unlock buffs or side quests at higher trust
