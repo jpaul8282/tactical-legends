@@ -1,0 +1,3 @@
+const self = useSelf();
+console.log(self.id);
+console.log(self.info);
