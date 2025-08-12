@@ -1,0 +1,10 @@
+const session = liveblocks.prepareSession("olivier@example.com");
+
+// Giving write access to one room, then read access to multiple rooms with a wildcard
+session.allow("Vu78Rt:design:9Hdu73", session.FULL_ACCESS);
+session.allow("Vu78Rt:product:*", session.READ_ACCESS);
+
+const { body, status } = await session.authorize();
+
+// '{ token: "j6Fga7..." }'
+console.log(body);
