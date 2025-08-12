@@ -1,0 +1,5 @@
+export { useSelf } from "@liveblocks/react/suspense";
+
+function Component() {
+  const { name, avatar, colors } = useSelf((me) => me.info);
+}
