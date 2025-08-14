@@ -16,3 +16,23 @@ export default async function Page() {
 
   return <div>Hello {user?.firstName}</div>
 }
+'use client'
+
+export default function AddItem({ addItem }) {
+  return (
+    <form action={addItem}>
+      <input value={'test'} type="text" name="name" />
+      <button type="submit">Add to Cart</button>
+    </form>
+  )
+}
+'use client'
+
+export default function UI({ addHobby }) {
+  return (
+    <form action={addHobby}>
+      <input value={'soccer'} type="text" name="hobby" />
+      <button type="submit">Submit your hobby</button>
+    </form>
+  )
+}
