@@ -35,3 +35,13 @@ export default function App() {
     </LiveblocksProvider>
   );
 }
+import AddItem from './components/AddItem'
+import { addItem } from './actions'
+export default function Hobby() {
+  return <AddItem addItem={addItem} />
+}
+import AddHobby from './components/AddHobby'
+import { addHobby } from './actions'
+export default function Hobby() {
+  return <AddHobby addHobby={addHobby} />
+}
