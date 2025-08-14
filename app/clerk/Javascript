@@ -1,0 +1,3 @@
+const clark = require('clark');
+console.log(clark([1, 2, 3, 4, 5])); // Output: ▁▂▄▆█
+
