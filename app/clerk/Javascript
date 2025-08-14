@@ -6,3 +6,4 @@ const responseTimes = [120, 200, 150, 300, 250];
 console.log('Response Times:', clark(responseTimes));
 
 
+
