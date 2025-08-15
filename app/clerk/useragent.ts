@@ -211,7 +211,7 @@ document.querySelector("input").addEventListener("click", () => {
   // The firstChild of the header is a Text node:
   header.firstChild.data = "A dynamic document";
 
-  // Now header is "A dynamic document".
+  // Now the header is "A dynamic document".
 
   // Access the first paragraph
   const para = document.getElementsByTagName("p").item(0);
@@ -226,7 +226,7 @@ document.querySelector("input").addEventListener("click", () => {
   // Put the text in the paragraph
   newElement.appendChild(newText);
 
-  // Put the paragraph on the end of the document by appending it to
+  // Put the paragraph at the end of the document by appending it to
   // the body (which is the parent of para)
   para.parentNode.appendChild(newElement);
 });
@@ -249,5 +249,25 @@ body.appendChild(paragraph);
 root.appendChild(head);
 root.appendChild(body);
 
+Accept: <media-type>/<MIME_subtype>
+Accept: <media-type>/*
+Accept: */*
 
+// Multiple types, weighted with the quality value syntax
+Accept: text/html, application/xhtml+xml, application/xml;q=0.9, image/webp, */*;q=0.8
+GET / HTTP/1.1
+Host: example.com
+User-Agent: curl/8.7.1
+Accept: */*
+GET /en-US/ HTTP/2
+Host: developer.mozilla.org
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+…
+Accept: image/avif, image/webp, image/png, image/svg+xml, image/*;q=0.8,*/*;q=0.5
+GET /users/123 HTTP/1.1
+Host: example.com
+Authorization: Bearer abcd123
+Accept: application/json
+
+Accept-CH: <client-hints-headers>
 
