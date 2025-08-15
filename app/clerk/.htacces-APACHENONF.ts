@@ -23,3 +23,49 @@ server {
 }
 rewrite ^/images/(.*)$ https://images.example.com/$1 redirect;
 rewrite ^/images/(.*)$ https://images.example.com/$1 permanent;
+
+curl -I https://i.imgur.com/z4d4kWk.jpg
+HEAD /z4d4kWk.jpg HTTP/2
+Host: i.imgur.com
+User-Agent: curl/8.7.1
+Accept: */*
+HTTP/2 200
+content-type: image/jpeg
+last-modified: Thu, 02 Feb 2017 11:15:53 GMT
+…
+accept-ranges: bytes
+content-length: 146515
+curl https://i.imgur.com/z4d4kWk.jpg -i -H "Range: bytes=0-1023" --output -
+GET /z4d4kWk.jpg HTTP/2
+Host: i.imgur.com
+User-Agent: curl/8.7.1
+Accept: */*
+Range: bytes=0-1023
+HTTP/2 206
+content-type: image/jpeg
+content-length: 1024
+content-range: bytes 0-1023/146515
+…
+
+(binary content)
+curl http://www.example.com -i -H "Range: bytes=0-50, 100-150"
+HTTP/1.1 206 Partial Content
+Content-Type: multipart/byteranges; boundary=3d6b6a416f9b5
+Content-Length: 282
+
+--3d6b6a416f9b5
+Content-Type: text/html
+Content-Range: bytes 0-50/1270
+
+<!doctype html>
+<html lang="en-US">
+<head>
+    <title>Example Do
+--3d6b6a416f9b5
+Content-Type: text/html
+Content-Range: bytes 100-150/1270
+
+eta http-equiv="Content-type" content="text/html; c
+--3d6b6a416f9b5--
+If-Range: Wed, 21 Oct 2015 07:28:00 GMT
+
