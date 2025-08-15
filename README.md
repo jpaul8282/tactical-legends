@@ -122,9 +122,9 @@ Each facility offers battlefield advantages and modifies gear, recon, diplomacy,
 Each room pulses in response to faction music, simulating live resonance threats.
 
 Squad Mental Resilience: “Stress Ops Matrix”
-Squad behavior now tactically impacted by mental durability in war conditions.
+Squad behavior is now tactically impacted by mental durability in war conditions.
 Strategic Impacts:
-- High StressLevel: Increased reaction delay, potential order rejection
+- High Stress Level: Increased reaction delay, potential order rejection
 - Low Morale: Decreases shooting accuracy, raises fear wave thresholds
 - Trauma Tags: Permanent modifiers (“Wavers Under Fire”, “Echo Shellshock”)
 Example Modifier:
@@ -154,9 +154,8 @@ public TraitType InheritTrait(string parentName) {
 }
 
 
-🧠 Squad briefing includes ancestral memory excerpts and war hymn fragments from parent unit’s campaigns.
+🧠 Squad briefing includes ancestral memory excerpts and war hymn fragments from the parent unit’s campaigns.
 
-Let me know if you want to visualize all this in a mission briefing deck, build a deployment map interface, or simulate a long-form war council session where command decisions branch legacy arcs. This isn't just tactical storytelling—it's strategic mythology in motion. 🎯📖⚡ Ready to deploy the next wave?
 
  Trait Inheritance: “Lineage Protocol Deployment”
 Recruits now spawn with embedded tactical archetypes based on ancestral traits.
@@ -169,7 +168,7 @@ Tactical Lineage Flow:
 - Triggers “Echo Shelter Tactics” ops
 
 Mission Briefing Deck: Operation — “Vault Protocol: Eden Surge”
-Reoccurring trauma triggers, ancestry-based resistance modifiers
+Recurring trauma triggers, ancestry-based resistance modifiers
 
 Deployment Map Interface: Tactical Glyph Grid
 A command interface where squads and gear are deployed onto live terrain maps—each pulse echoes the faction music in real time.
@@ -201,8 +200,8 @@ This is no ordinary objective—it’s a mythic relic vault that requires morali
 - Gear reacts to ambient vault music tempo
 - Boss logic tied to legacy decisions: betrayal triggers boss mutation
 
-Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics w![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
-ith strategic planning, requiring players to rely on both quick reflexes and clever tactics to outsmart enemies.
+Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
+With strategic planning, players rely on both quick reflexes and clever tactics to outsmart enemies.
 
 Explore sprawling, visually stunning environments—from neon-lit cities and sprawling industrial complexes to alien landscapes. Ut![TL_002](https://github.com/user-attachments/assets/4d5d550b-a127-42d8-aa7f-16e5b9cc4171)
 ilize a wide array of futuristic gadgets, from drone companions and energy shields to invisibility cloaks. Play solo or team up with friends in cooperative modes to complete daring missions that challenge your thinking and reflexes.
