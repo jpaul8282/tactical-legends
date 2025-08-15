@@ -69,3 +69,14 @@ eta http-equiv="Content-type" content="text/html; c
 --3d6b6a416f9b5--
 If-Range: Wed, 21 Oct 2015 07:28:00 GMT
 
+Accept-CH: Width, Downlink, Sec-CH-UA
+<meta http-equiv="Accept-CH" content="Width, Downlink, Sec-CH-UA" />
+Vary: Accept, Width, ECT
+HTTP/1.1 200 OK
+Content-Type: text/html
+Accept-CH: Sec-CH-Prefers-Reduced-Motion
+Vary: Sec-CH-Prefers-Reduced-Motion
+Critical-CH: Sec-CH-Prefers-Reduced-Motion
+GET / HTTP/1.1
+Host: example.com
+Sec-CH-Prefers-Reduced-Motion: "reduce"
