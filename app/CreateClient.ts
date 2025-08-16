@@ -188,3 +188,9 @@ const presence = room.getPresence();
 
 // { cursor: { x: 363, y: 723 } }
 console.log(presence);
+
+
+import { createClient } from '@supabase/supabase-js'
+const supabaseUrl = 'https://qcwvtjlualmcxlfkpzhg.supabase.co'
+const supabaseKey = process.env.SUPABASE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
