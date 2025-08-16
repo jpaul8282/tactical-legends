@@ -203,3 +203,28 @@ const SERVICE_KEY = 'SUPABASE_SERVICE_KEY'
 
 const SUPABASE_URL = "https://qcwvtjlualmcxlfkpzhg.supabase.co"
 const supabase = createClient(SUPABASE_URL, process.env.SERVICE_KEY);
+
+
+let { data, error } = await supabase.auth.verifyOtp({
+  phone: '+13334445555',
+  token: '123456',
+  type: 'sms'
+})
+
+let { data, error } = await supabase.auth.signInWithOAuth({
+  provider: 'github'
+})
+
+const { data: { user } } = await supabase.auth.getUser()
+
+let { data, error } = await supabase.auth.resetPasswordForEmail(email)
+
+const { data, error } = await supabase.auth.updateUser({
+  email: "new@email.com",
+  password: "new-password",
+  data: { hello: 'world' }
+})
+
+let { error } = await supabase.auth.signOut()
+
+let { data, error } = await supabase.auth.admin.inviteUserByEmail('someone@email.com')
