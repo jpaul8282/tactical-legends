@@ -228,3 +228,10 @@ const { data, error } = await supabase.auth.updateUser({
 let { error } = await supabase.auth.signOut()
 
 let { data, error } = await supabase.auth.admin.inviteUserByEmail('someone@email.com')
+
+
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = 'https://qcwvtjlualmcxlfkpzhg.supabase.co'
+const supabaseKey = process.env.SUPABASE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
