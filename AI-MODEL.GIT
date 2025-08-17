@@ -1,4 +1,5 @@
 import 'package:yaml/yaml.dart';
+
 void main() {
   const String yamlContent = r'''
 # model.yaml is an open standard for defining cross-platform, composable AI models
