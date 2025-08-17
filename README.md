@@ -232,6 +232,15 @@ Before you begin, ensure you have met the following requirements:
   - [Docker](https://www.docker.com/) (for containerized builds or deployment)
 - **Network:** Internet access for cloning the repository and restoring NuGet packages.
 
+MARKDOWN:
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/jurgen-paul/tactical-legends/blob/main/LICENSE)
+
+[![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/<workflow_file>.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
+
+
+
+
+
 > _Note_: If you plan to contribute code, please also review the project's [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines and setup instructions.
 
 
