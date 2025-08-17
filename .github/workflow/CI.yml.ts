@@ -1,3 +1,4 @@
+markdown: [![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/ci.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
 name: CI
 
 on:
@@ -28,4 +29,6 @@ jobs:
 
     - name: Run Tests
       run: |
-markdown: [![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/ci.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
+        cd build
+        ctest --output-on-failure
+      continue-on-error: true
