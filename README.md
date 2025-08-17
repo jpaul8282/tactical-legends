@@ -208,14 +208,6 @@ ilize a wide array of futuristic gadgets, from drone companions and energy shiel
 
 With its deep customization options, innovative weapon systems, and high-stakes gameplay, Tactical Legend offers an electrifying experience for fans of sci-fi shooters and tactical strategists alike. Prepare for battle and become a legend in the futuristic battlefield!
 
-
-
-
-
-
-
-
-
 ## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
@@ -238,7 +230,7 @@ MARKDOWN:
 [![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/<workflow_file>.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
 
 [![Build and Deploy to Octopus Deploy](https://github.com/jurgen-paul/tactical-legends/actions/workflows/octopusdeploy.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions/workflows/octopusdeploy.yml)
-
+[![CodeQL](https://github.com/jurgen-paul/tactical-legends/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions/workflows/github-code-scanning/codeql)
 
 
 > _Note_: If you plan to contribute code, please also review the project's [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines and setup instructions.
