@@ -1,3 +1,53 @@
+[![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/ci.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
+# Tactical Legends
+
+[![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/ci.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
+## Table of Contents
+
+- [About](#about)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+
+---
+
+## About
+
+Tactical Legends is a strategy game built with C++ and SDL2. The project aims to deliver engaging tactical gameplay with modular, maintainable code.
+
+## Features
+
+- Turn-based tactical combat
+- Modular codebase using CMake
+- Cross-platform support
+- SDL2-based graphics and audio
+- Unit tests via CTest
+
+## Installation
+
+### Prerequisites
+
+- CMake >= 3.x
+- g++ >= 9.0
+- SDL2, SDL2_image, SDL2_mixer, SDL2_ttf
+
+### Setup
+
+```bash
+sudo apt update
+sudo apt install cmake g++ libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+git clone https://github.com/jurgen-paul/tactical-legends.git
+cd tactical-legends
+
+
 # Tactical Legends: Rise of OISTARIAN
 
 Welcome to **Tactical Legends: Rise of OISTARIAN**! This project is a tactical turn-based strategy game built in C#. It is designed for strategy enthusiasts who enjoy deep gameplay, challenging AI, and immersive worlds.
@@ -71,7 +121,6 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 ---
 
 Happy strategizing!
-
 Super Character Incoming: OISTARIAN
 🔥 Character Profile: OISTARIAN
 | Attribute | Description | 
@@ -82,10 +131,7 @@ Super Character Incoming: OISTARIAN
 | 🧠 Emotional Lock | Cannot launch missions involving betrayal unless trust score > 80 | 
 | 🎞️ Flashback Cue | “The corridor. The child. The silence.” | 
 
-
 https://github.com/user-attachments/assets/13af01b5-07e8-469c-bec9-e04623771d17
-
-
 🎮 Integration Plan
 ✅ Wire into Campaign Flow
 - OISTARIAN becomes available after completing “Sand Echo” with a trauma score below 50.
@@ -103,7 +149,7 @@ https://github.com/user-attachments/assets/13af01b5-07e8-469c-bec9-e04623771d17
 🎖️ Tactical Reputation Logs: “War Archive Deployment”
 Converted into battlefield intelligence dossiers accessible at the HQ War Table.
 🧩 Features:
-• 	Timestamped Incident Reports: Track moral infractions, heroic rescues, controversial tactics
+• 	Timestamped Incident Reports: Track moral infractions, heroic rescues, and controversial tactics
 • 	Faction Trust Analytics: Gauge diplomatic leverage, trade embargo risks, alliance perks
 • 	Operation Efficiency Index: Success-to-risk ratio for each mission
 • 	Debrief Commentary Overlay: Squad audio logs declassified with combat psyche tags (e.g., “Subject Kane shows diminishing empathy”)
@@ -117,7 +163,6 @@ Each facility offers battlefield advantages and modifies gear, recon, diplomacy,
 | 🧩 Iron Bastion Grid | Defensive shield pulses around base perimeter | Ruthless Trait active + Iron Veil trust ≥ 70 | 
 | 📡 Tactical HoloDeck | Simulates enemy psychology in upcoming ops | Squad Intelligence rating ≥ 75 | 
 | 🔮 Pulse Meditation Room | Reduces squad stress pre-deployment | Mental Resilience avg. ≤ 40 | 
-
 
 Each room pulses in response to faction music, simulating live resonance threats.
 
@@ -133,7 +178,6 @@ if (squadmate.TraumaTags.Contains("ChildLossWitness")) {
     unit.reactionTime *= 1.5f;
     unit.ambientWhisperVO = "Why didn't we save them...";
 }
-
 
 🎮 Tactical Gear Fix: Equip squad with Empathy Circuit Vests to soften psychological recoil after traumatic events.
 
@@ -153,11 +197,9 @@ public TraitType InheritTrait(string parentName) {
     return TraitType.Calculating;
 }
 
-
 🧠 Squad briefing includes ancestral memory excerpts and war hymn fragments from the parent unit’s campaigns.
 
-
- Trait Inheritance: “Lineage Protocol Deployment”
+Trait Inheritance: “Lineage Protocol Deployment”
 Recruits now spawn with embedded tactical archetypes based on ancestral traits.
 Tactical Lineage Flow:
 - Kane’s Descendant (Ruthless + Calculating):
@@ -197,7 +239,7 @@ This is no ordinary objective—it’s a mythic relic vault that requires morali
 - Legacy Key Activation: Artifact obtained via past sacrifice; carries encrypted pulse signature
 🎵 In-Vault Mechanics
 - Combat shifts to rhythm choreography
-- Gear reacts to ambient vault music tempo
+- Gear reacts to the ambient vault music tempo
 - Boss logic tied to legacy decisions: betrayal triggers boss mutation
 
 Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
@@ -231,6 +273,93 @@ MARKDOWN:
 
 [![Build and Deploy to Octopus Deploy](https://github.com/jurgen-paul/tactical-legends/actions/workflows/octopusdeploy.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions/workflows/octopusdeploy.yml)
 [![CodeQL](https://github.com/jurgen-paul/tactical-legends/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions/workflows/github-code-scanning/codeql)
+
+# Tactical Legends
+
+[![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/ci.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
+## Table of Contents
+
+- [About](#about)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+
+---
+
+## About
+
+Tactical Legends is a strategy game built with C++ and SDL2. The project aims to deliver engaging tactical gameplay with modular, maintainable code.
+
+## Features
+
+- Turn-based tactical combat
+- Modular codebase using CMake
+- Cross-platform support
+- SDL2-based graphics and audio
+- Unit tests via CTest
+
+## Installation
+
+### Prerequisites
+
+- CMake >= 3.x
+- g++ >= 9.0
+- SDL2, SDL2_image, SDL2_mixer, SDL2_ttf
+
+### Setup
+
+```bash
+sudo apt update
+sudo apt install cmake g++ libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+git clone https://github.com/jurgen-paul/tactical-legends.git
+cd tactical-legends
+mkdir build
+cmake -S. -B build
+cmake --build build
+```
+
+## Usage
+
+Run the game executable from the build directory:
+
+```bash
+./build/tactical_legends
+```
+
+## Testing
+
+Run all unit tests with:
+
+```bash
+cd build
+ctest --output-on-failure
+```
+
+## Contributing
+
+We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+
+To propose changes:
+- Fork the repo
+- Create a feature branch
+- Submit a pull request
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
+
+## Support
+
+Open an issue on our [GitHub issue tracker](https://github.com/jurgen-paul/tactical-legends/issues) or contact [jurgen-paul](https://github.com/jurgen-paul).
+
+---
+
 
 
 > _Note_: If you plan to contribute code, please also review the project's [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines and setup instructions.
