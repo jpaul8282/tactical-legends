@@ -28,8 +28,4 @@ jobs:
 
     - name: Run Tests
       run: |
-        cd build
-        ctest --output-on-failure
-      continue-on-error: true
-
 markdown: [![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/ci.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
