@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Yonina Rubin"
+role = "EOD Specialist"
+background = "Explosive ordinance disposal with floodplain experience"
+expertise = [ "Underwater explosives risk", "Remote detonation protocols" ]

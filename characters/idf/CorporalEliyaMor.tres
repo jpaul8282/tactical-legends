@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Eliya Mor"
+role = "Medical Logistics"
+background = "Field medic with supply chain orientation"
+expertise = [ "Medical stock", "Field triage routing", "Evacuation planning" ]

@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Sergeant Miriam Volinsky"
+role = "Intelligence Analyst"
+background = "Signals intelligence and open-source analysis"
+expertise = [ "Target profiling", "Pattern recognition", "Intel fusion" ]

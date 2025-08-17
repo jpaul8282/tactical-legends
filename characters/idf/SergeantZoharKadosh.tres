@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Sergeant Zohar Kadosh"
+role = "Signals Intel Officer"
+background = "Cryptography and counterfeit detection"
+expertise = [ "Secure comms", "Signal interception awareness" ]

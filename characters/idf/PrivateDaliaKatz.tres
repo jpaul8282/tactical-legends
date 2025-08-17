@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Private Dalia Katz"
+role = "Communications Tech"
+background = "Radio systems and encryption specialist"
+expertise = [ "Field comms networks", "Antenna deployment", "Redundancy planning" ]

@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Sergeant Jonah Levi"
+role = "Intelligence Collector"
+background = "Field observer, multi-environment ops"
+expertise = [ "Environmental scanning", "Ambush pattern recognition" ]

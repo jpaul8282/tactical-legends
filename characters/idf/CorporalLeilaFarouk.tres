@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Leila Farouk"
+role = "Sniper/Spotter"
+background = "Precision shooter with camouflage specialties"
+expertise = [ "Waterborne concealment", "Long-range metrics", "Rapid concealment" ]

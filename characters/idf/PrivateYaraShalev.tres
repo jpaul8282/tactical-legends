@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Private Yara Shalev"
+role = "Signals & Cyber Liaison"
+background = "Cyber defense student with field comms experience"
+expertise = [ "Secure networks", "Electronic warfare awareness", "Field encryption" ]

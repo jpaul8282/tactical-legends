@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Private Kahlil Faris"
+role = "Navigator / Pathfinder"
+background = "Desert and coastal navigation expert"
+expertise = [ "Land-water navigation", "Map-to-survey translation", "GPS-denied ops" ]

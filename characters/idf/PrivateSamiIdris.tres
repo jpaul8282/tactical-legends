@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Private Sami Idris"
+role = "Heavy Weapons / Support"
+background = "Marine gunner with anti-armor capabilities"
+expertise = [ "Waterborne weapon stabilization", "Suppressive fire", "Field logistics" ]

@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Sergeant Ayelet Brenner"
+role = "Demolitions Technician"
+background = "Explosives and demolition in urban-riverside settings"
+expertise = [ "Underwater charges", "Breach sequencing", "Risk gating" ]

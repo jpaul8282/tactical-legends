@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Ahmed Nasser"
+role = "Recon and Surveillance"
+background = "Multilingual linguist, cultural liaison, drone operator"
+expertise = [ "Amphibious reconnaissance", "Stealth movement", "Comms jamming awareness" ]

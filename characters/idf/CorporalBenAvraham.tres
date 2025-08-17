@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Ben Avraham"
+role = "Diver / Underwater Engineer"
+background = "Maritime maintenance diver"
+expertise = [ "Hull tech", "Salvage operations", "Submersible interface" ]

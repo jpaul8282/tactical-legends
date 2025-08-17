@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Private Lior Katz"
+role = "New Recruit / Communications Operator"
+background = "Physics student turned trainee comms technician"
+expertise = [ "Secure radios", "Field comms setup", "Signal integrity" ]

@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Private Amina Suleiman"
+role = "Diver / Medical Support"
+background = "Dive medic, emphasizes rapid extraction"
+expertise = [ "Underwater medical response", "Swimmer safety" ]
