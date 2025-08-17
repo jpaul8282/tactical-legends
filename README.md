@@ -99,6 +99,10 @@ The project is open source and welcomes contributions from the community.
 
 ---
 
+[![Gameplay Demo](https://img.youtube.com/vi/<VIDEO_ID>/0.jpg)](https://www.youtube.com/watch?v=<VIDEO_ID>)
+
+![Gameplay GIF](docs/gameplay.gif)
+
 ## Contribution Guidelines
 
 We welcome contributions! To get started:
