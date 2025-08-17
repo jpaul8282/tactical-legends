@@ -99,7 +99,7 @@ The project is open source and welcomes contributions from the community.
 
 ---
 
-[![Gameplay Demo](https://img.youtube.com/vi/<VIDEO_ID>/0.jpg)](https://www.youtube.com/watch?v=<VIDEO_ID>)
+
 
 ![Gameplay GIF](docs/gameplay.gif)
 
@@ -246,10 +246,14 @@ This is no ordinary objective—it’s a mythic relic vault that requires morali
 - Gear reacts to the ambient vault music tempo
 - Boss logic tied to legacy decisions: betrayal triggers boss mutation
 
-Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
+Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics!
+
+[TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
 With strategic planning, players rely on both quick reflexes and clever tactics to outsmart enemies.
 
-Explore sprawling, visually stunning environments—from neon-lit cities and sprawling industrial complexes to alien landscapes. Ut![TL_002](https://github.com/user-attachments/assets/4d5d550b-a127-42d8-aa7f-16e5b9cc4171)
+Explore sprawling, visually stunning environments—from neon-lit cities and sprawling industrial complexes to alien landscapes. 
+
+Ut![TL_002](https://github.com/user-attachments/assets/4d5d550b-a127-42d8-aa7f-16e5b9cc4171)
 ilize a wide array of futuristic gadgets, from drone companions and energy shields to invisibility cloaks. Play solo or team up with friends in cooperative modes to complete daring missions that challenge your thinking and reflexes.
 
 With its deep customization options, innovative weapon systems, and high-stakes gameplay, Tactical Legend offers an electrifying experience for fans of sci-fi shooters and tactical strategists alike. Prepare for battle and become a legend in the futuristic battlefield!
