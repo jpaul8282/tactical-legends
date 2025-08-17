@@ -237,7 +237,7 @@ MARKDOWN:
 
 [![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/<workflow_file>.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
 
-
+[![Build and Deploy to Octopus Deploy](https://github.com/jurgen-paul/tactical-legends/actions/workflows/octopusdeploy.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions/workflows/octopusdeploy.yml)
 
 
 
