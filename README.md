@@ -98,8 +98,62 @@ The project is open source and welcomes contributions from the community.
 - For advanced options or modding, see the [Wiki](https://github.com/jurgen-paul/tactical-legends/wiki).
 
 ---
+🥈 Silver Pack (75 Characters) - Veteran Operators
+🥇 Platinum Pack (25 Characters) - Elite Operators
+Key Features:
+🎯 12 Specializations:
 
+Sniper, Assault, Medic, Engineer, Demolitions
+Reconnaissance, Communications, Anti-Armor
+Heavy Weapons, Cyber Warfare, Special Forces, Pilot
 
+🏅 Experience Levels:
+
+Veteran (Silver tier)
+Elite (Platinum tier)
+Legendary (Top Platinum tier)
+
+3D Character System:
+
+Full 3D model rendering with render_character_3d()
+Material customization based on rarity
+Equipment visualization on 3D models
+Specialization-specific appearance modifications
+
+Advanced Features:
+📊 Analytics & Management:
+
+Character comparison system
+Pack statistics and distribution analysis
+Top performer rankings by stats
+Squad creation with synergy bonuses
+
+🎮 Game Integration:
+
+Character unlock system based on player level
+Character upgrade/progression system
+Save/Load functionality for persistence
+Mission deployment squad builder
+
+🎭 Rich Character Data:
+
+Detailed service records with decorations
+Signature moves are unique to each specialization
+Authentic Hebrew-inspired names and surnames
+Military background stories
+Specialized equipment loadouts
+
+# Get elite sniper
+var top_sniper = get_platinum_character(0)  # David 'Phantom' Goldstein
+
+# Create tactical squad
+var squad = create_squad([get_random_platinum(), get_random_silver()])
+
+# Render character in 3D
+var character_3d = render_character_3d(top_sniper)
+
+# View pack statistics
+demo_character_packs()
 
 ![Gameplay GIF](docs/gameplay.gif)
 
