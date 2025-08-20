@@ -107,3 +107,76 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
+
+
+name: CI Monorepo
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ '**' ]
+  workflow_dispatch:
+
+jobs:
+  python-service:
+    name: Python service
+    runs-on: ubuntu-latest
+    steps: ...
+    # Use the Python workflow from above or inline steps
+  web-ui:
+    name: Web UI (Node)
+    runs-on: ubuntu-latest
+    steps: ...
+    # Use the Node.js workflow from above
+
+  # Optionally a shared cache
+  cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            node_modules/.cache
+          key: ${{ runner.os }}-cache-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/package-lock.json') }}
+
+image: python:3.11
+
+stages:
+  - lint
+  - test
+  - audit
+  - publish
+
+cache:
+  paths:
+    - .cache/pip
+
+lint:
+  stage: lint
+  script:
+    - pip install --upgrade pip
+    - pip install ruff black
+    - ruff check .
+    - black --check .
+
+test:
+  stage: test
+  script:
+    - pip install -r requirements-dev.txt
+    - pytest --maxfail=1 --disable-warnings -q
+
+audit:
+  stage: audit
+  script:
+    - pip install pip-audit
+    - pip audit
+
+publish:
+  stage: publish
+  script:
+    - echo "Add your publish steps here (e.g., python -m build && twine upload dist/*)"
+  only:
+    - tags
+
