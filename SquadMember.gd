@@ -517,3 +517,161 @@ Emotional Integration
 • 	Morale and trauma scores
 • 	Example:
 • 	If Mira’s trust in Alex drops below 50, Echo Strike greys out with the tooltip: “Trust fractured. Ability unavailable.”
+
+Relationship History Engine
+Each duo has a MemoryLog that tracks:
+{
+  "pair": ["Liora", "Tamsin"],
+  "trust": 82,
+  "resentment": 12,
+  "shared_missions": 5,
+  "trauma_events": ["Fall of Emberhold"],
+  "bond_level": "Deep",
+  "ability_evolution": {
+    "Shield of Silence": "Silent Aegis"
+  }
+}
+
+Bond Level: Determines access to advanced forms
+• 	Trauma Events: Unlock unique abilities with emotional resonance
+• 	Trust vs. Resentment: Affects cooldowns, potency, and availability
+Ability Evolution Framework
+🔹 Base Ability: Echo Strike
+• 	Initial: Basic dual attack with minor heal
+• 	If Trust > 80: Evolves into Echo Reverb (adds AoE splash)
+• 	If Resentment > 50: Mutates into Echo Clash (damages both enemies and allies)
+• 	If Trauma Shared: Unlocks Echo Remnant (leaves healing zone behind)
+🔹 UI Feedback
+• 	Ability icon pulses with color based on bond state:
+• 	💙 Blue = Trust
+• 	🔥 Red = Conflict
+• 	🌫️ Grey = Trauma
+• 	Hover tooltip shows:
+
+Echo Reverb
+Mira & Alex
+“Strike together. Heal together.”
+Bond Level: Deep
+Trust: 92
+Evolution Path: Reverb
+
+UI Layout
+RelationshipMap
+├── Nodes (Characters)
+│   ├── Portrait
+│   ├── Bond Level Indicator
+│   ├── Emotional Aura (color-coded)
+├── Edges (Connections)
+│   ├── Type: Trust / Conflict / History
+│   ├── Strength: Numeric + Visual Thickness
+│   ├── Tooltip: Relationship Summary
+├── Filters
+│   ├── Show: Trust / Trauma / Duo Abilities / Mentorships
+
+Visual Cues
+|  |  |  | 
+|  |  |  | 
+|  |  |  | 
+|  |  |  | 
+|  |  |  | 
+
+
+- 
+Liora
+Bonded with: Tamsin (Deep)
+Duo Ability: Silent Aegis
+Trust: 82 | Resentment: 12
+Shared Trauma: Fall of Emberhold
+
+Mentorship System — Shaping the Bond Arc
+🧩 Core Concept
+Players can assign a Mentor to a duo to influence:
+- Emotional growth
+- Ability evolution paths
+- Conflict resolution or intensification
+
+🧠 Mechanics
+🔹 Mentor Roles
+Each mentor has a Bond Philosophy:
+|  |  |  | 
+|  |  |  | 
+|  |  |  | 
+|  |  |  | 
+
+
+🔹 Mentorship Actions
+- Campfire Dialogues: Mentor initiates reflection scenes
+- Combat Coaching: Mentor gives tactical advice mid-battle
+- Memory Weaving: Mentor helps duo reframe past trauma
+🔹 UI Integration
+- In Relationship Map, click a duo → “Assign Mentor”
+- Tooltip:
+Mentor: Mira
+Influence: +Trust, -Resentment
+Projected Evolution: Echo Reverb
+
+
+
+🧬 Evolution Forecasting
+Mentorship reveals Projected Paths:
+- Echo Strike → Echo Reverb → Echo Resonance
+- Shield of Silence → Silent Aegis → Voidguard
+Players can nudge evolution by:
+- Choosing a mentor
+- Triggering bonding events
+- Managing emotional states
+
+Mechanics
+🔹 Mentor Roles
+Each mentor has a Bond Philosophy:
+|  |  |  | 
+|  |  |  | 
+|  |  |  | 
+|  |  |  | 
+
+
+Mentorship Actions
+- Campfire Dialogues: Mentor initiates reflection scenes
+- Combat Coaching: Mentor gives tactical advice mid-battle
+- Memory Weaving: Mentor helps duo reframe past trauma
+🔹 UI Integration
+- In Relationship Map, click a duo → “Assign Mentor”
+- Tooltip:
+Mentor: Mira
+Influence: +Trust, -Resentment
+Projected Evolution: Echo Reverb
+
+Conflict Detection Engine
+{
+  "pair": ["Kael", "Sera"],
+  "trust": 42,
+  "resentment": 68,
+  "last_conflict": "Mission: Ashfall",
+  "status": "Fractured"
+}
+
+Thresholds:
+• 	Resentment > 60 → Conflict state
+• 	Trust < 50 → Duo abilities disabled
+• 	Status: Fractured, Tense, Healing
+
+Resolution Paths
+Dialogue System
+• 	Branching dialogue with emotional stakes
+• 	Player chooses tone: Empathetic, Confrontational, Avoidant
+• 	Example:
+Kael: “You left me behind.”
+Sera:
+  [Empathetic] “I panicked. I’m sorry.”
+  [Confrontational] “You would’ve done the same.”
+  [Avoidant] “Let’s not talk about this.”
+
+Echo Reconciliation
+Kael & Sera
+“Forgiveness forged in fire.”
+Status: Healing
+Trust: 65 → 80
+Resentment: 68 → 40
+
+
+
