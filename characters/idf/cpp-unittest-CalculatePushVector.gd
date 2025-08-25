@@ -95,4 +95,15 @@ void AIController::adjustBehavior(const std::string& trigger) {
         dialogue.play("Retreating!");
     }
 }
+class MoraleSystem {
+public:
+    float moraleLevel; // 0.0 to 1.0
+    bool panicked;
+    void adjustMorale(float delta);
+    void evaluateState();
+};
+
+MoraleSystem morale;
+EmotionSystem emotion;
+AIController ai;
 
