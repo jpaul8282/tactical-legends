@@ -53,3 +53,32 @@
 }
 
 @endjson
+
+
+  @startjson
+{
+"Numeric": [1, 2, 3],
+"String ": ["v1a", "v2b", "v3c"],
+"Boolean": [true, false, true]
+}
+@endjson
+
+  @startjson
+[1, 2, 3]
+@endjson
+
+  @startjson
+["1a", "2b", "3c"]
+@endjson
+
+  @startjson
+[true, false, true]
+@endjson
+
+  @startjson
+{
+"DecimalNumber": [-1, 0, 1],
+"DecimalNumber. Digits": [-1.1, 0.1, 1.1],
+"DecimalNumber ExponentPart": [1E5]
+}
+@endjson
