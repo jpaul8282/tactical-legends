@@ -206,3 +206,125 @@ func _show_character(c):
 # │   ├─ TechStat (ProgressBar)
 # │   ├─ StealthStat (ProgressBar)
 # │   ├─ LeadershipStat (ProgressBar)
+
+
+public class SquadMember
+{
+    public string callSign;
+    public string name;
+    public string origin;
+    public string specialty;
+    public int morale;
+    public string status;
+
+    public SquadMember(string callSign, string name, string origin, string specialty, int morale, string status)
+    {
+        this.callSign = callSign;
+        this.name = name;
+        this.origin = origin;
+        this.specialty = specialty;
+        this.morale = morale;
+        this.status = status;
+    }
+
+using System.Collections.Generic;
+using UnityEngine;
+
+public class SquadManager : MonoBehaviour
+{
+    public List<SquadMember> squad = new List<SquadMember>();
+
+    void Start()
+    {
+        InitializeSquad();
+        DisplaySquad();
+    }
+
+    void InitializeSquad()
+    {
+        squad.Add(new SquadMember("Echo-27", "John Smith", "Oistarian Vanguard", "Tactical Recall, Vault Phase", 78, "Active"));
+        squad.Add(new SquadMember("Gunwafa", "Gunwafa El-Rami", "IDF", "Urban Siege, Adaptive Combat", 82, "Active"));
+        squad.Add(new SquadMember("Nyla Sera", "Nyla Sera", "Vaultborn", "Recon, Memory Echo", 65, "Active"));
+        squad.Add(new SquadMember("Korr Vex", "Korr Vex", "Synth Ascendancy (Defector)", "Heavy Weapons, Terrain Manipulation", 58, "Active"));
+        squad.Add(new SquadMember("Oistarian", "Unknown", "Eden Core", "Psychic Shield, Relic Interface", 70, "Active"));
+    }
+
+    void DisplaySquad()
+    {
+        foreach (var member in squad)
+        {
+            Debug.Log($"{member.callSign} - {member.name} ({member.origin}) | Specialty: {member.specialty} | Morale: {member.morale} | Status: {member.status}");
+        }
+    }
+}
+
+using UnityEngine;
+using System.Collections.Generic;
+
+public class MissionBriefing : MonoBehaviour
+{
+    public string missionID = "EDN-V7-0425";
+    public string commander = "Echo-27";
+    public string location = "Eden Vault Sector 9 – The Hollow Grid";
+    public string time = "0400 Vault Standard Time";
+    public string tier = "Omega";
+
+    public List<string> objectives = new List<string>
+    {
+        "Infiltrate Hollow Grid Vault",
+        "Secure Relic Node",
+        "Activate Eden Pulse Beacon",
+        "Extract with Vault Surge Protocol"
+    };
+
+    public List<string> threats = new List<string>
+    {
+        "Synth Ascendancy Patrols",
+        "Vaultborn Sentinels",
+        "Environmental Hazards"
+    };
+
+    void Start()
+    {
+        DisplayBriefing();
+    }
+
+    void DisplayBriefing()
+    {
+        Debug.Log($"Mission ID: {missionID}");
+        Debug.Log($"Commander: {commander}");
+        Debug.Log($"Location: {location}");
+        Debug.Log($"Time: {time}");
+        Debug.Log($"Tier: {tier}");
+
+        Debug.Log("Objectives:");
+        foreach (var obj in objectives)
+            Debug.Log($"- {obj}");
+
+        Debug.Log("Known Threats:");
+        foreach (var threat in threats)
+            Debug.Log($"- {threat}");
+
+        Debug.Log("Comms Protocol:");
+        Debug.Log("Alpha: Echo-27");
+        Debug.Log("Delta: Gunwafa");
+        Debug.Log("Theta: Nyla Sera");
+        Debug.Log("Omega: Oistarian");
+    }
+}
+
+public static class TacticalAbility
+{
+    public static void ActivateAbility(SquadMember member)
+    {
+        if (member.callSign == "Gunwafa")
+        {
+            Debug.Log($"{member.name} executes Urban Siege Protocol: breach efficiency +40%.");
+        }
+        else if (member.callSign == "Echo-27")
+        {
+            Debug.Log($"{member.name} deploys Tactical Recall: squad reposition enabled.");
+        }
+    }
+}
+
