@@ -477,4 +477,325 @@ void BeginSixPhaseManifestoCutscene() {
     director.Play();
 }
 
+// SylraCutIn.cs — Cinematic Cut-In Script
+
+void TriggerGaleSurgeCutIn() {
+    HideHUD();
+    FreezeGameplay();
+
+    // Scene 1: The Silence Before the Storm
+    PlayCameraZoom("FaceCloseUp");
+    PlayVFX("WindParticles", Sylra.Position);
+    PlaySFX("HeartbeatPulse");
+    Animate("Sylra_EyesOpen_Glow");
+
+    Wait(1.5f);
+
+    // Scene 2: Glyph Awakening
+    PlayCameraPan("OverheadZoomOut");
+    SpawnVFX("GlyphSigil", Sylra.Position);
+    PlaySFX("WindWhispers");
+    Animate("Sylra_ChannelEnergy");
+
+    Wait(2.0f);
+
+    // Scene 3: The Surge Unleashed
+    PlayCameraAngle("SideDynamic");
+    Animate("Sylra_ThrustForward");
+    SpawnVFX("WindShockwave", Sylra.ForwardDirection);
+    PlaySFX("ThunderCrack");
+    ApplyForceToEnemies("PushBack", Sylra.ForwardDirection, radius: 10f);
+
+    Wait(1.0f);
+
+    // Scene 4: Morale Shift
+    PlayCameraCut("AlliesReact");
+    AnimateAllies("RallyPose");
+    PlaySFX("AllyCheer");
+    BoostAllyStats("Morale", amount: +20);
+
+    Wait(1.5f);
+
+    // Scene 5: The Calm Returns
+    PlayCameraWide("BattlefieldFade");
+    FadeOutVFX("GlyphSigil");
+    PlaySFX("WindChime");
+    Animate("Sylra_Exhale");
+    ShowHUD();
+    UnfreezeGameplay();
+
+    StartCooldown("GaleSurge");
+}
+
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+
+public class SylraCutIn : MonoBehaviour
+{
+    public Animator sylraAnimator;
+    public AudioSource voiceoverSource;
+    public AudioSource sfxSource;
+    public Cinemachine.CinemachineVirtualCamera[] cutInCameras;
+    public Text subtitleText;
+    public GameObject hud;
+
+    void Start()
+    {
+        StartCoroutine(PlayGaleSurgeCutIn());
+    }
+
+    IEnumerator PlayGaleSurgeCutIn()
+    {
+        hud.SetActive(false);
+        Time.timeScale = 0f;
+
+        // Scene 1: Eyes Open
+        SwitchCamera(0); // Face close-up
+        PlaySFX("heartbeat");
+        sylraAnimator.Play("EyesOpenGlow");
+        yield return ShowSubtitle("The wind... it listens.", 2f);
+        yield return new WaitForSecondsRealtime(1.5f);
+
+        // Scene 2: Glyph Awakening
+        SwitchCamera(1); // Overhead zoom
+        PlaySFX("glyph_rise");
+        sylraAnimator.Play("ChannelEnergy");
+        yield return ShowSubtitle("Ancient breath, awaken.", 2f);
+        yield return new WaitForSecondsRealtime(2f);
+
+        // Scene 3: Surge Unleashed
+        SwitchCamera(2); // Dynamic side angle
+        PlaySFX("wind_surge");
+        sylraAnimator.Play("ThrustForward");
+        ApplyEnemyPushback();
+        yield return ShowSubtitle("Gale Surge!", 1.5f);
+
+        // Scene 4: Morale Shift
+        SwitchCamera(3); // Allies react
+        PlaySFX("ally_cheer");
+        BoostAllyMorale();
+        yield return ShowSubtitle("She's with us!", 1.5f);
+
+        // Scene 5: Calm Returns
+        SwitchCamera(4); // Wide battlefield
+        PlaySFX("wind_chime");
+        sylraAnimator.Play("Exhale");
+        yield return ShowSubtitle("Balance restored.", 2f);
+
+        hud.SetActive(true);
+        Time.timeScale = 1f;
+        StartCooldown("GaleSurge");
+    }
+
+    void SwitchCamera(int index)
+    {
+        for (int i = 0; i < cutInCameras.Length; i++)
+            cutInCameras[i].gameObject.SetActive(i == index);
+    }
+
+    void PlaySFX(string clipName)
+    {
+        AudioClip clip = Resources.Load<AudioClip>($"Audio/SFX/{clipName}");
+        sfxSource.PlayOneShot(clip);
+    }
+
+    IEnumerator ShowSubtitle(string text, float duration)
+    {
+        subtitleText.text = text;
+        voiceoverSource.clip = Resources.Load<AudioClip>($"Audio/Voiceovers/{text}");
+        voiceoverSource.Play();
+        yield return new WaitForSecondsRealtime(duration);
+        subtitleText.text = "";
+    }
+
+    void ApplyEnemyPushback()
+    {
+        // Add force to nearby enemies
+        foreach (var enemy in FindObjectsOfType<Enemy>())
+        {
+            Vector3 direction = (enemy.transform.position - sylraAnimator.transform.position).normalized;
+            enemy.GetComponent<Rigidbody>().AddForce(direction * 500f);
+        }
+    }
+
+    void BoostAllyMorale()
+    {
+        foreach (var ally in FindObjectsOfType<Ally>())
+        {
+            ally.Morale += 20;
+        }
+    }
+
+    void StartCooldown(string abilityName)
+    {
+        // Trigger cooldown logic
+        Debug.Log($"{abilityName} cooldown started.");
+    }
+}
+
+PhantomBreach.cs
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+public class PhantomBreach : MonoBehaviour
+{
+    public float stealthDuration = 8f;
+    public float markRadius = 15f;
+    public LayerMask enemyLayer;
+    public GameObject markVFX;
+    public AudioClip activateSFX;
+    public AudioClip takedownSFX;
+    public AudioSource audioSource;
+    public SkinnedMeshRenderer agentRenderer;
+    public Material stealthMaterial;
+    public Material normalMaterial;
+
+    private bool isStealthed = false;
+    private List<GameObject> markedEnemies = new List<GameObject>();
+
+    public void ActivatePhantomBreach()
+    {
+        StartCoroutine(ExecutePhantomBreach());
+    }
+
+    IEnumerator ExecutePhantomBreach()
+    {
+        // Step 1: Activate Stealth
+        isStealthed = true;
+        agentRenderer.material = stealthMaterial;
+        audioSource.PlayOneShot(activateSFX);
+        Debug.Log("Phantom Breach activated.");
+
+        // Step 2: Mark Enemies
+        Collider[] enemies = Physics.OverlapSphere(transform.position, markRadius, enemyLayer);
+        foreach (Collider enemy in enemies)
+        {
+            markedEnemies.Add(enemy.gameObject);
+            Instantiate(markVFX, enemy.transform.position + Vector3.up * 2f, Quaternion.identity);
+        }
+
+        yield return new WaitForSeconds(stealthDuration / 2f);
+
+        // Step 3: Silent Takedowns
+        foreach (GameObject enemy in markedEnemies)
+        {
+            if (enemy != null)
+            {
+                Vector3 direction = (enemy.transform.position - transform.position).normalized;
+                transform.LookAt(enemy.transform);
+                audioSource.PlayOneShot(takedownSFX);
+                enemy.GetComponent<Enemy>().EliminateSilently();
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
+
+        // Step 4: Exit Stealth
+        yield return new WaitForSeconds(stealthDuration / 2f);
+        isStealthed = false;
+        agentRenderer.material = normalMaterial;
+        markedEnemies.Clear();
+        Debug.Log("Phantom Breach ended.");
+    }
+}
+
+public class Enemy : MonoBehaviour
+{
+    public void EliminateSilently()
+    {
+        // Play animation, disable AI, fade out
+        Debug.Log($"{gameObject.name} eliminated silently.");
+        Destroy(gameObject, 1f);
+    }
+}
+
+public class ThermalVision : MonoBehaviour
+{
+    public Material thermalMaterial;
+    public Camera playerCamera;
+    private bool isActive = false;
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            ToggleThermalVision();
+        }
+    }
+
+    void ToggleThermalVision()
+    {
+        isActive = !isActive;
+        playerCamera.GetComponent<Camera>().cullingMask = isActive ? LayerMask.GetMask("Heat") : LayerMask.GetMask("Default");
+        RenderSettings.skybox = isActive? thermalMaterial: null;
+        Debug.Log("Thermal Vision " + (isActive ? "Activated": "Deactivated"));
+    }
+}
+
+public class WallBreach : MonoBehaviour
+{
+    public GameObject breachChargePrefab;
+    public float breachDelay = 3f;
+    public LayerMask breachableLayer;
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, transform.forward, out hit, 5f, breachableLayer))
+            {
+                StartCoroutine(PlaceAndDetonateCharge(hit.point));
+            }
+        }
+    }
+
+    IEnumerator PlaceAndDetonateCharge(Vector3 position)
+    {
+        GameObject charge = Instantiate(breachChargePrefab, position, Quaternion.identity);
+        Debug.Log("Charge placed.");
+        yield return new WaitForSeconds(breachDelay);
+        Destroy(charge);
+        ExplodeWall(position);
+    }
+
+    void ExplodeWall(Vector3 position)
+    {
+        Collider[] affected = Physics.OverlapSphere(position, 5f);
+        foreach (var obj in affected)
+        {
+            if (obj.CompareTag("Wall"))
+            {
+                Destroy(obj.gameObject);
+                Debug.Log("Wall breached.");
+            }
+        }
+    }
+}
+
+using UnityEngine.UI;
+
+public class CooldownUI : MonoBehaviour
+{
+    public Image cooldownBar;
+    public float cooldownTime = 10f;
+    private float cooldownRemaining = 0f;
+
+    void Update()
+    {
+        if (cooldownRemaining > 0)
+        {
+            cooldownRemaining -= Time.deltaTime;
+            cooldownBar.fillAmount = cooldownRemaining / cooldownTime;
+        }
+    }
+
+    public void TriggerCooldown()
+    {
+        cooldownRemaining = cooldownTime;
+        cooldownBar.fillAmount = 1f;
+    }
+}
+
 
