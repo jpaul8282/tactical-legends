@@ -12,3 +12,24 @@
 }
 @endjson
 
+public string GenerateEncodedInscription(string relicName, string origin, string eventTag)
+{
+    return $"\"{relicName}\"\\nForged in {origin}\\tDuring {eventTag}\\rBound by memory\\bNever forgotten";
+}
+
+{
+  "relicName": "Stormcaller Matrix",
+  "encodedInscription": "\"Stormcaller Matrix\"\nForged in Vaultborn+Eden\tDuring EchoStorm 7\rBound by memory\bNever forgotten"
+}
+
+{
+  "transmissionID": "EL-442",
+  "relicID": "VX-77",
+  "payload": "EchoLink\\nRelic: \\\"VX-77\\\"\\tOrigin: Vaultborn\\rPrevious: Nyla Sera\\bCurrent: Echo-27"
+}
+
+public string BuildEchoLinkPayload(Relic relic)
+{
+    return $"EchoLink\\nRelic: \\\"{relic.id}\\\"\\tOrigin: {relic.origin}\\rPrevious: {string.Join(",", relic.previousOwners)}\\bCurrent: {relic.currentOwner}";
+}
+
