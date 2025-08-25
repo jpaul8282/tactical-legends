@@ -85,3 +85,350 @@ left_3.2;
 **[#lightblue] Blue
 @endmindmap
 
+@startmindmap
++[#Orange] Colors
+++[#lightgreen] Green
+++[#FFBBCC] Rose
+--[#lightblue] Blue
+@endmindmap
+@startmindmap
+*[#Orange] root node
+ *[#lightgreen] some first level node
+  *[#FFBBCC] second level node
+  *[#lightblue] another second level node
+ *[#lightgreen] another first level node
+@endmindmap
+@startmindmap
+<style>
+mindmapDiagram {
+  .green {
+    BackgroundColor lightgreen
+  }
+  .rose {
+    BackgroundColor #FFBBCC
+  }
+  .your_style_name {
+    BackgroundColor lightblue
+  }
+}
+</style>
+* Colors
+** Green <<green>>
+** Rose <<rose>>
+** Blue <<your_style_name>>
+@endmindmap
+@startmindmap
+<style>
+mindmapDiagram {
+  .green {
+    BackgroundColor lightgreen
+  }
+  .rose {
+    BackgroundColor #FFBBCC
+  }
+  .your_style_name {
+    BackgroundColor lightblue
+  }
+}
+</style>
++ Colors
+++ Green <<green>>
+++ Rose <<rose>>
+-- Blue <<your_style_name>>
+@endmindmap
+@startmindmap
+<style>
+mindmapDiagram {
+  .green {
+    BackgroundColor lightgreen
+  }
+  .rose {
+    BackgroundColor #FFBBCC
+  }
+  .your_style_name {
+    BackgroundColor lightblue
+  }
+}
+</style>
+* root node
+ * some first level node <<green>>
+  * second level node <<rose>>
+  * another second level node <<your_style_name>>
+ * another first level node <<green>>
+@endmindmap
+@startmindmap
+<style>
+mindmapDiagram {
+  .myStyle * {
+    BackgroundColor lightgreen
+  }
+}
+</style>
++ root
+++ b1 <<myStyle>>
++++ b11
++++ b12
+++ b2
+@endmindmap
+@startmindmap
+* root node
+** some first-level node
+***_ second-level node
+***_ another second-level node
+***_ foo
+***_ bar
+***_ foobar
+** another first-level node
+@endmindmap
+@startmindmap
+*_ root node
+**_ some first-level node
+***_ second-level node
+***_ another second-level node
+***_ foo
+***_ bar
+***_ foobar
+**_ another first-level node
+@endmindmap
+@startmindmap
++ root node
+++ some first-level node
++++_ second-level node
++++_ another second-level node
++++_ foo
++++_ bar
++++_ foobar
+++_ another first-level node
+-- some first right level node
+--_ another first right level node
+@endmindmap
+@startmindmap
+* count
+** 100
+*** 101
+*** 102
+** 200
+
+left side
+
+** A
+*** AA
+*** AB
+** B
+@endmindmap
+@startmindmap
+* 1
+** 2
+*** 4
+*** 5
+** 3
+*** 6
+*** 7
+@endmindmap
+@startmindmap
+top to bottom direction
+* 1
+** 2
+*** 4
+*** 5
+** 3
+*** 6
+*** 7
+@endmindmap
+@startmindmap
+right-to-left direction
+* 1
+** 2
+*** 4
+*** 5
+** 3
+*** 6
+*** 7
+@endmindmap
+@startmindmap
+top to bottom direction
+left side
+* 1
+** 2
+*** 4
+*** 5
+** 3
+*** 6
+*** 7
+@endmindmap
+@startmindmap
+caption figure 1
+title My super title
+
+* <&flag>Debian
+** <&globe>Ubuntu
+*** Linux Mint
+*** Kubuntu
+*** Lubuntu
+*** KDE Neon
+** <&graph>LMDE
+** <&pulse>SolydXK
+** <&people>SteamOS
+** <&star>Raspbian with a very long name
+*** <s>Raspmbc</s> => OSMC
+*** <s>Raspyfi</s> => Volumio
+
+header
+My super header
+endheader
+
+center footer My super footer
+
+legend right
+  Short
+  legend
+endlegend
+@endmindmap
+@startmindmap
+<style>
+mindmapDiagram {
+    node {
+        BackgroundColor lightGreen
+    }
+    :depth(1) {
+      BackGroundColor white
+    }
+}
+</style>
+* Linux
+** NixOS
+** Debian
+*** Ubuntu
+**** Linux Mint
+**** Kubuntu
+**** Lubuntu
+**** KDE Neon
+@endmindmap
+@startmindmap
+<style>
+mindmapDiagram {
+  node {
+    BackgroundColor lightGreen
+  }
+  boxless {
+    FontColor darkgreen
+  }
+}
+</style>
+* Linux
+** NixOS
+** Debian
+***_ Ubuntu
+**** Linux Mint
+**** Kubuntu
+**** Lubuntu
+**** KDE Neon
+@endmindmap
+@startmindmap
+
+
+<style>
+node {
+    Padding 12
+    Margin 3
+    HorizontalAlignment center
+    LineColor blue
+    LineThickness 3.0
+    BackgroundColor gold
+    RoundCorner 40
+    MaximumWidth 100
+}
+
+rootNode {
+    LineStyle 8.0;3.0
+    LineColor red
+    BackgroundColor white
+    LineThickness 1.0
+    RoundCorner 0
+    Shadowing 0.0
+}
+
+leafNode {
+    LineColor gold
+    RoundCorner 0
+    Padding 3
+}
+
+arrow {
+    LineStyle 4
+    LineThickness 0.5
+    LineColor green
+}
+</style>
+
+* Hi =)
+** Sometimes I have a node in which I want to write a long text
+*** This results in a really huge diagram
+**** of course, I can explicitly split with a\nnew line
+**** but it could be cool if PlantUML were able to split long lines, maybe with an option 
+
+@endmindmap
+@startmindmap
+* Creole on Mindmap
+left side
+**:==Creole
+  This is **bold**
+  This is //italics//
+  This is "monospaced"
+  This is --stricken-out--
+  This is __underlined__
+  This is ~~wave-underlined~~
+--test Unicode and icons--
+  This is <U+221E> long
+  This is a <&code> icon
+  Use image : <img:https://plantuml.com/logo3.png>
+;
+**: <b>HTML Creole 
+  This is <b>bold</b>
+  This is <i>italics</i>
+  This is <font:monospaced>monospaced</font>
+  This is <s>stroked</s>
+  This is <u>underlined</u>
+  This is <w>waved</w>
+  This is <s:green>stroked</s>
+  This is <u:red>underlined</u>
+  This is <w:#0000FF>waved</w>
+-- other examples --
+  This is <color:blue>Blue</color>
+  This is <back:orange>Orange background</back>
+  This is <size:20>big</size>
+;
+right side
+**:==Creole line
+You can have a horizontal line
+----
+Or double line
+====
+Or strong line
+____
+Or dotted line
+..My title..
+Or dotted title
+//and title... //
+==Title==
+Or double-line title
+--Another title--
+Or single-line title
+Enjoy!;
+**:==Creole list item
+**test list 1**
+* Bullet list
+* Second item
+** Sub item
+*** Sub sub item
+* Third item
+----
+**test list 2**
+# Numbered list
+# Second item
+## Sub item
+## Another sub item
+# Third item
+;
+@endmindmap
+
