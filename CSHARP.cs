@@ -700,7 +700,7 @@ public class PhantomBreach : MonoBehaviour
     }
 }
 
-public class Enemy : MonoBehaviour
+public class Enemy: MonoBehaviour
 {
     public void EliminateSilently()
     {
@@ -710,7 +710,7 @@ public class Enemy : MonoBehaviour
     }
 }
 
-public class ThermalVision : MonoBehaviour
+public class ThermalVision: MonoBehaviour
 {
     public Material thermalMaterial;
     public Camera playerCamera;
@@ -733,7 +733,7 @@ public class ThermalVision : MonoBehaviour
     }
 }
 
-public class WallBreach : MonoBehaviour
+public class WallBreach: MonoBehaviour
 {
     public GameObject breachChargePrefab;
     public float breachDelay = 3f;
@@ -776,7 +776,7 @@ public class WallBreach : MonoBehaviour
 
 using UnityEngine.UI;
 
-public class CooldownUI : MonoBehaviour
+public class CooldownUI: MonoBehaviour
 {
     public Image cooldownBar;
     public float cooldownTime = 10f;
