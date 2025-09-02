@@ -4,4 +4,114 @@
 name = "Corporal Ahmed Nasser"
 role = "Recon and Surveillance"
 background = "Multilingual linguist, cultural liaison, drone operator"
-expertise = [ "Amphibious reconnaissance", "Stealth movement", "Comms jamming awareness" ]
+expertise = [ "Amphibious reconnaissance", "Stealth movement", "Comms jamming awareness" ] 
+
+Intelligence Operative
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Lieutenant Sofia Varga"
+role = "Intelligence & Counterintelligence"
+background = "Former cryptanalyst turned field operative. Expert in signal interception, psychological profiling, and covert data extraction."
+expertise = [
+  "Cyber infiltration",
+  "Interrogation resistance",
+  "Signal triangulation"
+]
+
+Heavy Weapons Specialist
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Sergeant Darnell 'Tank' Brooks"
+role = "Heavy Assault & Breach Operations"
+background = "Decorated veteran with expertise in urban warfare and fortified entry. Known for resilience under fire and tactical demolition."
+expertise = [
+  "Explosive breaching",
+  "Heavy armor deployment",
+  "Suppressive fire tactics"
+]
+
+
+Wilderness Tracker
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Scout Elira Toma"
+role = "Long-Range Recon & Survival"
+background = "Raised in remote highlands, Elira excels in tracking, camouflage, and surviving off-grid. Often deployed for deep infiltration missions."
+expertise = [
+  "Terrain-based tracking",
+  "Natural camouflage",
+  "Survivalist fieldcraft"
+]
+
+Experimental Operative
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Specialist Kael Ramires"
+role = "Bio-Tech Integration Unit"
+background = "Subject of classified augmentation trials. Kael operates with enhanced reflexes and neural-linked combat systems."
+expertise = [
+  "Neural combat interface",
+  "Adaptive reflex protocols",
+  "Bio-sensor disruption"
+]
+
+Faction: Crimson Vow
+A militant order bound by ancient oaths and ritual combat. Known for their zeal, discipline, and ceremonial warfare.
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Brother-Sergeant Malrik Thorne"
+role = "Ritual Combat Specialist"
+background = "Initiated into the Crimson Vow at age 12. Trained in blade rites, oath-binding, and ceremonial dueling. Commands respect through unwavering discipline."
+expertise = [
+  "Close-quarters combat",
+  "Oathblade mastery",
+  "Combat meditation"
+]
+
+Faction: Echo Syndicate
+A decentralized network of hackers, infiltrators, and rogue agents. Masters of digital warfare and subterfuge.
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Cipher Agent Nyx"
+role = "Cyber Ops & Espionage"
+background = "Identity unknown. Operates under multiple aliases. Specializes in data theft, system sabotage, and psychological manipulation."
+expertise = [
+  "Network infiltration",
+  "Digital cloaking",
+  "Neural disruption tactics"
+]
+
+ Faction: Verdant Pact
+A nomadic alliance of eco-warriors and survivalists. They harness nature’s power and thrive in hostile environments.
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Warden Kaela Moss"
+role = "Environmental Recon & Biotech"
+background = "Raised in the wild zones. Expert in terrain manipulation, plant-based toxins, and regenerative field tech."
+expertise = [
+  "Biotech fieldcraft",
+  "Terrain adaptation",
+  "Organic camouflage"
+]
+
+Faction: Iron Dominion
+A technocratic regime focused on mechanized warfare and strategic dominance. Their operatives are enhanced and heavily armed.
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Enforcer Vex-9"
+role = "Heavy Mechanized Assault"
+background = "Cybernetic enforcer deployed in urban suppression zones. Equipped with modular weapon systems and reinforced exo-frame."
+expertise = [
+  "Urban pacification",
+  "Modular weaponry",
+  "Tactical armor deployment"
+]
+
