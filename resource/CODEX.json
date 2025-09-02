@@ -1,0 +1,185 @@
+{
+  "operatives": [
+    {
+      "name": "Lieutenant Sofia Varga",
+      "faction": "Independent Operative",
+      "role": "Intelligence",
+      "background": "Former cryptanalyst turned field operative...",
+      "expertise": ["Cyber infiltration", "Interrogation resistance", "Signal triangulation"],
+      "unlockCondition": "Decode the 'Black Cipher' relic",
+      "portraitPath": "Images/Operatives/SofiaVarga"
+    }
+  ],
+  "relics": [
+    {
+      "name": "Echo Core",
+      "type": "Mutation Relic",
+      "bonus": "+15% neural reflex speed",
+      "unlockMethod": "Complete 'Neurovault Breach'",
+      "linkedOperatives": ["Specialist Kael Ramires"]
+    }
+  ],
+  "factions": [
+    {
+      "name": "Crimson Vow",
+      "description": "Ritualist warriors bound by oath and blade",
+      "crestPath": "Images/Factions/CrimsonVow"
+    }
+  ]
+}
+
+C#
+[System.Serializable]
+public class Operative {
+    public string name;
+    public string faction;
+    public string role;
+    public string background;
+    public string[] expertise;
+    public string unlockCondition;
+    public string portraitPath;
+}
+
+[System.Serializable]
+public class Relic {
+    public string name;
+    public string type;
+    public string bonus;
+    public string unlockMethod;
+    public string[] linkedOperatives;
+}
+
+[System.Serializable]
+public class Faction {
+    public string name;
+    public string description;
+    public string crestPath;
+}
+
+[System.Serializable]
+public class CodexData {
+    public Operative[] operatives;
+    public Relic[] relics;
+    public Faction[] factions;
+}
+
+public class CodexLoader: MonoBehaviour {
+    public CodexData codex;
+
+    void Awake() {
+        TextAsset json = Resources.Load<TextAsset>("codex");
+        codex = JsonUtility.FromJson<CodexData>(json.text);
+    }
+}
+
+foreach (Operative op in codex.operatives) {
+    GameObject card = Instantiate(cardPrefab, gridParent);
+    card.GetComponent<CardUI>().Setup(op);
+}
+
+public class CardUI: MonoBehaviour {
+    public Text nameText;
+    public Text roleText;
+    public Image portraitImage;
+
+    public void Setup(Operative op) {
+        nameText.text = op.name;
+        roleText.text = op.role;
+        Sprite portrait = Resources.Load<Sprite>(op.portraitPath);
+        portraitImage.sprite = portrait;
+    }
+}
+
+C#
+public enum RelicUnlockState {
+    Locked,
+    Discovered,
+    Unlocked
+}
+
+[System.Serializable]
+public class Relic {
+    public string name;
+    public string type;
+    public string bonus;
+    public string unlockMethod;
+    public string[] linkedOperatives;
+    public RelicUnlockState unlockState = RelicUnlockState.Locked;
+}
+
+public class GameEvents: MonoBehaviour {
+    public static Action<string> OnMissionCompleted;
+    public static Action<string> OnRelicDiscovered;
+
+    public static void MissionCompleted(string missionName) {
+        OnMissionCompleted?.Invoke(missionName);
+    }
+
+    public static void RelicDiscovered(string relicName) {
+        OnRelicDiscovered?.Invoke(relicName);
+    }
+}
+
+public class RelicUnlockManager: MonoBehaviour {
+    public CodexData codex;
+
+    void OnEnable() {
+        GameEvents.OnMissionCompleted += HandleMissionUnlock;
+        GameEvents.OnRelicDiscovered += HandleRelicDiscovery;
+    }
+
+    void OnDisable() {
+        GameEvents.OnMissionCompleted -= HandleMissionUnlock;
+        GameEvents.OnRelicDiscovered -= HandleRelicDiscovery;
+    }
+
+    void HandleMissionUnlock(string missionName) {
+        foreach (Relic relic in codex.relics) {
+            if (relic.unlockMethod.Contains(missionName) && relic.unlockState == RelicUnlockState.Locked) {
+                relic.unlockState = RelicUnlockState.Unlocked;
+                Debug.Log($"Relic Unlocked: {relic.name}");
+                UnlockLinkedOperatives(relic);
+            }
+        }
+    }
+
+    void HandleRelicDiscovery(string relicName) {
+        Relic relic = codex.relics.FirstOrDefault(r => r.name == relicName);
+        if (relic != null && relic.unlockState == RelicUnlockState.Locked) {
+            relic.unlockState = RelicUnlockState.Discovered;
+            Debug.Log($"Relic Discovered: {relic.name}");
+        }
+    }
+
+    void UnlockLinkedOperatives(Relic relic) {
+        foreach (string opName in relic.linkedOperatives) {
+            Operative op = codex.operatives.FirstOrDefault(o => o.name == opName);
+            if (op != null) {
+                // Custom logic to mark operative as unlocked
+                Debug.Log($"Operative Unlocked: {op.name}");
+            }
+        }
+    }
+}
+
+public void DisplayRelic(Relic relic) {
+    relicNameText.text = relic.name;
+    bonusText.text = relic.bonus;
+
+    switch (relic.unlockState) {
+        case RelicUnlockState.Locked:
+            statusText.text = "🔒 Locked";
+            break;
+        case RelicUnlockState.Discovered:
+            statusText.text = "🧩 Discovered";
+            break;
+        case RelicUnlockState.Unlocked:
+            statusText.text = "✅ Unlocked";
+            break;
+    }
+}
+
+GameEvents.MissionCompleted("Neurovault Breach");
+GameEvents.RelicDiscovered("Echo Core");
+
+player.pref
