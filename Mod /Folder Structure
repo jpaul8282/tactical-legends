@@ -1,0 +1,15 @@
+mods/
+  └── my_mod/
+      ├── units.json
+      ├── map1.tmap
+      ├── rules.lua
+      ├── assets/
+      │   ├── unit_sprites/
+      │   └── sounds/
+
+create_unit("ShadowKnight", {
+  hp = 120,
+  attack = 30,
+  abilities = {"stealth", "lifesteal"}
+})
+
