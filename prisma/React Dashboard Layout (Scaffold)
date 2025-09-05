@@ -1,0 +1,202 @@
+src/
+├── components/
+│   ├── MissionCard.tsx
+│   ├── GearStats.tsx
+│   └── CharacterProfile.tsx
+├── pages/
+│   ├── Dashboard.tsx
+│   ├── MissionHistory.tsx
+│   └── CampaignMap.tsx
+├── App.tsx
+└── index.tsx
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Dashboard from './pages/Dashboard';
+import MissionHistory from './pages/MissionHistory';
+import CampaignMap from './pages/CampaignMap';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/missions" element={<MissionHistory />} />
+        <Route path="/campaign" element={<CampaignMap />} />
+      </Routes>
+    </Router>
+  );
+}
+interface Props {
+  character: string;
+  outcome: string;
+  enemiesDefeated: number;
+  gearUsed: number;
+}
+
+export default function MissionCard({ character, outcome, enemiesDefeated, gearUsed }: Props) {
+  return (
+    <div className="bg-gray-800 text-white p-4 rounded shadow">
+      <h2 className="text-xl font-bold">{character}</h2>
+      <p>Outcome: {outcome}</p>
+      <p>Enemies Defeated: {enemiesDefeated}</p>
+      <p>Gear Used: {gearUsed}</p>
+    </div>
+  );
+}
+
+export const characters = [
+  {
+    name: "Oistarian",
+    class: "Warrior",
+    abilities: ["Shield Bash", "Battle Cry"]
+  },
+  {
+    name: "Nyx",
+    class: "Rogue",
+    abilities: ["Shadow Step", "Poison Blade"]
+  },
+  {
+    name: "Velora",
+    class: "Mage",
+    abilities: ["Arcane Surge", "Mana Shield"]
+  }
+];
+
+export const gear = [
+  { name: "Whisper & Roar", type: "Dual Blade", bonus: "+3 agility" },
+  { name: "NeuroPulse Arm Module", type: "Tech Implant", bonus: "+5 intelligence" },
+  { name: "Titanium Aegis", type: "Shield", bonus: "+4 defense" }
+];
+
+export const campaignTree = {
+  start: {
+    id: 1,
+    name: "The Awakening",
+    next: [2, 3]
+  },
+  2: {
+    id: 2,
+    name: "Echoes of War",
+    next: [4]
+  },
+  3: {
+    id: 3,
+    name: "Shadow Protocol",
+    next: [4, 5]
+  },
+  4: {
+    id: 4,
+    name: "Siege of the Forgotten",
+    next: [6]
+  },
+  5: {
+    id: 5,
+    name: "The Rogue Signal",
+    next: []
+  },
+  6: {
+    id: 6,
+    name: "Final Reckoning",
+    next: []
+  }
+};
+
+function getNextMissions(currentId: number) {
+  return campaignTree[currentId]?.next.map(id => campaignTree[id]) || [];
+}
+
+GET /api/simulations
+import { useEffect, useState } from 'react';
+
+export function useSimulations() {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/simulations')
+      .then(res => res.json())
+      .then(setData)
+      .catch(console.error);
+  }, []);
+
+  return data;
+}
+
+import MissionCard from '../components/MissionCard';
+import { useSimulations } from '../hooks/useSimulations';
+
+export default function Dashboard() {
+  const simulations = useSimulations();
+
+  return (
+    <div className="grid gap-4 p-6">
+      {simulations.map(sim => (
+        <MissionCard
+          key={sim.id}
+          character={sim.characterName}
+          outcome={sim.missionOutcome}
+          enemiesDefeated={sim.enemiesDefeated}
+          gearUsed={sim.gearUsed}
+        />
+      ))}
+    </div>
+  );
+}
+
+export const campaignTree = {
+  1: { name: "Awakening", next: [2, 3] },
+  2: { name: "Echoes of War", next: [4] },
+  3: { name: "Shadow Protocol", next: [4, 5] },
+  4: { name: "Siege of the Forgotten", next: [6] },
+  5: { name: "The Rogue Signal", next: [] },
+  6: { name: "Final Reckoning", next: [] }
+};
+
+import { campaignTree } from '../data/campaignTree';
+
+export default function CampaignMap() {
+  return (
+    <div className="p-6">
+      {Object.entries(campaignTree).map(([id, node]) => (
+        <div key={id} className="mb-4">
+          <h3 className="font-bold text-lg">{node.name}</h3>
+          <p>Next: {node.next.map(n => campaignTree[n].name).join(', ') || 'None'}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function calculateOutcome({
+  characterClass,
+  gearLoadout,
+  abilities,
+  difficulty
+}: {
+  characterClass: string;
+  gearLoadout: string[];
+  abilities: string[];
+  difficulty: 'easy' | 'medium' | 'hard';
+}) {
+  const base = difficulty === 'easy' ? 5 : difficulty === 'hard' ? 15 10;
+
+  const classBonus = {
+    Warrior: 5,
+    Mage: 3,
+    Rogue: 4
+  };
+
+  const gearBonus = gearLoadout.length * 2;
+  const abilityBonus = abilities.length * 1.5;
+
+  const totalScore = base + classBonus[characterClass] + gearBonus + abilityBonus;
+
+  return {
+    enemiesDefeated: Math.floor(totalScore),
+    missionOutcome: totalScore > 15? 'Victory': totalScore > 10? 'Partial Success': 'Failure'
+  };
+}
+const result = calculateOutcome({
+  characterClass,
+  gearLoadout,
+  abilities,
+  difficulty
+});
