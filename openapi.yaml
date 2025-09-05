@@ -1,0 +1,66 @@
+openapi: 3.0.0
+info:
+  title: Tacticallegend API
+  version: 1.0.0
+  description: Tactical RPG simulation engine for character missions and gear-based combat.
+paths:
+  /simulate:
+    post:
+      Summary: Simulate a tactical mission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulationRequest'
+      responses:
+        '200':
+          description: Simulation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResponse'
+components:
+  schemas:
+    SimulationRequest:
+      type: object
+      required:
+        - characterName
+        - missionId
+      properties:
+        characterName:
+          type: string
+          example: "Oistarian"
+        missionId:
+          type: integer
+          example: 42
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+          example: "hard"
+        enableAI:
+          type: boolean
+          example: true
+        gearLoadout:
+          type: array
+          items:
+            type: string
+          example: ["Whisper & Roar", "NeuroPulse Arm Module"]
+    SimulationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        summary:
+          type: string
+        stats:
+          type: object
+          properties:
+            enemiesDefeated:
+              type: integer
+            gearUsed:
+              type: integer
+            missionOutcome:
+              type: string
+
+              
