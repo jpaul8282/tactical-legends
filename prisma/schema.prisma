@@ -1,0 +1,10 @@
+model Simulation {
+  id              Int      @id @default(autoincrement())
+  characterName   String
+  missionId       Int
+  difficulty      String
+  enemiesDefeated Int
+  gearUsed        Int
+  missionOutcome  String
+  createdAt       DateTime @default(now())
+}
