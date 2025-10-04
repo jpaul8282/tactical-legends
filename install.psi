@@ -1,0 +1,76 @@
+# Tactical Legends Installer Script
+# Author: Jpaul
+
+$logPath = "$env:USERPROFILE\TacticalLegends\install_log.txt"
+New-Item -ItemType Directory -Path (Split-Path $logPath) -Force | Out-Null
+Start-Transcript -Path $logPath -Append
+
+Write-Host "`n=== Tactical Legends Setup ===`n"
+
+# Registry Setup
+$regKey = "HKCU:\Software\TacticalLegends"
+if (-not (Test-Path $regKey)) {
+    Write-Host "Registry key not found. Importing settings..."
+    Start-Process regedit.exe -ArgumentList "/s", "TacticalLegendsSettings.reg" -Wait
+} else {
+    Write-Host "Registry key already exists. Skipping import."
+}
+
+# Folder Structure
+$paths = @(
+    "$env:USERPROFILE\TacticalLegends\Mods",
+    "$env:USERPROFILE\TacticalLegends\Dashboards",
+    "$env:USERPROFILE\TacticalLegends\Codex",
+    "$env:USERPROFILE\TacticalLegends\Plugins"
+)
+foreach ($path in $paths) {
+    if (-not (Test-Path $path)) {
+        New-Item -ItemType Directory -Path $path -Force | Out-Null
+        Write-Host "Created: $path"
+    } else {
+        Write-Host "Exists: $path"
+    }
+}
+
+# Python Integration
+$pythonPath = Get-Command python -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+if ($pythonPath) {
+    Write-Host "Python found at: $pythonPath"
+    Set-ItemProperty -Path $regKey -Name "PythonPath" -Value $pythonPath
+} else {
+    Write-Warning "Python not found. Please install Python and re-run this script."
+}
+
+# Dashboard Stub
+$stub = @"
+# Tactical Legends Modding Dashboard Stub
+import os
+MOD_PATH = os.path.expanduser('~\\TacticalLegends\\Mods')
+print(f"Modding path initialized: {MOD_PATH}")
+"@
+Set-Content "$env:USERPROFILE\TacticalLegends\Dashboards\modding_dashboard.py" $stub
+
+# Mod Validation
+$mods = Get-ChildItem "$env:USERPROFILE\TacticalLegends\Mods" -Filter *.tlmod
+foreach ($mod in $mods) {
+    $content = Get-Content $mod.FullName
+    if ($content -notmatch "MOD_VERSION") {
+        Write-Warning "Invalid mod file: $($mod.Name)"
+    } else {
+        Write-Host "Validated mod: $($mod.Name)"
+    }
+}
+
+# Plugin Scan
+$pluginDir = "$env:USERPROFILE\TacticalLegends\Plugins"
+if (Test-Path $pluginDir) {
+    $plugins = Get-ChildItem $pluginDir -Filter *.dll
+    foreach ($plugin in $plugins) {
+        Write-Host "Plugin detected: $($plugin.Name)"
+    }
+} else {
+    Write-Host "No plugin directory found. Skipping scan."
+}
+
+Stop-Transcript
+Write-Host "`nSetup complete. Log saved to: $logPath"
