@@ -1,161 +1,133 @@
-@startmindmap
-* Debian
-** Ubuntu
-*** Linux Mint
-*** Kubuntu
-*** Lubuntu
-*** KDE Neon
-** LMDE
-** SolydXK
-** SteamOS
-** Raspbian with a very long name
-*** <s>Raspmbc</s> => OSMC
-*** <s>Raspyfi</s> => Volumio
-@endmindmap
+# PlantUML Mindmap - Complete Syntax Guide
 
-@startmindmap
-* root node
-	* some first-level node
-		* second-level node
-		* another second-level node
-	* another first-level node
-@endmindmap
+## 📋 Table of Contents
+1. [Basic Syntax](#basic-syntax)
+2. [Direction Control](#direction-control)
+3. [Colors & Styling](#colors--styling)
+4. [Box Types](#box-types)
+5. [Multiple Roots](#multiple-roots)
+6. [Advanced Styling](#advanced-styling)
+7. [Text Formatting](#text-formatting)
+8. [Best Practices](#best-practices)
 
+---
+
+## 1. Basic Syntax
+
+### Simple Mindmap Structure
+```plantuml
 @startmindmap
-+ OS
-++ Ubuntu
-+++ Linux Mint
-+++ Kubuntu
-+++ Lubuntu
-+++ KDE Neon
-++ LMDE
-++ SolydXK
-++ SteamOS
-++ Raspbian
--- Windows 95
--- Windows 98
--- Windows NT
---- Windows 8
---- Windows 10
+* Root Node
+** First Level
+*** Second Level
+**** Third Level
+** Another First Level
 @endmindmap
+```
+
+### Alternative Syntax (Plus/Minus)
+```plantuml
 @startmindmap
-* Class Templates
-**: Example 1
-<code>
-template <typename T>
-class cname{
-void f1()<U+003B>
-...
-}
-</code>
-;
-**: Example 2
-<code>
-other template <typename T>
-class cname{
-...
-</code>
-;
++ Root
+++ Right Side Level 1
++++ Right Side Level 2
+-- Left Side Level 1
+--- Left Side Level 2
 @endmindmap
+```
+
+**Key Points:**
+- `*` creates nodes (more asterisks = deeper levels)
+- `+` for right side, `-` for left side
+- Indentation is optional but improves readability
+
+---
+
+## 2. Direction Control
+
+### Default (Left to Right)
+```plantuml
 @startmindmap
-+ root
-**:right_1.1
-right_1.2;
-++ right_2
+* Root
+** Child 1
+** Child 2
+@endmindmap
+```
+
+### Top to Bottom
+```plantuml
+@startmindmap
+top to bottom direction
+* Root
+** Child 1
+** Child 2
+@endmindmap
+```
+
+### Right to Left
+```plantuml
+@startmindmap
+right-to-left direction
+* Root
+** Child 1
+** Child 2
+@endmindmap
+```
+
+### Mixed Directions
+```plantuml
+@startmindmap
++ Root
+++ Right Side
+-- Left Side (use 'left side' keyword)
 
 left side
 
--- left_1
--- left_2
-**:left_3.1
-left_3.2;
+-- Left Node 1
+-- Left Node 2
 @endmindmap
-@startmindmap
-* Root 1
-** Foo
-** Bar
-* Root 2
-** Lorem
-** Ipsum
-@endmindmap
-@startmindmap
-*[#Orange] Colors
-**[#lightgreen] Green
-**[#FFBBCC] Rose
-**[#lightblue] Blue
-@endmindmap
+```
 
+---
+
+## 3. Colors & Styling
+
+### Inline Color Syntax
+```plantuml
 @startmindmap
-+[#Orange] Colors
-++[#lightgreen] Green
-++[#FFBBCC] Rose
---[#lightblue] Blue
+*[#Orange] Root
+**[#lightgreen] Green Node
+**[#FFBBCC] Pink Node
+**[#lightblue] Blue Node
 @endmindmap
-@startmindmap
-*[#Orange] root node
- *[#lightgreen] some first level node
-  *[#FFBBCC] second level node
-  *[#lightblue] another second level node
- *[#lightgreen] another first level node
-@endmindmap
-@startmindmap
-<style>
-mindmapDiagram {
-  .green {
-    BackgroundColor lightgreen
-  }
-  .rose {
-    BackgroundColor #FFBBCC
-  }
-  .your_style_name {
-    BackgroundColor lightblue
-  }
-}
-</style>
-* Colors
-** Green <<green>>
-** Rose <<rose>>
-** Blue <<your_style_name>>
-@endmindmap
+```
+
+### Using Style Classes
+```plantuml
 @startmindmap
 <style>
 mindmapDiagram {
-  .green {
+  .success {
     BackgroundColor lightgreen
   }
-  .rose {
-    BackgroundColor #FFBBCC
+  .warning {
+    BackgroundColor #FFA500
   }
-  .your_style_name {
-    BackgroundColor lightblue
+  .error {
+    BackgroundColor #FF6B6B
   }
 }
 </style>
-+ Colors
-++ Green <<green>>
-++ Rose <<rose>>
--- Blue <<your_style_name>>
+
+* Project Status
+** Completed Tasks <<success>>
+** Pending Tasks <<warning>>
+** Failed Tasks <<error>>
 @endmindmap
-@startmindmap
-<style>
-mindmapDiagram {
-  .green {
-    BackgroundColor lightgreen
-  }
-  .rose {
-    BackgroundColor #FFBBCC
-  }
-  .your_style_name {
-    BackgroundColor lightblue
-  }
-}
-</style>
-* root node
- * some first level node <<green>>
-  * second level node <<rose>>
-  * another second level node <<your_style_name>>
- * another first level node <<green>>
-@endmindmap
+```
+
+### Style Inheritance
+```plantuml
 @startmindmap
 <style>
 mindmapDiagram {
@@ -164,271 +136,362 @@ mindmapDiagram {
   }
 }
 </style>
-+ root
-++ b1 <<myStyle>>
-+++ b11
-+++ b12
-++ b2
-@endmindmap
-@startmindmap
-* root node
-** some first-level node
-***_ second-level node
-***_ another second-level node
-***_ foo
-***_ bar
-***_ foobar
-** another first-level node
-@endmindmap
-@startmindmap
-*_ root node
-**_ some first-level node
-***_ second-level node
-***_ another second-level node
-***_ foo
-***_ bar
-***_ foobar
-**_ another first-level node
-@endmindmap
-@startmindmap
-+ root node
-++ some first-level node
-+++_ second-level node
-+++_ another second-level node
-+++_ foo
-+++_ bar
-+++_ foobar
-++_ another first-level node
--- some first right level node
---_ another first right level node
-@endmindmap
-@startmindmap
-* count
-** 100
-*** 101
-*** 102
-** 200
 
-left side
++ Root
+++ Parent <<myStyle>>
++++ Child (inherits green)
++++ Another Child (inherits green)
+@endmindmap
+```
 
-** A
-*** AA
-*** AB
-** B
-@endmindmap
-@startmindmap
-* 1
-** 2
-*** 4
-*** 5
-** 3
-*** 6
-*** 7
-@endmindmap
-@startmindmap
-top to bottom direction
-* 1
-** 2
-*** 4
-*** 5
-** 3
-*** 6
-*** 7
-@endmindmap
-@startmindmap
-right-to-left direction
-* 1
-** 2
-*** 4
-*** 5
-** 3
-*** 6
-*** 7
-@endmindmap
-@startmindmap
-top to bottom direction
-left side
-* 1
-** 2
-*** 4
-*** 5
-** 3
-*** 6
-*** 7
-@endmindmap
-@startmindmap
-caption figure 1
-title My super title
+---
 
-* <&flag>Debian
-** <&globe>Ubuntu
-*** Linux Mint
-*** Kubuntu
-*** Lubuntu
-*** KDE Neon
-** <&graph>LMDE
-** <&pulse>SolydXK
-** <&people>SteamOS
-** <&star>Raspbian with a very long name
-*** <s>Raspmbc</s> => OSMC
-*** <s>Raspyfi</s> => Volumio
+## 4. Box Types
 
-header
-My super header
-endheader
-
-center footer My super footer
-
-legend right
-  Short
-  legend
-endlegend
+### Boxless Nodes (Underscore Suffix)
+```plantuml
+@startmindmap
+* Root
+** Normal Node
+**_ Boxless Node
+***_ Boxless Child 1
+***_ Boxless Child 2
 @endmindmap
+```
+
+### Mixed Box Types
+```plantuml
+@startmindmap
+*_ Boxless Root
+**_ Boxless Level 1
+*** Normal Level 2
+***_ Boxless Level 2
+** Normal Level 1
+@endmindmap
+```
+
+---
+
+## 5. Multiple Roots
+
+```plantuml
+@startmindmap
+* Root 1
+** Branch A
+** Branch B
+
+* Root 2
+** Branch X
+** Branch Y
+@endmindmap
+```
+
+---
+
+## 6. Advanced Styling
+
+### Comprehensive Node Styling
+```plantuml
+@startmindmap
+<style>
+node {
+    Padding 12
+    Margin 5
+    HorizontalAlignment center
+    LineColor #0066CC
+    LineThickness 2.0
+    BackgroundColor #E8F4F8
+    RoundCorner 20
+    MaximumWidth 150
+    FontSize 14
+    FontColor #333333
+}
+
+rootNode {
+    LineStyle 8.0;3.0
+    LineColor #FF6B6B
+    BackgroundColor #FFFFFF
+    LineThickness 3.0
+    RoundCorner 25
+    Shadowing 2.0
+    FontSize 18
+    FontStyle bold
+}
+
+leafNode {
+    LineColor #00CC88
+    RoundCorner 10
+    Padding 8
+    BackgroundColor #F0FFF0
+}
+
+arrow {
+    LineStyle 4
+    LineThickness 1.5
+    LineColor #666666
+}
+</style>
+
+* Strategic Plan
+** Goals
+*** Revenue Growth
+*** Market Expansion
+** Resources
+*** Budget
+*** Team
+@endmindmap
+```
+
+### Depth-Based Styling
+```plantuml
 @startmindmap
 <style>
 mindmapDiagram {
     node {
         BackgroundColor lightGreen
     }
+    :depth(0) {
+        BackgroundColor #FF6B6B
+        FontColor white
+        FontStyle bold
+    }
     :depth(1) {
-      BackGroundColor white
+        BackgroundColor #FFA500
+    }
+    :depth(2) {
+        BackgroundColor #FFD700
     }
 }
 </style>
-* Linux
-** NixOS
-** Debian
-*** Ubuntu
-**** Linux Mint
-**** Kubuntu
-**** Lubuntu
-**** KDE Neon
+
+* Level 0 (Root)
+** Level 1
+*** Level 2
+**** Level 3
 @endmindmap
+```
+
+---
+
+## 7. Text Formatting
+
+### Creole Markup
+```plantuml
+@startmindmap
+* Text Formatting
+
+left side
+
+**:==Creole Syntax
+**Bold Text**: This is **bold**
+//Italic Text//: This is //italics//
+"Monospaced": This is "monospaced"
+--Strikethrough--: This is --stricken-out--
+__Underlined__: This is __underlined__
+~~Wavy~~: This is ~~wave-underlined~~
+;
+
+right side
+
+**:==HTML Markup
+<b>Bold</b>
+<i>Italics</i>
+<u>Underlined</u>
+<s>Strikethrough</s>
+<color:blue>Blue Text</color>
+<back:yellow>Yellow Background</back>
+<size:16>Large Text</size>
+;
+@endmindmap
+```
+
+### Lists in Nodes
+```plantuml
+@startmindmap
+* Project Tasks
+
+**:==Completed
+* Database setup
+* User authentication
+* API endpoints
+** POST /users
+** GET /users
+* Frontend design
+;
+
+**:==In Progress
+# Code review
+# Testing
+## Unit tests
+## Integration tests
+# Documentation
+;
+@endmindmap
+```
+
+### Icons and Special Characters
+```plantuml
+@startmindmap
+* <&flag> Project Dashboard
+** <&globe> Global Reach
+** <&people> Team Members
+** <&star> Key Features
+** <&code> Development
+** <&pulse> Performance
+@endmindmap
+```
+
+### Multiline Text
+```plantuml
+@startmindmap
+**: Long Text Node
+This is a node with
+multiple lines of text
+that wraps automatically
+for better readability;
+
+** Another approach\nusing explicit\nnewlines
+@endmindmap
+```
+
+---
+
+## 8. Best Practices
+
+### Complete Example with Headers, Footers, and Legends
+```plantuml
+@startmindmap
+title Software Development Lifecycle
+caption Phase 1: Planning & Design
+
+header
+Project: Tactical Legends
+Version: 1.0
+endheader
+
+center footer Generated: 2025-10-12
+
+legend right
+  Status Colors:
+  * Green = Complete
+  * Orange = In Progress
+  * Red = Blocked
+endlegend
+
+<style>
+mindmapDiagram {
+  .complete {
+    BackgroundColor #90EE90
+  }
+  .inprogress {
+    BackgroundColor #FFA500
+  }
+  .blocked {
+    BackgroundColor #FF6B6B
+  }
+}
+</style>
+
+* <&flag> SDLC
+** <&code> Planning <<complete>>
+*** Requirements Analysis
+*** Resource Allocation
+** <&gear> Design <<inprogress>>
+*** Architecture
+*** UI/UX Design
+** <&cog> Development <<inprogress>>
+*** Backend API
+*** Frontend UI
+** <&check> Testing <<blocked>>
+*** Unit Tests
+*** Integration Tests
+@endmindmap
+```
+
+### Tactical Legends Game Architecture Example
+```plantuml
 @startmindmap
 <style>
 mindmapDiagram {
-  node {
-    BackgroundColor lightGreen
+  .core {
+    BackgroundColor #00FF88
+    FontColor #000000
   }
-  boxless {
-    FontColor darkgreen
+  .feature {
+    BackgroundColor #1A1A2E
+    FontColor #00FF88
+  }
+  .system {
+    BackgroundColor #FF6B6B
+    FontColor #FFFFFF
   }
 }
 </style>
-* Linux
-** NixOS
-** Debian
-***_ Ubuntu
-**** Linux Mint
-**** Kubuntu
-**** Lubuntu
-**** KDE Neon
-@endmindmap
-@startmindmap
 
+* <&star> Tactical Legends <<core>>
 
-<style>
-node {
-    Padding 12
-    Margin 3
-    HorizontalAlignment center
-    LineColor blue
-    LineThickness 3.0
-    BackgroundColor gold
-    RoundCorner 40
-    MaximumWidth 100
-}
-
-rootNode {
-    LineStyle 8.0;3.0
-    LineColor red
-    BackgroundColor white
-    LineThickness 1.0
-    RoundCorner 0
-    Shadowing 0.0
-}
-
-leafNode {
-    LineColor gold
-    RoundCorner 0
-    Padding 3
-}
-
-arrow {
-    LineStyle 4
-    LineThickness 0.5
-    LineColor green
-}
-</style>
-
-* Hi =)
-** Sometimes I have a node in which I want to write a long text
-*** This results in a really huge diagram
-**** of course, I can explicitly split with a\nnew line
-**** but it could be cool if PlantUML were able to split long lines, maybe with an option 
-
-@endmindmap
-@startmindmap
-* Creole on Mindmap
 left side
-**:==Creole
-  This is **bold**
-  This is //italics//
-  This is "monospaced"
-  This is --stricken-out--
-  This is __underlined__
-  This is ~~wave-underlined~~
---test Unicode and icons--
-  This is <U+221E> long
-  This is a <&code> icon
-  Use image : <img:https://plantuml.com/logo3.png>
-;
-**: <b>HTML Creole 
-  This is <b>bold</b>
-  This is <i>italics</i>
-  This is <font:monospaced>monospaced</font>
-  This is <s>stroked</s>
-  This is <u>underlined</u>
-  This is <w>waved</w>
-  This is <s:green>stroked</s>
-  This is <u:red>underlined</u>
-  This is <w:#0000FF>waved</w>
--- other examples --
-  This is <color:blue>Blue</color>
-  This is <back:orange>Orange background</back>
-  This is <size:20>big</size>
-;
-right side
-**:==Creole line
-You can have a horizontal line
-----
-Or double line
-====
-Or strong line
-____
-Or dotted line
-..My title..
-Or dotted title
-//and title... //
-==Title==
-Or double-line title
---Another title--
-Or single-line title
-Enjoy!;
-**:==Creole list item
-**test list 1**
-* Bullet list
-* Second item
-** Sub item
-*** Sub sub item
-* Third item
-----
-**test list 2**
-# Numbered list
-# Second item
-## Sub item
-## Another sub item
-# Third item
-;
-@endmindmap
 
+** <&people> Characters <<feature>>
+*** Character Builder
+*** Stats System
+*** Abilities
+
+** <&shield> Combat <<system>>
+*** Damage Calculation
+*** Balance System
+*** AI Behavior
+
+right side
+
+** <&wrench> Weapons <<feature>>
+*** Weapon Generator
+*** DPS Calculator
+*** Rarity System
+
+** <&map-marker> Missions <<feature>>
+*** Mission Creator
+*** Objective System
+*** Reward Distribution
+@endmindmap
+```
+
+---
+
+## 🎯 Quick Reference
+
+### Syntax Shortcuts
+| Symbol | Purpose |
+|--------|---------|
+| `*` | Create node (increase for depth) |
+| `+` | Right-side node |
+| `-` | Left-side node |
+| `_` suffix | Boxless node |
+| `[#color]` | Inline color |
+| `<<class>>` | Apply style class |
+| `:text;` | Multiline node content |
+
+### Common Colors
+- `lightgreen`, `lightblue`, `lightgray`
+- `#00FF88` (hex codes)
+- `orange`, `red`, `gold`
+- RGB: `rgb(255,100,100)`
+
+### Useful Icons (OpenIconic)
+- `<&flag>`, `<&star>`, `<&people>`
+- `<&code>`, `<&cog>`, `<&shield>`
+- `<&map-marker>`, `<&globe>`, `<&pulse>`
+
+---
+
+## 📝 Notes
+
+1. **Performance**: Large mindmaps (100+ nodes) may render slowly
+2. **Styling Priority**: Inline colors override style classes
+3. **Text Width**: Use `MaximumWidth` to control node width
+4. **Line Breaks**: Use `\n` or multiline syntax `:text;`
+5. **Compatibility**: Some features require recent PlantUML versions
+
+---
+
+*Generated for Tactical Legends - Game Development Toolkit*
