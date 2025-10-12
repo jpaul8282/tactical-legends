@@ -1,4 +1,4 @@
-public class CivilianBehavior : MonoBehaviour
+public class CivilianBehavior: MonoBehaviour
 {
     public enum EmotionState { Calm, Fear, Panic, Resist }
     private EmotionState currentState = EmotionState.Calm;
@@ -134,7 +134,7 @@ public void TriggerSonar(Vector3 origin)
     AudioSource.PlayClipAtPoint(sonarPing, origin);
 
     GameObject ripple = Instantiate(sonarRipplePrefab, origin, Quaternion.identity);
-    ripple.transform.localScale = Vector3.zero;
+    ripple. transform.localScale = Vector3.zero;
     LeanTween.scale(ripple, Vector3.one * 5f, 1f).setEaseOutCirc();
 
     Destroy(ripple, 2f); // Clean up effect
@@ -329,7 +329,7 @@ NARRATOR:
 [Quick-cut beats: Menu flashes. HUD syncs. Echo cyclone. Boss roar.]
 NARRATOR (crescendo):
 "Tactical Legends. The war isn't over. The next beat… is yours."
-[Logo pulses with beat. Sonic ring ripple out. Screen fades.]
+[Logo pulses with beat. Sonic ring ripples out. Screen fades.]
 
 public void AnimateFactionIntro(string faction, float inputTempo)
 {
@@ -396,17 +396,17 @@ void RenderGameDevManifesto() {
     Narrator.Speak("Phase by phase, we designed not just a game… but a philosophy.");
 
     Manifesto.AddPhase("Strategic Immersion Core", 
-        "Weather becomes weapon. Cities breathe tactics. Vision and morale bend to nature’s tempo.");
+        "Weather becomes a weapon. Cities breathe tactics. Vision and morale bend to nature’s tempo.");
     Manifesto.AddPhase("Environmental Dynamics", 
         "Traps whisper from rooftops. Civilian clutter isn’t chaos—it’s opportunity.");
     Manifesto.AddPhase("Rhythm-Fueled Multiplayer", 
-        "Teams tune their tactics. Dualities sync to survive. The battlefield becomes a beatmap.");
+        Teams tune their tactics. Dualities sync to survive. The battlefield becomes a beatmap.");
     Manifesto.AddPhase("Audio Intelligence", 
         "Menus shimmer with encrypted tones. HUD particles respond like sonar waves.");
     Manifesto.AddPhase("Cipher Battles & Boss Cadence", 
         "Harmonic combos breach shields. Vaults open with sonic resonance. Players perform, not just play.");
     Manifesto.AddPhase("Endgame Symphony", 
-        "Factions pulse with sound DNA. A sonic storm reshapes the world—terrain and skybox move to your music.");
+        "Factions pulse with sound DNA. A sonic storm reshapes the world—terrain and skybox move to your music."
 
     UI.Overlay("composer_notes.png");
     UI.Overlay("dev_sketches.png");
@@ -531,7 +531,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
-public class SylraCutIn : MonoBehaviour
+public class SylraCutIn: MonoBehaviour
 {
     public Animator sylraAnimator;
     public AudioSource voiceoverSource;
@@ -639,7 +639,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-public class PhantomBreach : MonoBehaviour
+public class PhantomBreach: MonoBehaviour
 {
     public float stealthDuration = 8f;
     public float markRadius = 15f;
@@ -797,5 +797,840 @@ public class CooldownUI: MonoBehaviour
         cooldownBar.fillAmount = 1f;
     }
 }
+// ═══════════════════════════════════════════════════════════════
+// TACTICAL LEGENDS - UNITY GAME SYSTEMS (REFACTORED)
+// ═══════════════════════════════════════════════════════════════
 
+using UnityEngine;
+using UnityEngine.UI;
+using System.Collections;
+using System.Collections.Generic;
+using Cinemachine;
+using UnityEngine.Playables;
+
+// ═══════════════════════════════════════════════════════════════
+// 1. CIVILIAN AI SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Controls civilian NPC emotional states and behaviors based on threat levels
+/// </summary>
+public class CivilianBehavior: MonoBehaviour
+{
+    public enum EmotionState { Calm, Fear, Panic, Resist }
+    
+    [Header("AI Configuration")]
+    [SerializeField] private EmotionState currentState = EmotionState.Calm;
+    [SerializeField] private float panicDistance = 5f;
+    [SerializeField] private float fearDistance = 10f;
+    [SerializeField] private float detectionInterval = 0.5f;
+    
+    [Header("Movement")]
+    [SerializeField] private float wanderSpeed = 2f;
+    [SerializeField] private float runSpeed = 6f;
+    
+    private float nextDetectionTime;
+    
+    void Update()
+    {
+        if (Time.time >= nextDetectionTime)
+        {
+            DetectThreats();
+            nextDetectionTime = Time.time + detectionInterval;
+        }
+        
+        HandleEmotion();
+    }
+
+    void DetectThreats()
+    {
+        float nearestEnemyDistance = GetNearestEnemyDistance();
+
+        if (nearestEnemyDistance < panicDistance)
+            currentState = EmotionState.Panic;
+        else if (nearestEnemyDistance < fearDistance)
+            currentState = EmotionState.Fear;
+        else
+            currentState = EmotionState.Calm;
+    }
+
+    void HandleEmotion()
+    {
+        switch (currentState)
+        {
+            case EmotionState.Calm:
+                Wander();
+                break;
+            case EmotionState.Fear:
+                RunFromThreat();
+                break;
+            case EmotionState.Panic:
+                KnockOverObjects();
+                break;
+            case EmotionState.Resist:
+                GrabThrownObject();
+                break;
+        }
+    }
+
+    float GetNearestEnemyDistance()
+    {
+        // TODO: Replace with actual enemy detection system
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        float minDistance = float.MaxValue;
+        
+        foreach (GameObject enemy in enemies)
+        {
+            float distance = Vector3.Distance(transform.position, enemy.transform.position);
+            if (distance < minDistance)
+                minDistance = distance;
+        }
+        
+        return minDistance == float.MaxValue? 999f : minDistance;
+    }
+    
+    void Wander() 
+    { 
+        // TODO: Implement wandering behavior
+    }
+    
+    void RunFromThreat() 
+    { 
+        // TODO: Implement fleeing behavior
+    }
+    
+    void KnockOverObjects() 
+    { 
+        // TODO: Implement panic interactions
+    }
+    
+    void GrabThrownObject() 
+    { 
+        // TODO: Implement resistance behavior
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 2. UI/UX SYSTEMS
+// ═══════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Handles animated menu transitions and UI effects
+/// </summary>
+public class UIManager: MonoBehaviour
+{
+    [Header("HUD Feedback")]
+    [SerializeField] private ParticleSystem hudFlashParticle;
+    
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    
+    /// <summary>
+    /// Slides between menu screens with smooth animation
+    /// </summary>
+    public void SlideToMenu(GameObject currentMenu, GameObject nextMenu)
+    {
+        RectTransform currentRect = currentMenu.GetComponent<RectTransform>();
+        RectTransform nextRect = nextMenu.GetComponent<RectTransform>();
+        
+        LeanTween.moveX(currentRect, -2000f, 0.4f)
+            .setEaseInBack()
+            .setOnComplete(() =>
+            {
+                currentMenu.SetActive(false);
+                nextMenu.SetActive(true);
+                nextRect.anchoredPosition = new Vector2(2000f, nextRect.anchoredPosition.y);
+                LeanTween.moveX(nextRect, 0f, 0.4f).setEaseOutExpo();
+            });
+    }
+
+    /// <summary>
+    /// Triggers visual feedback at UI position
+    /// </summary>
+    public void TriggerHUDFeedback(Vector3 uiPosition)
+    {
+        if (hudFlashParticle != null)
+        {
+            hudFlashParticle.transform.position = uiPosition;
+            hudFlashParticle.Play();
+        }
+        
+        TriggerHUDPing();
+    }
+    
+    /// <summary>
+    /// Updates HUD appearance based on game state
+    /// </summary>
+    public void UpdateHUDState(string state)
+    {
+        if (hudFlashParticle == null) return;
+        
+        switch (state)
+        {
+            case "Stealth":
+                hudFlashParticle.startColor = Color.cyan;
+                TriggerStealthPulse();
+                break;
+            case "Alert":
+                hudFlashParticle.startColor = Color.red;
+                TriggerHUDPing();
+                break;
+            case "Boosted":
+                hudFlashParticle.startColor = Color.yellow;
+                TriggerMutatorEffect("TimeDilation");
+                break;
+        }
+        
+        hudFlashParticle.Play();
+    }
+    
+    void TriggerHUDPing() { /* TODO: Implement */ }
+    void TriggerStealthPulse() { /* TODO: Implement */ }
+    void TriggerMutatorEffect(string effect) { /* TODO: Implement */ }
+}
+
+/// <summary>
+/// Cooldown visualization for abilities
+/// </summary>
+public class CooldownUI: MonoBehaviour
+{
+    [SerializeField] private Image cooldownBar;
+    [SerializeField] private float cooldownTime = 10f;
+    
+    private float cooldownRemaining = 0f;
+
+    void Update()
+    {
+        if (cooldownRemaining > 0)
+        {
+            cooldownRemaining -= Time.deltaTime;
+            cooldownBar.fillAmount = cooldownRemaining / cooldownTime;
+        }
+    }
+
+    public void TriggerCooldown()
+    {
+        cooldownRemaining = cooldownTime;
+        cooldownBar.fillAmount = 1f;
+    }
+    
+    public bool IsReady() => cooldownRemaining <= 0;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 3. AUDIO SYSTEMS
+// ═══════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Dynamic audio manager for environmental and tactical audio
+/// </summary>
+public class AudioManager: MonoBehaviour
+{
+    public enum RegionType { Desert, Submarine, Forest }
+    
+    [Header("Ambient Audio")]
+    [SerializeField] private AudioSource ambientSource;
+    [SerializeField] private AudioClip desertAmbience;
+    [SerializeField] private AudioClip subAmbience;
+    [SerializeField] private AudioClip forestAmbience;
+    
+    [Header("Tactical Audio")]
+    [SerializeField] private AudioClip sonarPing;
+    [SerializeField] private GameObject sonarRipplePrefab;
+    
+    /// <summary>
+    /// Sets ambient audio based on region type
+    /// </summary>
+    public void SetRegionAmbience(RegionType type)
+    {
+        if (ambientSource == null) return;
+        
+        switch (type)
+        {
+            case RegionType.Desert:
+                ambientSource.clip = desertAmbience;
+                ambientSource.volume = 0.5f;
+                ambientSource.spatialBlend = 0f;
+                break;
+                
+            case RegionType.Submarine:
+                ambientSource.clip = subAmbience;
+                ambientSource.volume = 0.8f;
+                ambientSource.spatialBlend = 1f; // 3D echo chamber effect
+                break;
+                
+            case RegionType.Forest:
+                ambientSource.clip = forestAmbience;
+                ambientSource.volume = 0.6f;
+                ambientSource.spatialBlend = 0.5f;
+                break;
+        }
+        
+        ambientSource.Play();
+    }
+
+    /// <summary>
+    /// Dynamically adjusts audio based on tension level
+    /// </summary>
+    public void BlendAmbientLayers(RegionType region, float tension)
+    {
+        tension = Mathf.Clamp01(tension);
+        ambientSource.volume = Mathf.Lerp(0.3f, 0.9f, tension);
+
+        if (region == RegionType.Desert && tension > 0.7f)
+        {
+            // TODO: Add sandstorm layer audio
+        }
+        else if (region == RegionType.Submarine && tension > 0.6f)
+        {
+            // TODO: Add metallic groans + pressure hisses
+        }
+    }
+
+    /// <summary>
+    /// Triggers sonar pulse effect with audio and visual
+    /// </summary>
+    public void TriggerSonar(Vector3 origin)
+    {
+        if (sonarPing != null)
+            AudioSource.PlayClipAtPoint(sonarPing, origin);
+
+        if (sonarRipplePrefab != null)
+        {
+            GameObject ripple = Instantiate(sonarRipplePrefab, origin, Quaternion.identity);
+            ripple. transform.localScale = Vector3.zero;
+            LeanTween.scale(ripple, Vector3.one * 5f, 1f).setEaseOutCirc();
+            Destroy(ripple, 2f);
+        }
+    }
+    
+    /// <summary>
+    /// Plays stealth footstep with dynamic pitch based on heartbeat
+    /// </summary>
+    public void PlayStealthStepSound(Vector3 position, float heartbeatRate)
+    {
+        float pitchMod = Mathf.Clamp(heartbeatRate / 120f, 0.8f, 1.3f);
+        AudioSource stepAudio = gameObject.AddComponent<AudioSource>();
+        stepAudio.clip = Resources.Load<AudioClip>("Stealth/step");
+        stepAudio.pitch = pitchMod;
+        stepAudio.spatialBlend = 1f;
+        stepAudio.volume = 0.5f;
+        stepAudio.Play();
+        Destroy(stepAudio, 1f);
+    }
+    
+    /// <summary>
+    /// Sets faction-specific audio theme
+    /// </summary>
+    public void SetFactionAudioTheme(string faction)
+    {
+        string rhythmPath = faction switch
+        {
+            "Pulseborn" => "tribal_stomp",
+            "Synthronauts" => "machine_pulse",
+            "Echo Ascendants" => "harmonic_drift",
+            _ => "default_theme"
+        };
+        
+        LoadRhythm(rhythmPath);
+    }
+    
+    void LoadRhythm(string rhythmName)
+    {
+        AudioClip rhythm = Resources.Load<AudioClip>($"Audio/Rhythms/{rhythmName}");
+        if (rhythm != null && ambientSource != null)
+        {
+            ambientSource.clip = rhythm;
+            ambientSource.Play();
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 4. RHYTHM/CIPHER GAMEPLAY SYSTEMS
+// ═══════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Handles rhythm-based cipher challenges and boss mechanics
+/// </summary>
+public class RhythmCipherSystem: MonoBehaviour
+{
+    [Header("Cipher Configuration")]
+    [SerializeField] private GameObject[] cipherRings;
+    [SerializeField] private AudioClip cipherRhythm;
+    [SerializeField] private float rhythmTolerance = 0.15f;
+    
+    /// <summary>
+    /// Initiates cipher challenge with target rhythm
+    /// </summary>
+    public void StartCipherChallenge(AudioClip targetRhythm)
+    {
+        PlayRhythm(targetRhythm);
+        // TODO: Wait for player input rhythm via timing taps
+    }
+
+    /// <summary>
+    /// Validates player rhythm input against target pattern
+    /// </summary>
+    public void ValidateRhythmInput(float[] userPattern, float[] targetPattern)
+    {
+        bool isMatch = CompareRhythms(userPattern, targetPattern);
+        
+        if (isMatch)
+        {
+            TriggerVaultUnlock();
+        }
+        else
+        {
+            PlayFailureTone();
+        }
+    }
+    
+    /// <summary>
+    /// Compares two rhythm patterns within tolerance
+    /// </summary>
+    bool CompareRhythms(float[] userPattern, float[] targetPattern)
+    {
+        if (userPattern.Length != targetPattern.Length)
+            return false;
+            
+        for (int i = 0; i < userPattern.Length; i++)
+        {
+            if (Mathf.Abs(userPattern[i] - targetPattern[i]) > rhythmTolerance)
+                return false;
+        }
+        
+        return true;
+    }
+
+    /// <summary>
+    /// Synchronizes visual cipher rings with audio pulses
+    /// </summary>
+    public void SyncCipherVisuals(float[] pulseTimings)
+    {
+        for (int i = 0; i < cipherRings.Length && i < pulseTimings.Length; i++)
+        {
+            float delay = pulseTimings[i];
+            LeanTween.scale(cipherRings[i], Vector3.one * 1.2f, 0.2f)
+                .setDelay(delay)
+                .setEaseOutElastic()
+                .setLoopPingPong(2);
+        }
+        
+        if (cipherRhythm != null)
+            AudioSource.PlayClipAtPoint(cipherRhythm, transform.position);
+    }
+    
+    /// <summary>
+    /// Boss shield break mechanic using rhythm matching
+    /// </summary>
+    public void TriggerBossShieldBreak(float[] playerInputs, float[] coreBeatPattern, GameObject bossShield)
+    {
+        if (CompareRhythms(playerInputs, coreBeatPattern))
+        {
+            bossShield.SetActive(false);
+            PlayShieldBreakFX();
+            // TODO: Set boss vulnerability
+        }
+        else
+        {
+            PlayShieldDistortion();
+            FlashScreenRed();
+        }
+    }
+    
+    void PlayRhythm(AudioClip rhythm) { /* TODO: Implement */ }
+    void TriggerVaultUnlock() { /* TODO: Implement */ }
+    void PlayFailureTone() { /* TODO: Implement */ }
+    void PlayShieldBreakFX() { /* TODO: Implement */ }
+    void PlayShieldDistortion() { /* TODO: Implement */ }
+    void FlashScreenRed() { /* TODO: Implement */ }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 5. MISSION & PHASE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Manages mission phases and dynamic event triggers
+/// </summary>
+public class MissionPhaseManager: MonoBehaviour
+{
+    [SerializeField] private AudioManager audioManager;
+    [SerializeField] private UIManager uiManager;
+    [SerializeField] private RhythmCipherSystem rhythmSystem;
+    [SerializeField] private GameObject player;
+    
+    public void OnMissionPhaseChanged(string phase)
+    {
+        switch (phase)
+        {
+            case "Extraction":
+                audioManager.SetRegionAmbience(AudioManager.RegionType.Submarine);
+                PlayBriefing("extractionDialogue", "Alert");
+                break;
+                
+            case "Infiltration":
+                uiManager.UpdateHUDState("Stealth");
+                audioManager.TriggerSonar(player.transform.position);
+                break;
+                
+            case "Boss":
+                UpdateEncryptedMenuVisual(true);
+                audioManager.BlendAmbientLayers(AudioManager.RegionType.Desert, 0.9f);
+                break;
+        }
+    }
+    
+    void PlayBriefing(string dialogue, string hudState)
+    {
+        // TODO: Implement briefing system
+        uiManager.UpdateHUDState(hudState);
+    }
+    
+    void UpdateEncryptedMenuVisual(bool encrypted)
+    {
+        // TODO: Implement encrypted menu visual
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 6. SPECIAL ABILITIES - SYLRA'S GALE SURGE
+// ═══════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Cinematic ability cutscene with camera control and VFX
+/// </summary>
+public class SylraGaleSurge: MonoBehaviour
+{
+    [Header("References")]
+    [SerializeField] private Animator sylraAnimator;
+    [SerializeField] private AudioSource voiceoverSource;
+    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private CinemachineVirtualCamera[] cutInCameras;
+    [SerializeField] private Text subtitleText;
+    [SerializeField] private GameObject hud;
+    
+    [Header("VFX")]
+    [SerializeField] private GameObject windParticles;
+    [SerializeField] private GameObject glyphSigil;
+    [SerializeField] private GameObject windShockwave;
+    
+    [Header("Settings")]
+    [SerializeField] private float pushbackForce = 500f;
+    [SerializeField] private float pushbackRadius = 10f;
+    [SerializeField] private int moraleBoost = 20;
+    
+    public void TriggerGaleSurge()
+    {
+        StartCoroutine(PlayGaleSurgeCutIn());
+    }
+
+    IEnumerator PlayGaleSurgeCutIn()
+    {
+        // Freeze game and hide HUD
+        hud.SetActive(false);
+        Time.timeScale = 0f;
+
+        // Scene 1: Eyes Open
+        SwitchCamera(0);
+        PlaySFX("heartbeat");
+        sylraAnimator.Play("EyesOpenGlow");
+        yield return ShowSubtitle("The wind... it listens.", 2f);
+        yield return new WaitForSecondsRealtime(1.5f);
+
+        // Scene 2: Glyph Awakening
+        SwitchCamera(1);
+        PlaySFX("glyph_rise");
+        sylraAnimator.Play("ChannelEnergy");
+        Instantiate(glyphSigil, transform.position, Quaternion.identity);
+        yield return ShowSubtitle("Ancient breath, awaken.", 2f);
+        yield return new WaitForSecondsRealtime(2f);
+
+        // Scene 3: Surge Unleashed
+        SwitchCamera(2);
+        PlaySFX("wind_surge");
+        sylraAnimator.Play("ThrustForward");
+        ApplyEnemyPushback();
+        yield return ShowSubtitle("Gale Surge!", 1.5f);
+
+        // Scene 4: Morale Shift
+        SwitchCamera(3);
+        PlaySFX("ally_cheer");
+        BoostAllyMorale();
+        yield return ShowSubtitle("She's with us!", 1.5f);
+
+        // Scene 5: Calm Returns
+        SwitchCamera(4);
+        PlaySFX("wind_chime");
+        sylraAnimator.Play("Exhale");
+        yield return ShowSubtitle("Balance restored.", 2f);
+
+        // Resume game
+        hud.SetActive(true);
+        Time.timeScale = 1f;
+    }
+
+    void SwitchCamera(int index)
+    {
+        for (int i = 0; i < cutInCameras.Length; i++)
+            cutInCameras[i].gameObject.SetActive(i == index);
+    }
+
+    void PlaySFX(string clipName)
+    {
+        AudioClip clip = Resources.Load<AudioClip>($"Audio/SFX/{clipName}");
+        if (clip != null)
+            sfxSource.PlayOneShot(clip);
+    }
+
+    IEnumerator ShowSubtitle(string text, float duration)
+    {
+        subtitleText.text = text;
+        AudioClip voiceover = Resources.Load<AudioClip>($"Audio/Voiceovers/{text.Replace(" ", "_")}");
+        if (voiceover != null)
+        {
+            voiceoverSource.clip = voiceover;
+            voiceoverSource.Play();
+        }
+        yield return new WaitForSecondsRealtime(duration);
+        subtitleText.text = "";
+    }
+
+    void ApplyEnemyPushback()
+    {
+        Collider[] enemies = Physics.OverlapSphere(transform.position, pushbackRadius);
+        foreach (Collider enemy in enemies)
+        {
+            if (enemy.CompareTag("Enemy"))
+            {
+                Vector3 direction = (enemy.transform.position - transform.position).normalized;
+                Rigidbody rb = enemy.GetComponent<Rigidbody>();
+                if (rb != null)
+                    rb.AddForce(direction * pushbackForce);
+            }
+        }
+    }
+
+    void BoostAllyMorale()
+    {
+        GameObject[] allies = GameObject.FindGameObjectsWithTag("Ally");
+        foreach (GameObject ally in allies)
+        {
+            // TODO: Add morale system
+            Debug.Log($"Boosted {ally.name} morale by {moraleBoost}");
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 7. TACTICAL ABILITIES
+// ═══════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Phantom Breach - Stealth ability with enemy marking and takedowns
+/// </summary>
+public class PhantomBreach: MonoBehaviour
+{
+    [Header("Configuration")]
+    [SerializeField] private float stealthDuration = 8f;
+    [SerializeField] private float markRadius = 15f;
+    [SerializeField] private LayerMask enemyLayer;
+    
+    [Header("Visual Effects")]
+    [SerializeField] private GameObject markVFX;
+    [SerializeField] private SkinnedMeshRenderer agentRenderer;
+    [SerializeField] private Material stealthMaterial;
+    [SerializeField] private Material normalMaterial;
+    
+    [Header("Audio")]
+    [SerializeField] private AudioClip activateSFX;
+    [SerializeField] private AudioClip takedownSFX;
+    [SerializeField] private AudioSource audioSource;
+
+    private bool isStealthed = false;
+    private List<GameObject> markedEnemies = new List<GameObject>();
+
+    public void Activate()
+    {
+        if (!isStealthed)
+            StartCoroutine(ExecutePhantomBreach());
+    }
+
+    IEnumerator ExecutePhantomBreach()
+    {
+        // Step 1: Activate Stealth
+        isStealthed = true;
+        agentRenderer.material = stealthMaterial;
+        audioSource.PlayOneShot(activateSFX);
+        Debug.Log("Phantom Breach activated.");
+
+        // Step 2: Mark Enemies
+        Collider[] enemies = Physics.OverlapSphere(transform.position, markRadius, enemyLayer);
+        foreach (Collider enemy in enemies)
+        {
+            markedEnemies.Add(enemy.gameObject);
+            if (markVFX != null)
+            {
+                GameObject mark = Instantiate(markVFX, enemy.transform.position + Vector3.up * 2f, Quaternion.identity);
+                mark.transform.SetParent(enemy.transform);
+            }
+        }
+
+        yield return new WaitForSeconds(stealthDuration / 2f);
+
+        // Step 3: Silent Takedowns
+        foreach (GameObject enemy in markedEnemies)
+        {
+            if (enemy != null)
+            {
+                transform.LookAt(enemy.transform);
+                audioSource.PlayOneShot(takedownSFX);
+                
+                Enemy enemyScript = enemy.GetComponent<Enemy>();
+                if (enemyScript != null)
+                    enemyScript.EliminateSilently();
+                    
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
+
+        // Step 4: Exit Stealth
+        yield return new WaitForSeconds(stealthDuration / 2f);
+        isStealthed = false;
+        agentRenderer.material = normalMaterial;
+        markedEnemies.Clear();
+        Debug.Log("Phantom Breach ended.");
+    }
+}
+
+/// <summary>
+/// Basic enemy class for Phantom Breach interaction
+/// </summary>
+public class Enemy: MonoBehaviour
+{
+    public void EliminateSilently()
+    {
+        // TODO: Play death animation
+        Debug.Log($"{gameObject.name} eliminated silently.");
+        Destroy(gameObject, 1f);
+    }
+}
+
+/// <summary>
+/// Thermal vision toggle system
+/// </summary>
+public class ThermalVision: MonoBehaviour
+{
+    [SerializeField] private Material thermalMaterial;
+    [SerializeField] private Camera playerCamera;
+    [SerializeField] private KeyCode toggleKey = KeyCode.T;
+    
+    private bool isActive = false;
+
+    void Update()
+    {
+        if (Input.GetKeyDown(toggleKey))
+            ToggleThermalVision();
+    }
+
+    void ToggleThermalVision()
+    {
+        isActive = !isActive;
+        
+        if (isActive)
+        {
+            playerCamera.cullingMask = LayerMask.GetMask("Heat");
+            RenderSettings.skybox = thermalMaterial;
+        }
+        else
+        {
+            playerCamera.cullingMask = LayerMask.GetMask("Default");
+            RenderSettings.skybox = null;
+        }
+        
+        Debug.Log($"Thermal Vision {(isActive ? "Activated" : "Deactivated")}");
+    }
+}
+
+/// <summary>
+/// Wall breaching mechanic with explosive charges
+/// </summary>
+public class WallBreach: MonoBehaviour
+{
+    [SerializeField] private GameObject breachChargePrefab;
+    [SerializeField] private float breachDelay = 3f;
+    [SerializeField] private float breachRadius = 5f;
+    [SerializeField] private LayerMask breachableLayer;
+    [SerializeField] private KeyCode breachKey = KeyCode.B;
+
+    void Update()
+    {
+        if (Input.GetKeyDown(breachKey))
+            AttemptBreach();
+    }
+
+    void AttemptBreach()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, transform.forward, out hit, 5f, breachableLayer))
+        {
+            StartCoroutine(PlaceAndDetonateCharge(hit.point, hit.normal));
+        }
+    }
+
+    IEnumerator PlaceAndDetonateCharge(Vector3 position, Vector3 normal)
+    {
+        GameObject charge = Instantiate(breachChargePrefab, position, Quaternion.LookRotation(normal));
+        Debug.Log("Breach charge placed. Detonating in " + breachDelay + "s");
+        
+        yield return new WaitForSeconds(breachDelay);
+        
+        Destroy(charge);
+        ExplodeWall(position);
+    }
+
+    void ExplodeWall(Vector3 position)
+    {
+        Collider[] affected = Physics.OverlapSphere(position, breachRadius);
+        foreach (Collider obj in affected)
+        {
+            if (obj.CompareTag("Wall") || obj.CompareTag("Breachable"))
+            {
+                Destroy(obj.gameObject);
+                Debug.Log($"Breached: {obj.name}");
+            }
+        }
+        
+        // TODO: Add explosion VFX and audio
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// 8. CINEMATIC TIMELINE SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+/// <summary>
+/// Manages cinematic sequences using Unity Timeline
+/// </summary>
+public class CinematicController: MonoBehaviour
+{
+    [SerializeField] private PlayableDirector director;
+    [SerializeField] private TimelineAsset sixPhaseTimeline;
+    [SerializeField] private AudioSource narratorAudioSource;
+    [SerializeField] private CinemachineVirtualCamera cineCamera;
+
+    void Start()
+    {
+        if (sixPhaseTimeline != null)
+            PlaySixPhaseManifesto();
+    }
+
+    public void PlaySixPhaseManifesto()
+    {
+        director.playableAsset = sixPhaseTimeline;
+        // TODO: Set up timeline track bindings
+        director.Play();
+    }
+}
 
