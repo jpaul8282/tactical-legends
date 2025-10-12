@@ -58,4 +58,19 @@ const InteractiveObjects = {
     };
   }
 };
+console.log(`${this.name} triggered by ${unit.name}`);
+if (!effectProps.damage && effectType === "explosive") {
+  throw new Error("Explosive traps must define damage.");
+}
+class Trap {
+  constructor(name, location, effect) { ... }
+  onTrigger(unit) { ... }
+}
+id: `${type}-${name}-${location.x}-${location.y}`
+InteractiveObjects.registerType("sensor", createSensorFn);
+onTrigger(unit) {
+  this.triggered = true;
+  if (this.script) this. script.execute(unit);
+}
+lore: "An old crate used by the Oistarian resistance..."
 
