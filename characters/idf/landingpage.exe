@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tactical Legends: Game Development Toolkit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Background Effects -->
+  <div class="matrix-bg"></div>
+  <div class="scanline"></div>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1 class="title">Tactical Legends</h1>
+      <p class="subtitle">A Modular RPG Engine for Visionaries, Modders, and Storytellers</p>
+    </header>
+
+    <!-- Trailer Section -->
+    <section class="trailer">
+      <h2>🎬 Cinematic Trailer</h2>
+      <div class="video-wrapper">
+        <iframe src="https://www.youtube.com/embed/YOUR_TRAILER_ID" frameborder="0" allowfullscreen></iframe>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+      <h2>🛠️ Core Features</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>Modular Systems</h3>
+          <p>Design and plug in your own combat, inventory, and AI systems with ease.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Python Scripting</h3>
+          <p>Empower creators with embedded scripting for events, quests, and custom logic.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Extensible Lore Engine</h3>
+          <p>Build codices, factions, and branching narratives that shape your world.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Cross-Platform Toolkit</h3>
+          <p>Built in C++/SDL2 and C#/.NET for performance and flexibility.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Supporter Tiers -->
+    <section class="supporters">
+      <h2>💎 Support the Vision</h2>
+      <div class="tiers">
+        <div class="tier">
+          <h3>Initiate</h3>
+          <p>€3/month</p>
+          <ul>
+            <li>Discord role</li>
+            <li>Early dev logs</li>
+          </ul>
+          <button>Join on Ko-fi</button>
+        </div>
+        <div class="tier">
+          <h3>Architect</h3>
+          <p>€8/month</p>
+          <ul>
+            <li>All Initiate perks</li>
+            <li>Behind-the-scenes videos</li>
+            <li>Modding tutorials</li>
+          </ul>
+          <button>Join on Patreon</button>
+        </div>
+        <div class="tier">
+          <h3>Legend</h3>
+          <p>€20/month</p>
+          <ul>
+            <li>All Architect perks</li>
+            <li>Credit in-game</li>
+            <li>Private dev Q&As</li>
+          </ul>
+          <button>Become a Legend</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Lore Teaser -->
+    <section class="lore">
+      <h2>📖 Rise of the Oistarian</h2>
+      <p>In the shattered realm of Oistaria, fractured alliances and ancient tech awaken. Will you forge unity or fuel the chaos?</p>
+      <a href="#codex" class="cta-button">Enter the Codex</a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2025 Tactical Legends. Built by dreamers, powered by community.</p>
+      <div class="socials">
+        <a href="#">Discord</a>
+        <a href="#">Patreon</a>
+        <a href="#">Ko-fi</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
