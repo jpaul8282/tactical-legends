@@ -1,0 +1,19 @@
+"appbuild"
+{
+    "appid"        "76561199838982349"
+    "desc"         "Windows build - Godot"
+    "buildoutput"  "build_output/windows"
+    "contentroot"  "build/windows"
+    "setlive"      "public"
+    "depots"
+    {
+        "DEPOT_ID_WINDOWS" 
+        {
+            "filemapping"
+            {
+                "localpath"  "."
+                "remotepath" "."
+            }
+        }
+    }
+}
