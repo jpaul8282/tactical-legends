@@ -1,0 +1,2 @@
+480
+# Replace 76561199838982349 with your real Steam App ID before shipping. 480 is Valve's Spacewar test app for local testing.
