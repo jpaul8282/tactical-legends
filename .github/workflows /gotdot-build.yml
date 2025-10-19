@@ -1,0 +1,152 @@
+name: Godot Export & Package (Windows / macOS / Linux)
+
+on:
+  workflow_dispatch:
+    inputs:
+      godot_version:
+        description: "Godot version (e.g., 4.2.0)"
+        required: true
+        default: "4.2.4"
+
+jobs:
+  build-exports:
+    strategy:
+      matrix:
+        include:
+          - platform: Windows
+            runner: windows-latest
+            export_name: "Windows Desktop"
+            artifact_name: "tactical-legends-windows.zip"
+            output_path: "build/windows"
+          - platform: linux
+            runner: ubuntu-latest
+            export_name: "Linux/X11"
+            artifact_name: "tactical-legends-linux.zip"
+            output_path: "build/linux"
+          - platform: macos
+            runner: macos-latest
+            export_name: "Mac OSX"
+            artifact_name: "tactical-legends-macos.zip"
+            output_path: "build/macos"
+    runs-on: ${{ matrix.runner }}
+    env:
+      GODOT_VERSION: ${{ github.event.inputs.godot_version || github. inputs.godot_version || '4.2.4' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare directories
+        run: |
+          mkdir -p ${{ matrix.output_path }}
+
+      - name: Download Godot editor
+        id: download_godot
+        run: |
+          set -e
+          GV=${GODOT_VERSION}
+          case "${{ matrix.platform }}" in
+            windows)
+              URL="https://downloads.tuxfamily.org/godotengine/${GV}/Godot_v${GV}-stable_windows.exe.zip"
+              FILENAME="godot.zip"
+              ;;
+            linux)
+              URL="https://downloads.tuxfamily.org/godotengine/${GV}/Godot_v${GV}-stable_linux.x86_64.zip"
+              FILENAME="godot.zip"
+              ;;
+            macos)
+              URL="https://downloads.tuxfamily.org/godotengine/${GV}/Godot_v${GV}-stable_macos.universal.zip"
+              FILENAME="godot.zip"
+              ;;
+          esac
+          echo "Downloading Godot from ${URL}"
+          curl -fsSL "${URL}" -o "${FILENAME}"
+          unzip -q "${FILENAME}" -d godot_bin
+          # Locate executable path
+          if [ -f godot_bin/Godot* ] || [ -f godot_bin/Godot.exe ]; then
+            echo "Found Godot executable in godot_bin"
+          fi
+          ls -la godot_bin
+
+      - name: Make Godot executable (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          find godot_bin -type f -iname 'godot*' -exec chmod +x {} \;
+
+      - name: Ensure Export Templates
+        run: |
+          # Attempt to install export templates if not present:
+          # Download export templates (zip) and extract to the Godot template folder.
+          GV=${GODOT_VERSION}
+          ET_URL="https://downloads.tuxfamily.org/godotengine/${GV}/Godot_v${GV}-stable_export_templates.tpz"
+          echo "Downloading export templates ${ET_URL}"
+          curl -fsSL "${ET_URL}" -o export_templates.tpz || true
+          if [ -f export_templates.tpz ]; then
+            mkdir -p "$HOME/.local/share/godot/templates/${GV}"
+            tar -xzf export_templates.tpz -C "$HOME/.local/share/godot/templates/${GV}" || true
+          else
+            echo "Export templates not downloaded automatically. Ensure templates are present on the runner."
+          fi
+
+      - name: Run Godot export (uses export_presets.cfg)
+        env:
+          # allow exported files and artifacts to be created
+          OUTPUT_DIR: ${{ matrix.output_path }}
+        run: |
+          # Find the Godot CLI binary extracted during download
+          GODOT_BIN=$(find godot_bin -type f -iname 'godot*' | head -n1)
+          if [ -z "$GODOT_BIN" ]; then
+            echo "Godot binary not found. Listing godot_bin:"
+            ls -la godot_bin
+            exit 1
+          fi
+          echo "Using Godot binary: $GODOT_BIN"
+          mkdir -p "${OUTPUT_DIR}"
+          # Export preset name must match an entry in export_presets.cfg
+          EXPORT_NAME="${{ matrix.export_name }}"
+          # Destination depends on platform extension:
+          case "${{ matrix.platform }}" in
+            windows)
+              DEST="${OUTPUT_DIR}/tactical-legends.exe"
+              ;;
+            linux)
+              DEST="${OUTPUT_DIR}/tactical-legends.x86_64"
+              ;;
+            macos)
+              DEST="${OUTPUT_DIR}/tactical-legends.dmg"
+              ;;
+          esac
+          echo "Exporting preset '${EXPORT_NAME}' to ${DEST}"
+          # Run the export; the exact CLI flags depend on Godot version — this uses standard export CLI
+          "$GODOT_BIN" --export "${EXPORT_NAME}" "${DEST}"
+          ls -la "${OUTPUT_DIR}"
+
+      - name: Copy steam_api binaries (if included)
+        run: |
+          # If you keep platform steam_api binaries in repo/steam_binaries/<platform>/,
+          # copy them into the output build folder. This repo layout is optional.
+          if [ -d "steam_binaries/${{ matrix.platform }}" ]; then
+            echo "Copying steam_api binaries for platform ${{ matrix.platform }}"
+            cp -r steam_binaries/${{ matrix.platform }}/* "${{ matrix.output_path }}/" || true
+          else
+            echo "No steam_binaries/${{ matrix.platform }} found; ensure steam_api is added before uploading to Steam"
+          fi
+
+      - name: Zip artifact
+        run: |
+          ART="${{ matrix.artifact_name }}"
+          OUT="${{ matrix.output_path }}"
+          cd $(dirname "${OUT}")
+          zip -r "../${ART}" "$(basename "${OUT}")"
+          cd -
+          ls -la ..
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-export
+          path: ${{ matrix.artifact_name }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf godot_bin export_templates.tpz
