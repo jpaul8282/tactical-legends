@@ -1,0 +1,11 @@
+# Godot exports and Steam build artifacts
+/export/
+build/
+build_output/
+*.zip
+*.tar.gz
+
+# Steam secrets (do not commit)
+steam_build_token.txt
+steam_password.txt
+*.p12
