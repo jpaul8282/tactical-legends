@@ -1,0 +1,19 @@
+"appbuild"
+{
+    "appid"        "76561199838982349"
+    "desc"         "Linux build - Godot"
+    "buildoutput"  "build_output/linux"
+    "contentroot"  "build/linux"
+    "setlive"      "public"
+    "depots"
+    {
+        "DEPOT_ID_LINUX" 
+        {
+            "filemapping"
+            {
+                "localpath"  "."
+                "remotepath" "."
+            }
+        }
+    }
+}
