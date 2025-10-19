@@ -1,0 +1,19 @@
+"appbuild"
+{
+    "appid"        "76561199838982349"
+    "desc"         "macOS build - Godot"
+    "buildoutput"  "build_output/macos"
+    "contentroot"  "build/macos"
+    "setlive"      "public"
+    "depots"
+    {
+        "DEPOT_ID_MACOS" 
+        {
+            "filemapping"
+            {
+                "localpath"  "."
+                "remotepath" "."
+            }
+        }
+    }
+}
