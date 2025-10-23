@@ -1,22 +1,107 @@
-name: Build
-on:
-  push:
-    branches:
-      - main
+name: Tactical Legends CI/CD
+
+On:
+  Push:
+    branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened]
-jobs:
-  sonarqube:
-    name: SonarQube
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
+    branches: [main]
+
+Jobs:
+  build-cpp:
+    name: Build C++/SDL2 Core
+    runs-on: ubuntu-latest
+
+    Steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install libsdl2-dev build-essential
+
+      - name: Compile C++ Core
+        run: |
+          mkdir -p build
+          g++ src/main.cpp -o build/tactical_legends -lSDL2
+
+      - name: Run C++ Tests
+        run: ./tests/run_cpp_tests.sh
+
+  build-dotnet:
+    name: Build .NET Backend
+    runs-on: ubuntu-latest
+
+    Steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      # The analysis requires to retrieve dependencies and build successfully
-      - name: Build
-        run: <mark><commands_to_build_your_project></mark>
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore TacticalLegends.sln
+
+      - name: Build Solution
+        run: dotnet build TacticalLegends.sln --configuration Release
+
+      - name: Run .NET Tests
+        run: dotnet test TacticalLegends.Tests/TacticalLegends.Tests.csproj
+
+  Deploy:
+    name: Deploy to Vercel
+    needs: [build-cpp, build-dotnet]
+    runs-on: ubuntu-latest
+
+    Steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
         env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel --prod --confirm --token $VERCEL_TOKEN
+
+      - name: Notify Vercel (Deploy Status)
+        uses: vercel/repository-dispatch/actions/status@v1
+        with:
+          Name: Vercel - tactical-legends: ex. deploy
+
+      - name: Lore-Driven Discord Notification
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -X POST $DISCORD_WEBHOOK \
+          -H "Content-Type: application/json" \
+          -d '{
+            "username": "Tactical Legends",
+            "content": "**Deployment Complete!**\nThe Oistarian gates have opened. Tactical Legends is live.\n🛡️ https://tactical-legends.vercel.app"
+          }'
+
+      - name: Notify Ko-fi Supporters
+        if: success()
+        env:
+          KOFI_WEBHOOK: ${{ secrets.KOFI_WEBHOOK }}
+        run: |
+          curl -X POST $KOFI_WEBHOOK \
+          -H "Content-Type: application/json" \
+          -d '{
+            "title": "Tactical Legends Deployed!",
+            "message": "The realm expands. Thank you for fueling the forge, heroes!"
+          }'
+
+      - name: Notify Patreon Supporters
+        if: success()
+        env:
+          PATREON_WEBHOOK: ${{ secrets.PATREON_WEBHOOK }}
+        run: |
+          curl -X POST $PATREON_WEBHOOK \
+          -H "Content-Type: application/json" \
+          -d '{
+            "title": "Rise of the Oistarian",
+            "message": "New build deployed. Your support shapes the legend!"
+          }'
