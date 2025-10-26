@@ -1,0 +1,42 @@
+//CodexPanel.vue / CodexPanel.cshtml
+• 	Purpose: Display lore entries, modding guides, or supporter perks.
+• 	Features:
+• 	Animated parchment background
+• 	Rune-bordered frame with glow-on-hover
+• 	Scroll reveal animation for new entries
+• 	Props:
+{
+  title: "Codex Entry Unlocked",
+  body: "You have uncovered a fragment of Oistarian memory...",
+  cta: "View in Archive →"
+}
+TooltipCodex.attach("OnUnitDeath", {
+  title: "Lorehook: OnUnitDeath",
+  description: "Triggers narrative echo and tactical response. Bind to Codex Fragment #27."
+});
+{
+  supporterName: "NewSupporter",
+  perks: ["Codex Access", "Lorekeeper Role", "Early Campaign Scripts"],
+  message: "Your contribution echoes through the Archive."
+}
+name: Lorebound Deployment
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Archive
+        run: |
+          curl -X POST https://discord.com/api/webhooks/XYZ \
+          -H "Content-Type: application/json" \
+          -d '{
+            "content": "**📡 Lorebound Deployment Complete**\nModule: TacticalGrid++\nCodex Entry: #42 - The Shattered Sigil\nEcho: “Unit death now triggers faction-wide morale decay.”"
+          }'
+client.on('newSupporter', (user) => {
+  const message = `🎉 A New Sigil Has Been Inscribed!\nWelcome, **${user.name}**, to the Oistarian Circle.\nYour scroll has been added to the Archive.\n🧙 Perks unlocked: Codex Access, Lorekeeper Role, Early Access to Campaign Scripts`;
+  discordChannel.send(message);
+});
+{
+  "event": "supporter_joined",
+  "message": "🎁 Supporter Scroll Received\nYour contribution echoes through the Archive.\nPerks: Codex Access, Lorekeeper Role, Early Campaign Scripts"
+}
