@@ -1,0 +1,108 @@
+public class CodexEntry
+{
+    public string FragmentId { get; set; }
+    public string Title { get; set; }
+    public string LoreText { get; set; }
+    public string FactionAffinity { get; set; }
+    public List<string> UnlockConditions { get; set; }
+    public Dictionary<string, string> GameplayHooks { get; set; }
+}
+new CodexEntry {
+    FragmentId = "42",
+    Title = "The Shattered Sigil",
+    LoreText = "When the Ember Pact fell, the Archivists sealed the sigil deep within the Archive. Its memory fractures morale and binds units to forgotten truths.",
+    FactionAffinity = "Archivists",
+    UnlockConditions = new List<string> { "Interact:CodexTerminal_42", "Complete:Mission_ArchiveVault" },
+    GameplayHooks = new Dictionary<string, string> {
+        { "OnUnlock", "EnableUnitTrait: MemoryEcho" },
+        { "OnDeploy", "TriggerEffect: CodexPulse" }
+    }
+}
+new CodexEntry {
+    FragmentId = "19",
+    Title = "Emberfall",
+    LoreText = "The Ember Pact’s final rebellion scorched the realm and shattered the Archive’s unity. This fragment pulses with volatile energy.",
+    FactionAffinity = "Ember Pact",
+    UnlockConditions = new List<string> { "ActivateRelic:sigil_relic_ember", "ControlZone:AshenRuins" },
+    GameplayHooks = new Dictionary<string, string> {
+        { "OnUnlock", "TriggerCutscene: EmberFall" },
+        { "OnZoneControl", "ApplyEffect: MoraleSurge" }
+    }
+}
+new CodexEntry {
+    FragmentId = "27",
+    Title = "The Hollow Whisper",
+    LoreText = "Born from the collapse of memory, the Hollow Chorus echoes through the void. This fragment binds fear to the battlefield.",
+    FactionAffinity = "Hollow Chorus",
+    UnlockConditions = new List<string> { "MoraleDrop:Below25", "SpawnUnit:Wraithcaller" },
+    GameplayHooks = new Dictionary<string, string> {
+        { "OnUnlock", "TriggerEffect: FearPulse" },
+        { "OnUnitSpawn", "PlayAudio :HollowWhisper" }
+    }
+}
+struct CodexFragment {
+    std::string id;
+    std::string title;
+    std::string lore;
+    std::string faction;
+    std::vector<std::string> unlockConditions;
+    std::map<std::string, std::string> hooks;
+};
+
+CodexFragment ContributorFragment {
+    "fragment_88",
+    "Sigil of the Modwright",
+    "Forged by those who shape the Archive, this fragment empowers contributors to extend the realm.",
+    "Neutral",
+    { "JoinGuild: Modwrights", "SubmitModule :CampaignExtension" },
+    {
+        { "OnUnlock", "GrantRole: Contributor" },
+        { "OnDeploy", "TriggerEffect: EchoOfCreation" }
+    }
+};
+public enum ContributorRole
+{
+    Lorekeeper,
+    Modwright,
+    Strategist,
+    Supporter
+}
+public class ContributorProfile
+{
+    public string Username { get; set; }
+    public ContributorRole Role { get; set; }
+    public List<string> UnlockedFragments { get; set; }
+    public string FactionAffinity { get; set; }
+}
+public void UnlockCodexFragment(ContributorProfile profile, string fragmentId)
+{
+    if (!profile.UnlockedFragments.Contains(fragmentId))
+    {
+        profile.UnlockedFragments.Add(fragmentId);
+        LoreEngine.TriggerHook(fragmentId, profile.FactionAffinity);
+        UIManager.ShowCodexReveal(fragmentId);
+    }
+}
+public class CodexRevealPanel: MonoBehaviour
+{
+    public void Display(string fragmentId, string title, string loreText, string faction)
+    {
+        UIManager.FadeInPanel("CodexReveal");
+        UIManager.SetText("FragmentTitle", title);
+        UIManager.SetText("FragmentLore", loreText);
+        UIManager.SetFactionBanner(faction);
+        AudioManager.Play("CodexWhisper");
+    }
+}
+void OnContributorAction(std::string actionType, std::string contributorName)
+{
+    if (actionType == "SubmitModule")
+    {
+        TriggerCodexUnlock("fragment_88");
+        BroadcastLoreEvent("EchoOfCreation", contributorName);
+    }
+}
+function sendContributorWelcome(user, role) {
+  const message = `📜 Welcome, **${user}**, to the Oistarian Archive.\nRole: ${role}\nYour first codex fragment awaits: *Sigil of the Modwright*.\n🧩 Shape the realm. Script the legend.`;
+  discordChannel.send(message);
+}
