@@ -1,0 +1,128 @@
+//Visual Storyboard Deck: The Oistarian Archive
+Slide 1: Title Reveal
+Visuals: A glowing codex symbol pulses against a dark stone background.
+Text: The Oistarian Archive
+Where memory becomes myth, and myth becomes code
+
+Slide 2: The Vault Awakens
+Visuals: A lone figure approaches a rune-sealed door. Glyphs swirl as the vault opens.
+Text: Before the legends were played, they were written.
+Before the battles were fought, they were forged in code.
+
+Slide 3: What Is the Archive?
+Visuals: Floating scrolls, holographic UI blueprints, lore fragments.
+Text: A living repository of Tactical Legends.
+Engine docs, campaign scripts, modding guides, and supporter rituals.
+
+Slide 4: Modular Realms
+Visuals: UI components snapping together, lore entries branching like a tree.
+Text: Every system is modular.
+Every scroll is a hook.
+Every deployment echoes through the realm
+
+Slide 5: The Guild of Contributors
+Visuals: Diverse creators around a glowing table, placing tokens.
+Text: Join the Guild.
+Script your saga.
+Shape the legend.
+
+Slide 6: Call to Action
+Visuals: A codex unfurls with the words: “Rise, Architect. The realm awaits.”
+Text: Enter the Archive.
+Become part of Tactical Legends.
+
+📜 Your first scroll awaits:
+“The Realm of Oistaria was born from modular flame. Your spark now joins it.”
+//CodexPanel.vue / CodexPanel.cshtml
+• 	Purpose: Display lore entries, modding guides, or supporter perks.
+• 	Features:
+• 	Animated parchment background
+• 	Rune-bordered frame with glow-on-hover
+• 	Scroll reveal animation for new entries
+• 	Props:
+{
+  title: "Codex Entry Unlocked",
+  body: "You have uncovered a fragment of Oistarian memory...",
+  cta: "View in Archive →"
+}
+TooltipCodex.attach("OnUnitDeath", {
+  title: "Lorehook: OnUnitDeath",
+  description: "Triggers narrative echo and tactical response. Bind to Codex Fragment #27."
+});
+{
+  supporterName: "NewSupporter",
+  perks: ["Codex Access", "Lorekeeper Role", "Early Campaign Scripts"],
+  message: "Your contribution echoes through the Archive."
+}
+name: Lorebound Deployment
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Archive
+        run: |
+          curl -X POST https://discord.com/api/webhooks/XYZ \
+          -H "Content-Type: application/json" \
+          -d '{
+            "content": "**📡 Lorebound Deployment Complete**\nModule: TacticalGrid++\nCodex Entry: #42 - The Shattered Sigil\nEcho: “Unit death now triggers faction-wide morale decay.”"
+          }'
+client.on('newSupporter', (user) => {
+  const message = `🎉 A New Sigil Has Been Inscribed!\nWelcome, **${user.name}**, to the Oistarian Circle.\nYour scroll has been added to the Archive.\n🧙 Perks unlocked: Codex Access, Lorekeeper Role, Early Access to Campaign Scripts`;
+  discordChannel.send(message);
+});
+{
+  "event": "supporter_joined",
+  "message": "🎁 Supporter Scroll Received\nYour contribution echoes through the Archive.\nPerks: Codex Access, Lorekeeper Role, Early Campaign Scripts"
+}
+
+Campaign Intro Cutscene: Rise of the Oistarian
+Scene 1: The Silence Before Memory
+Visuals: A black screen slowly fades into a shattered battlefield. Ash drifts through the air.
+Voiceover: “Oistarian was once whole. Bound by codices, ruled by tacticians, remembered by the Archive.” 
+
+Scene 2: The Archive Stirs
+Visuals: Deep underground, glowing glyphs pulse on ancient stone. A vault door trembles.
+Voiceover: “But memory faded. Systems fractured. And the Archive… slept.”
+
+Scene 3: The Call to Strategists
+Visuals: A lone figure—hooded, bearing a relic—approaches the vault. The door opens. Light floods the chamber.
+Voiceover: “Now, the Archive awakens. And with it, the rise of those who remember.”
+
+Scene 4: Tactical Awakening
+Visuals: Tactical maps unfurl. Units materialize. Factions clash. Codex fragments hover mid-air.
+Voiceover: “You are the Architect. The Strategist. The Lorekeeper. The realm bends to your command.”
+
+Scene 5: Title Reveal
+Visuals: The Oistarian Archive pulses. The title burns into view.
+Tactical Legends: Rise of the Oistarian
+“Shape the legend. Script the realm.”
+
+Modular Lore Object Design
+Object: CodexTerminal
+• 	Type: Interactive lore object
+• 	Trigger: OnInteract
+• 	Properties: 
+{
+  "fragmentId": 42,
+  "factionAffinity": "Archivists",
+  "unlockHook": "EnableUnitTrait: MemoryEcho",
+  "visualEffect": "GlyphPulse",
+  "audioCue": "CodexWhisper"
+}
+Narrative Output:
+Fragment #42: The Shattered Sigil. When the Ember Pact fell, memory fractured. This terminal remembers.”
+
+Object: RelicRuins
+• 	Type: Tactical modifier + lore echo
+• 	Trigger: OnUnitEnterZone
+• 	Properties:
+{
+  "zoneRadius": 3,
+  "effect": "MoraleShift",
+  "linkedCodex": 19,
+  "factionBias": "Hollow Chorus",
+  "scriptHook": "TriggerCutscene: EmberFall"
+}
+Narrative Output:
+“The ruins hum with forgotten power. Your presence stirs the Ember Pact’s last breath.”
