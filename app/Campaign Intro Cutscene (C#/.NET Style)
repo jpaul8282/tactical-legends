@@ -1,0 +1,141 @@
+public class CampaignIntroCutscene: ICutsceneSequence
+{
+    public void Play()
+    {
+        CutsceneManager.BeginSequence("RiseOfTheOistarian");
+
+        CutsceneManager.FadeIn(2.0f);
+        CutsceneManager.PlayVoiceover("Oistaria was once whole...");
+        CutsceneManager.ShowScene("ShatteredBattlefield", 5.0f);
+
+        CutsceneManager.TransitionTo("ArchiveVault", 3.0f);
+        CutsceneManager.PlayVoiceover("But memory faded...");
+        CutsceneManager.TriggerEffect("GlyphPulse");
+
+        CutsceneManager.TransitionTo("StrategistApproachesVault", 4.0f);
+        CutsceneManager.PlayVoiceover("Now, the Archive awakens...");
+        CutsceneManager.TriggerAnimation("VaultOpen");
+
+        CutsceneManager.TransitionTo("TacticalMapReveal", 5.0f);
+        CutsceneManager.PlayVoiceover("You are the Architect...");
+        CutsceneManager.ShowTitle("Tactical Legends: Rise of the Oistarian");
+
+        CutsceneManager.EndSequence();
+    }
+}
+struct LoreObject {
+    std::string id;
+    std::string type;
+    std::string trigger;
+    std::map<std::string, std::string> properties;
+    std::string narrativeOutput;
+};
+
+LoreObject CodexTerminal {
+    "codex_terminal_42",
+    "CodexTerminal",
+    "OnInteract",
+    {
+        {"fragmentId", "42"},
+        {"factionAffinity", "Archivists"},
+        {"unlockHook", "EnableUnitTrait: MemoryEcho"},
+        {"visualEffect", "GlyphPulse"},
+        {"audioCue", "CodexWhisper"}
+    },
+    "Fragment #42: The Shattered Sigil. When the Ember Pact fell, memory fractured. This terminal remembers."
+};
+
+LoreObject RelicRuins {
+    "relic_ruins_19",
+    "RelicRuins",
+    "OnUnitEnterZone",
+    {
+        {"zoneRadius", "3"},
+        {"effect", "MoraleShift"},
+        {"linkedCodex", "19"},
+        {"factionBias", "Hollow Chorus"},
+        {"scriptHook", "TriggerCutscene: EmberFall"}
+    },
+    "The ruins hum with forgotten power. Your presence stirs the Ember Pact’s last breath."
+};
+[Serializable]
+public class CodexFragment
+{
+    public int FragmentId { get; set; }
+    public string Title { get; set; }
+    public string LoreText { get; set; }
+    public string UnlockHook { get; set; }
+    public string FactionAffinity { get; set; }
+}
+public class Faction
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public string Motto { get; set; }
+    public string Lore { get; set; }
+    public List<string> UniqueUnits { get; set; }
+    public List<string> CodexFragments { get; set; }
+    public Dictionary<string, string> Hooks { get; set; }
+}
+new Faction {
+    Id = "faction_archivists",
+    Name = "The Archivists",
+    Motto = "Memory is power. Preservation is resistance.",
+    Lore = "Guardians of the Oistarian Archive, the Archivists believe that knowledge itself is sacred. They wield relics and codex-bound units that manipulate memory, time, and tactical foresight.",
+    UniqueUnits = new List<string> { "Codex Scribe", "Glyph Sentinel", "Echo Binder" },
+    CodexFragments = new List<string> { "Fragment_12", "Fragment_42", "Fragment_77" },
+    Hooks = new Dictionary<string, string> {
+        { "OnCodexUnlock", "TriggerBuff: MemoryEcho" },
+        { "OnUnitDeath", "LogLoreEvent: ArchiveLoss" }
+    }
+}
+new Faction {
+    Id = "faction_ember_pact",
+    Name = "The Ember Pact",
+    Motto = "Burn the past. Forge the future.",
+    Lore = "Once the ruling force of Oistaria, the Ember Pact fractured under the weight of forgotten truths. Their units are volatile, aggressive, and fueled by relics of fire and rebellion.",
+    UniqueUnits = new List<string> { "Ashblade", "Flamecaller", "Sigil Breaker" },
+    CodexFragments = new List<string> { "Fragment_19", "Fragment_66", "Fragment_88" },
+    Hooks = new Dictionary<string, string> {
+        { "OnRelicActivate", "TriggerCutscene: EmberFall" },
+        { "OnZoneControl", "ApplyEffect: MoraleSurge" }
+    }
+}
+new Faction {
+    Id = "faction_hollow_chorus",
+    Name = "The Hollow Chorus",
+    Motto = "We are the echo of what was lost.",
+    Lore = "A spectral faction born from the collapse of memory. The Hollow Chorus manipulates morale, fear, and battlefield resonance. Their units phase between realms and sow confusion.",
+    UniqueUnits = new List<string> { "Wraithcaller", "Echoblade", "Chorus Weaver" },
+    CodexFragments = new List<string> { "Fragment_27", "Fragment_51", "Fragment_99" },
+    Hooks = new Dictionary<string, string> {
+        { "OnMoraleDrop", "TriggerEffect: FearPulse" },
+        { "OnUnitSpawn", "PlayAudio: HollowWhisper" }
+    }
+}
+struct CampaignTrigger {
+    std::string triggerId;
+    std::string eventType;
+    std::string condition;
+    std::string action;
+    std::string linkedFaction;
+    std::string codexReference;
+};
+
+CampaignTrigger EmberFallTrigger {
+    "trigger_ember_fall",
+    "OnRelicActivate",
+    "RelicId == 'sigil_relic_ember'",
+    "TriggerCutscene('EmberFall')",
+    "Ember Pact",
+    "Fragment_19"
+};
+
+CampaignTrigger ArchiveEchoTrigger {
+    "trigger_archive_echo",
+    "OnCodexUnlock",
+    "FragmentId == '42'",
+    "ApplyBuff('MemoryEcho')",
+    "Archivists",
+    "Fragment_42"
+};
