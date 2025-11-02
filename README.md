@@ -1,3 +1,6 @@
+<img width="1517" height="984" alt="badge tactical-legend" src="https://github.com/user-attachments/assets/f67d5892-1098-4b74-94b3-724b6e3b2bca" />
+
+
 [![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/ci.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
