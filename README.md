@@ -67,10 +67,46 @@ Run all unit tests with:
 cd build
 ctest --output-on-failure
 ```
+Project Overview: Tactical Legends – Rise of OISTARIAN
+Tactical Legends is a cross-platform game designed for strategic depth and replayability. It features:
+• 	Turn-based tactical combat with adaptive AI
+• 	Modular codebase using CMake for easy extension
+• 	Cross-platform support (Windows, macOS, Linux)
+• 	SDL2-powered graphics and audio
+• 	Deep squad customization and branching campaign structure
+• 	Unit testing via CTest for robust development
+
+Tactical Legends Game Architecture Diagram
+Diagram Highlights:
+• 	Central Game Loop powered by SDL2
+• 	Modular AI System with combat and stealth logic
+• 	Campaign Manager for branching storylines
+• 	Audio Manager for immersive sound design
+• 	UI Layer built with Vue and C++
+• 	Data Layer using Prisma and JSON configs
+• 	Build & Deployment via CMake and YAML workflows
+• 	Testing supported by CTest
+<img width="1105" height="811" alt="tactical-legend diagram" src="https://github.com/user-attachments/assets/e6e160a1-1a7d-42f6-8991-63b6786e1112" />
 
 ## Contributing
 
 We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+<img width="950" height="657" alt="onboarding flow(tactical-legend)" src="https://github.com/user-attachments/assets/31835e2c-649f-4518-a8db-625105ac725b" />
+The flow is split into two main tracks:
+🔍 Discovery & Setup
+• 	Discover the project on GitHub
+• 	Read the README and contribution guidelines
+• 	Set up the development environment (C++, SDL2, CMake)
+• 	Explore the codebase (AI, UI, Campaign Manager)
+• 	Pick an issue or feature to work on
+🛠️ Contribution & Review
+• 	Fork the repository and create a branch
+• 	Develop and test changes locally
+• 	Submit a pull request
+• 	Participate in code review and make revisions
+• 	Merge and celebrate your contribution 🎉
+Each stage is represented with labeled boxes and directional arrows to show progression. It’s designed to be intuitive and beginner-friendly.
+Click/open the card above to download the diagram.
 
 To propose changes:
 - Fork the repo
