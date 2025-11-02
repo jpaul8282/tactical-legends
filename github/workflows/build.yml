@@ -1,22 +1,23 @@
 name: Tactical Legends CI/CD
 
-On:
-  Push:
+on:
+  push:
     branches: [main]
+    tags:
+      - 'v*.*.*'  # Trigger release on version tags
   pull_request:
     branches: [main]
 
-Jobs:
+jobs:
   build-cpp:
     name: Build C++/SDL2 Core
     runs-on: ubuntu-latest
-
-    Steps:
+    steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Dependencies
-        run: sudo apt-get update && sudo apt-get install libsdl2-dev build-essential
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev build-essential
 
       - name: Compile C++ Core
         run: |
@@ -29,10 +30,9 @@ Jobs:
   build-dotnet:
     name: Build .NET Backend
     runs-on: ubuntu-latest
-
-    Steps:
+    steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
@@ -48,14 +48,82 @@ Jobs:
       - name: Run .NET Tests
         run: dotnet test TacticalLegends.Tests/TacticalLegends.Tests.csproj
 
-  Deploy:
+  build-windows:
+    name: Build Windows Binary
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          choco install cmake -y
+          choco install sdl2 -y
+
+      - name: Build Project
+        run: |
+          mkdir build
+          cmake -S . -B build
+          cmake --build build --config Release
+
+      - name: Package Binary
+        run: Compress-Archive -Path build\Release\* -DestinationPath tactical-legends-windows.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tactical-legends-windows
+          path: tactical-legends-windows.zip
+
+  build-macos:
+    name: Build macOS Binary
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: brew install cmake sdl2
+
+      - name: Build Project
+        run: |
+          mkdir build
+          cmake -S. -B build
+          cmake --build build --config Release
+
+      - name: Package Binary
+        run: zip -r tactical-legends-macos.zip build/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tactical-legends-macos
+          path: tactical-legends-macos.zip
+
+  release:
+    name: Create GitHub Release
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/tactical-legends-windows/tactical-legends-windows.zip
+            artifacts/tactical-legends-macos/tactical-legends-macos.zip
+
+  deploy:
     name: Deploy to Vercel
     needs: [build-cpp, build-dotnet]
     runs-on: ubuntu-latest
-
-    Steps:
+    steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Vercel CLI
         run: npm install -g vercel
@@ -65,12 +133,7 @@ Jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: vercel --prod --confirm --token $VERCEL_TOKEN
 
-      - name: Notify Vercel (Deploy Status)
-        uses: vercel/repository-dispatch/actions/status@v1
-        with:
-          Name: Vercel - tactical-legends: ex. deploy
-
-      - name: Lore-Driven Discord Notification
+      - name: Notify Discord
         if: success()
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
@@ -105,3 +168,5 @@ Jobs:
             "title": "Rise of the Oistarian",
             "message": "New build deployed. Your support shapes the legend!"
           }'
+          git tag v1.0.0
+git push origin v1.0.0
