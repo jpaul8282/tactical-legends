@@ -32,3 +32,7 @@ jobs:
         cd build
         ctest --output-on-failure
       continue-on-error: true
+- name: 'notify vercel'
+  uses: 'vercel/repository-dispatch/actions/status@v1'
+  with:
+    name: Vercel - nouvochatbotbuddy: ex. lint
