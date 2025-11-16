@@ -1,0 +1,271 @@
+public class ContributorDashboard: MonoBehaviour
+{
+    public ContributorProfile Profile;
+    public List<CodexEntry> UnlockedFragments;
+    public List<ContributionLog> RecentActions;
+
+    public void Render()
+    {
+        UIManager.SetText("Username", Profile.Username);
+        UIManager.SetText("Role", Profile.Role.ToString());
+        UIManager.SetFactionBanner(Profile.FactionAffinity);
+
+        CodexPanel.RenderUnlocked(Profile.UnlockedFragments);
+        ContributionFeed.Render(Profile.RecentActions);
+    }
+}
+public class CodexPanel: MonoBehaviour
+{
+    public static void RenderUnlocked(List<CodexEntry> fragments)
+    {
+        foreach (var fragment in fragments)
+        {
+            UIManager.CreateCard("CodexFragment", new {
+                Title = fragment.Title,
+                Lore = fragment.LoreText,
+                Faction = fragment.FactionAffinity
+            });
+        }
+    }
+}
+public class ContributionLog
+{
+    public string ActionType;
+    public string Description;
+    public DateTime Timestamp;
+    public string LinkedCodex;
+}
+
+public class ContributionFeed: MonoBehaviour
+{
+    public static void Render(List<ContributionLog> logs)
+    {
+        foreach (var log in logs.OrderByDescending(l => l.Timestamp))
+        {
+            UIManager.CreateFeedItem(new {
+                Icon = "🛠️",
+                Text = $"{log.Timestamp.ToShortDateString()} — {log.Description",
+                CodexLink = log.LinkedCodex
+            });
+        }
+    }
+}
+# changelog.yml
+title: "Lorebound Deployment: Rise of the Oistarian"
+date: "2025-10-26"
+entries:
+  - type: "Module"
+    name: "CodexTerminal_42"
+    description: "Added interactive lore object for Archivists. Unlocks Fragment #42: The Shattered Sigil."
+    codex: "42"
+    faction: "Archivists"
+
+  - type: "Hook"
+    name: "TriggerCutscene: EmberFall"
+    description: "Linked to RelicRuins_19. Unlocks Fragment #19 for Ember Pact."
+    codex: "19"
+    faction: "Ember Pact"
+
+  - type: "UI"
+    name: "CodexRevealPanel"
+    description: "New animated panel for displaying codex unlocks with faction banners and audio cues."
+public class CampaignEditor
+{
+    public List<CampaignMap> Maps;
+    public List<LoreObject> LoreObjects;
+    public List<CodexTrigger> CodexTriggers;
+
+    public void AddMap(CampaignMap map) => Maps.Add(map);
+    public void PlaceLoreObject(string mapId, LoreObject obj) => Maps.Find(m => m.Id == mapId)?.LoreObjects.Add(obj);
+    public void AddCodexTrigger(CodexTrigger trigger) => CodexTriggers.Add(trigger);
+}
+public class LoreObject
+{
+    public string Id;
+    public string Type;
+    public Vector2 Position;
+    public string FactionAffinity;
+    public string LinkedCodex;
+    public Dictionary<string, string> Hooks;
+}
+new LoreObject {
+    Id = "codex_terminal_42",
+    Type = "CodexTerminal",
+    Position = new Vector2(12, 7),
+    FactionAffinity = "Archivists",
+    LinkedCodex = "42",
+    Hooks = new Dictionary<string, string> {
+        { "OnInteract", "UnlockCodex:42" },
+        { "OnUnlock", "EnableUnitTrait: MemoryEcho" }
+    }
+}
+public class CodexTrigger
+{
+    public string TriggerId;
+    public string EventType;
+    public string Condition;
+    public string Action;
+    public string LinkedCodex;
+    public string FactionAffinity;
+}
+new CodexTrigger {
+    TriggerId = "trigger_ember_fall",
+    EventType = "OnRelicActivate",
+    Condition = "RelicId == 'sigil_relic_ember'",
+    Action = "TriggerCutscene:EmberFall",
+    LinkedCodex = "19",
+    FactionAffinity = "Ember Pact"
+}
+public class CampaignBranch
+{
+    public string BranchId;
+    public string EntryCondition;
+    public string NextMapId;
+    public string LoreImpact;
+    public string FactionBias;
+}
+new CampaignBranch {
+    BranchId = "chorus_path_1",
+    EntryCondition = "Morale < 25 && Faction == 'Hollow Chorus'",
+    NextMapId = "map_void_echo",
+    LoreImpact = "UnlockCodex:27",
+    FactionBias = "Hollow Chorus"
+}
+public class MapEditorPanel: MonoBehaviour
+{
+    public void LoadMap(CampaignMap map);
+    public void PlaceObject(LoreObject obj);
+    public void HighlightFactionZones(string factionId);
+}
+public class CodexPreviewPanel: MonoBehaviour
+{
+    public void ShowFragment(CodexEntry entry)
+    {
+        UIManager.SetText("FragmentTitle", entry.Title);
+        UIManager.SetText("Faction", entry.FactionAffinity);
+        UIManager.SetText("LoreText", entry.LoreText);
+        UIManager.RenderHooks(entry.GameplayHooks);
+    }
+}
+public class FactionFilterBar: MonoBehaviour
+{
+    public void ApplyFilter(string factionId)
+    {
+        MapEditorPanel.HighlightFactionZones(factionId);
+        CodexPreviewPanel.FilterByFaction(factionId);
+    }
+}
+public class BranchDesignerPanel: MonoBehaviour
+{
+    public void CreateBranch(CampaignBranch branch)
+    {
+        UIManager.RenderBranch(branch.EntryCondition, branch.NextMapId, branch.LoreImpact);
+    }
+}
+public void SaveMapWithLore(CampaignMap map)
+{
+    CampaignEditor.AddMap(map);
+    foreach (var obj in map.LoreObjects)
+    {
+        if (obj.LinkedCodex != null)
+            UnlockCodexFragment(currentContributor, obj.LinkedCodex);
+    }
+}
+public class LoreChangelogEntry
+{
+    public string Type;
+    public string Description;
+    public string LinkedCodex;
+    public string Faction;
+}
+
+public class ChangelogBuilder
+{
+    public static List<LoreChangelogEntry> GenerateFromMap(CampaignMap map)
+    {
+        var entries = new List<LoreChangelogEntry>();
+        foreach (var obj in map.LoreObjects)
+        {
+            entries.Add(new LoreChangelogEntry {
+                Type = obj.Type,
+                Description = $"Placed {obj.Type} at {obj.Position",
+                LinkedCodex = obj.LinkedCodex,
+                Faction = obj.FactionAffinity
+            });
+        }
+        return entries;
+    }
+}
+public class SupporterDashboardPanel: MonoBehaviour
+{
+    public SupporterProfile Profile;
+    public SupporterNPC BoundNPC;
+    public List<string> UnlockedPerks;
+    public List<string> CodexLinks;
+
+    public void Render()
+    {
+        UIManager.SetText("SupporterName", Profile.DisplayName);
+        UIManager.SetText("RoleTitle", BoundNPC.RoleTitle);
+        UIManager.SetFactionBanner(BoundNPC.FactionAffinity);
+
+        NPCPreviewPanel.Render(BoundNPC);
+        CodexLinkPanel.Render(CodexLinks);
+        PerkPanel.Render(UnlockedPerks);
+    }
+}
+public class NPCPreviewPanel: MonoBehaviour
+{
+    public static void Render(SupporterNPC npc)
+    {
+        UIManager.SetImage("NPCPortrait", npc.AppearanceTag);
+        UIManager.SetText("LoreBio", npc.LoreBio);
+        UIManager.SetText("TacticalEffect", npc.TacticalEffect);
+    }
+}
+public class CodexLinkPanel: MonoBehaviour
+{
+    public static void Render(List<string> codexIds)
+    {
+        foreach (var id in codexIds)
+        {
+            var entry = CodexRepository.GetEntry(id);
+            UIManager.CreateCard("CodexFragment", new {
+                Title = entry.Title,
+                Faction = entry.FactionAffinity,
+                Lore = entry.LoreText
+            });
+        }
+    }
+}
+public class PerkPanel: MonoBehaviour
+{
+    public static void Render(List<string> perks)
+    {
+        foreach (var perk in perks)
+        {
+            UIManager.CreateBadge("Perk", perk);
+        }
+    }
+}
+public SupporterNPC BuildCustomNPC(string name, string role, string faction, string codexId, string effect, string appearance)
+{
+    return new SupporterNPC {
+        Id = $"npc_{name.ToLower()}",
+        DisplayName = name,
+        RoleTitle = role,
+        FactionAffinity = faction,
+        CodexFragmentId = codexId,
+        TacticalEffect = effect,
+        LoreBio = $"A supporter whose legacy echoes through the Archive.",
+        AppearanceTag = appearance
+    };
+}
+public void PlaySupporterReveal(SupporterNPC npc)
+{
+    CutsceneManager.PlayOverlay("SupporterReveal", new {
+        Visual = npc.AppearanceTag,
+        Voiceover = $"The Archive welcomes {npc.DisplayName}, {npc.RoleTitle}. Their legend begins.",
+        Duration = 5.0f
+    });
+}

@@ -1,0 +1,47 @@
+Sample MissionConfig.json (placed under Assets/Data/JSON or JSON/Configs)
+{
+"missions": [
+{
+"id": "MISSION_001",
+"name": "Dawn Infiltration",
+"environment": "UrbanRuins",
+"objectives": [
+{"type": "Infiltrate", "location": "ArmoryAccess"},
+{"type": "DisableCore", "location": "ReactorRoom"},
+{"type": "Exfiltrate", "location": "ExtractionPoint"}
+],
+"difficulty": 1,
+"moralityImpact": 5,
+"branchingRules": {
+"ifMoralityGte": 50,
+"ifTrustGte": {"EchoAscendants": 60}
+}
+}
+]
+}
+
+Sample FactionConfig.json
+{
+"factions": [
+{
+"name": "Echo Ascendants",
+"trustThreshold": 60,
+"bonuses": ["DroneBuff", "CloakEfficiency"],
+"alliedMissions": ["MISSION_001", "MISSION_003"]
+}
+]
+}
+
+Sample GadgetConfig.json
+{
+"gadgets": [
+{"name": "ReconDrone", "type": "Drone", "cooldown": 15, "range": 60},
+{"name": "EnergyShield", "type": "Shield", "duration": 8, "cooldown": 25},
+{"name": "Cloak", "type": "Cloak", "duration": 6, "cooldown": 20}
+]
+}
+
+Sample WeaponConfig.json
+{
+"weapons": [
+{"name": "ModularCarbine", "range": 35, "recoil": 0.

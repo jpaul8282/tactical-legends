@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Private Mateo Rossi"
+role = "Logistics Coord / Boat Master"
+background = "Maritime logistics and small-boat handling"
+expertise = [ "Supply chain in coastal zones", "Rescue boat ops" ]

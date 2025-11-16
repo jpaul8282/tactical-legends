@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Lieutenant Nia Park"
+role = "Recon Specialist / UAS Pilot"
+background = "Cross-trained in drones and reconnaissance"
+expertise = [ "Aerial recon over water", "Sensor interpretation" ]

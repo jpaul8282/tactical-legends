@@ -1,0 +1,9 @@
+Zone_Viper_Intro:
+  narrator: "Surveillance flickers. A storm brews—not of weather, but wills. Shadow Seraphs vanish, civilians whisper, and the power grid hums in defiance. Choose wisely. The echo of this hour will rewrite the map."
+
+CivilianAllySupport_Intro:
+  NPC_leader: "We saw how you fought—not just with force, but with mercy. We'll follow you. Let’s push back the silence."
+
+BlackSectorLockdown_Intro:
+  Stormfront_officer: "Neutrality is obsolete. The Citadel demands control. Anyone wandering without wires will be hunted like dust."
+

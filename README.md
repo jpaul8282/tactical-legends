@@ -1,58 +1,129 @@
-Super Character Incoming: OISTARIAN
-🔥 Character Profile: OISTARIAN
-| Attribute | Description | 
-| 🧠 Codename | OISTARIAN — “The Echo of Forgotten Wars” | 
-| 🧬 Origin | Born in the ruins of the Orbital Institute of Strategic Tactics (OIST) | 
-| 🕶️ Role | Tactical Commander / Emotional Recon Specialist | 
-| 💥 Signature Gear | Dual-phase sniper rifle “Whisper & Roar” + Arm Module “NeuroPulse” | 
-| 🧠 Emotional Lock | Cannot launch missions involving betrayal unless trust score > 80 | 
-| 🎞️ Flashback Cue | “The corridor. The child. The silence.” | 
-
-🎮 Integration Plan
-✅ Wire into Campaign Flow
-- OISTARIAN becomes available after completing “Sand Echo” with a trauma score below 50.
-- Unlocks hidden mission path: “Echo Protocol” — a stealth op with memory-triggered choices.
-🎭 Emotional Branching Scene Generator
-- Scene: “The Vault of Echoes”
-- Branch A: Trust the voice — unlocks gear mod “Echo Shield”
-- Branch B: Silence the voice — triggers flashback and locks “Final Liberation”
-🛠️ Gear Upgrade UI with Animated Transitions
-- UI Theme: Neural Pulse Grid
-- Transitions:
-- Fade-in gear holograms with pulse ripple
-- Upgrade animations: gear morphs with sound-reactive glow
-- Voiceover: OISTARIAN whispers upgrade lore during transitions
+<img width="1517" height="984" alt="badge tactical-legend" src="https://github.com/user-attachments/assets/f67d5892-1098-4b74-94b3-724b6e3b2bca" />
 
 
+[![CI](https://github.com/jurgen-paul/tactical-legends/actions/workflows/ci.yml/badge.svg)](https://github.com/jurgen-paul/tactical-legends/actions)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
+# Tactical Legends
 
+Welcome to **Tactical Legends**, an open-source tactical strategy game focused on turn-based combat, deep squad customization, and replayable missions. Whether you’re a strategist, developer, or gamer, our modular codebase lets you contribute, experiment, and play on your favorite platform.
 
+## Table of Contents
 
+- [About](#about)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
 
+---
 
+## About
 
+Tactical Legends delivers engaging tactical gameplay built with C++ and SDL2, designed for extensibility and cross-platform support. Plan your moves, outwit adaptive AI, and enjoy a game that grows with community contributions.
 
+## Features
 
+- Turn-based tactical combat
+- Modular codebase using CMake
+- Cross-platform support (Windows, macOS, Linux)
+- SDL2-powered graphics and audio
+- Unit testing via CTest
+- Deep squad customization and branching campaign (coming soon)
 
+## Installation
 
-tactical-legends:![TL_005](https://github.com/user-attachments/assets/6d4cb1e4-d3e1-47ec-abba-9fac2d105e26)
+### Prerequisites
 
-Step into the world of the future with Tactical Legend, an immersive tactical shooter set in a high-tech, dystopian universe. In this adrenaline-fueled game, players assume the role of elite fighters equipped with cutting-edge weaponry and advanced gear. The game combines intense combat mechanics w![TL_001](https://github.com/user-attachments/assets/146e0bdf-083b-4db6-8904-7d94eb51e705)
-ith strategic planning, requiring players to rely on both quick reflexes and clever tactics to outsmart enemies.
+- CMake >= 3.x
+- g++ >= 9.0
+- SDL2, SDL2_image, SDL2_mixer, SDL2_ttf
 
-Explore sprawling, visually stunning environments—from neon-lit cities and sprawling industrial complexes to alien landscapes. Ut![TL_002](https://github.com/user-attachments/assets/4d5d550b-a127-42d8-aa7f-16e5b9cc4171)
-ilize a wide array of futuristic gadgets, from drone companions and energy shields to invisibility cloaks. Play solo or team up with friends in cooperative modes to complete daring missions that challenge your thinking and reflexes.
+### Setup
 
-With its deep customization options, innovative weapon systems, and high-stakes gameplay, Tactical Legend offers an electrifying experience for fans of sci-fi shooters and tactical strategists alike. Prepare for battle and become a legend in the futuristic battlefield!
+```bash
+sudo apt update
+sudo apt install cmake g++ libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+git clone https://github.com/jurgen-paul/tactical-legends.git
+cd tactical-legends
+mkdir build
+cmake -S. -B build
+cmake --build build
+```
 
-![TL_006](https://github.com/user-attachments/assets/7d7d56e6-570e-4f3a-84dc-c6b8c61773ae)
+## Usage
 
-[TL_008](https://github.com/user-attachments/assets/07d3dd0e-2bea-466b-b384-0a0d5fc1ba7f)
-echo "# tactical-legends" >> README.md
-git init!
-git add README.md
-git commit -m "first commit"
-git branch -M main
-git remote add origin git@github.com:jurgen-paul/tactical-legends.git
-git push -u origin main 
-![TL_008](https://github.com/user-attachments/assets/15c00501-bdc6-4d23-bc69-577e1765a888)
+Run the game executable from the build directory:
+
+```bash
+./build/tactical_legends
+```
+
+## Testing
+
+Run all unit tests with:
+
+```bash
+cd build
+ctest --output-on-failure
+```
+Project Overview: Tactical Legends – Rise of OISTARIAN
+Tactical Legends is a cross-platform game designed for strategic depth and replayability. It features:
+• 	Turn-based tactical combat with adaptive AI
+• 	Modular codebase using CMake for easy extension
+• 	Cross-platform support (Windows, macOS, Linux)
+• 	SDL2-powered graphics and audio
+• 	Deep squad customization and branching campaign structure
+• 	Unit testing via CTest for robust development
+
+Tactical Legends Game Architecture Diagram
+Diagram Highlights:
+• 	Central Game Loop powered by SDL2
+• 	Modular AI System with combat and stealth logic
+• 	Campaign Manager for branching storylines
+• 	Audio Manager for immersive sound design
+• 	UI Layer built with Vue and C++
+• 	Data Layer using Prisma and JSON configs
+• 	Build & Deployment via CMake and YAML workflows
+• 	Testing supported by CTest
+<img width="1105" height="811" alt="tactical-legend diagram" src="https://github.com/user-attachments/assets/e6e160a1-1a7d-42f6-8991-63b6786e1112" />
+
+## Contributing
+
+We welcome contributions! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+<img width="950" height="657" alt="onboarding flow(tactical-legend)" src="https://github.com/user-attachments/assets/31835e2c-649f-4518-a8db-625105ac725b" />
+The flow is split into two main tracks:
+🔍 Discovery & Setup
+• 	Discover the project on GitHub
+• 	Read the README and contribution guidelines
+• 	Set up the development environment (C++, SDL2, CMake)
+• 	Explore the codebase (AI, UI, Campaign Manager)
+• 	Pick an issue or feature to work on
+🛠️ Contribution & Review
+• 	Fork the repository and create a branch
+• 	Develop and test changes locally
+• 	Submit a pull request
+• 	Participate in code review and make revisions
+• 	Merge and celebrate your contribution 🎉
+Each stage is represented with labeled boxes and directional arrows to show progression. It’s designed to be intuitive and beginner-friendly.
+Click/open the card above to download the diagram.
+
+To propose changes:
+- Fork the repo
+- Create a feature branch
+- Submit a pull request
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
+
+## Support
+
+Open an issue on our [GitHub issue tracker](https://github.com/jurgen-paul/tactical-legends/issues) or contact [jurgen-paul](https://github.com/jurgen-paul).
+
+---
+
+> _Note_: If you plan to contribute code, please also review the project's [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines and setup instructions.

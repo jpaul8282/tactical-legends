@@ -1,0 +1,9 @@
+const clark = require('clark');
+console.log(clark([1, 2, 3, 4, 5])); // Output: ▁▂▄▆█
+const clark = require('clark');
+
+const responseTimes = [120, 200, 150, 300, 250];
+console.log('Response Times:', clark(responseTimes));
+
+
+

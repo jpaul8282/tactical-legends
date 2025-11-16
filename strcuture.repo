@@ -1,0 +1,11 @@
+tactical-legends/
+├── installer/
+│   ├── TacticalLegendsSettings.reg
+│   ├── Install.ps1
+│   ├── TacticalLegendsInstaller.nsi
+├── Dashboards/
+│   └── modding_dashboard.py
+├── Codex/
+│   └── CodexViewer.exe
+├── Mods/
+├── Plugins/

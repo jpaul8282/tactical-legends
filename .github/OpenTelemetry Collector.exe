@@ -1,0 +1,33 @@
+pnpm i @opentelemetry/api @opentelemetry/sdk-node @opentelemetry/resources @opentelemetry/semantic-conventions @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/sdk-trace-node
+import { NodeSDK } from '@opentelemetry/sdk-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { Resource } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node';
+ 
+export async function register() {
+  const sdk = new NodeSDK({
+    resource: new Resource({
+      [SemanticResourceAttributes.SERVICE_NAME]: 'your-project-name',
+      // NOTE: You can replace `your-project-name` with the actual name of your project
+    }),
+    spanProcessor: new SimpleSpanProcessor(new OTLPTraceExporter()),
+  });
+ 
+  await sdk.start();
+}
+@opentelemetry/exporter-trace-otlp-http
+import { registerOTel, OTLPHttpJsonTraceExporter } from '@vercel/otel';
+ 
+export function register() {
+  registerOTel({
+    serviceName: 'your-project-name',
+    traceExporter: new OTLPHttpJsonTraceExporter({
+      url: 'https://your-trace-exporter-url',
+      headers: {
+        'authentication-header-name': 'authentication-header-value',
+        'another-header-name': 'another-header-value',
+      },
+    }),
+  });
+}

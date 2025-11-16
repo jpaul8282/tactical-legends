@@ -1,0 +1,172 @@
+name: Tactical Legends CI/CD
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*.*.*'  # Trigger release on version tags
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-cpp:
+    name: Build C++/SDL2 Core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev build-essential
+
+      - name: Compile C++ Core
+        run: |
+          mkdir -p build
+          g++ src/main.cpp -o build/tactical_legends -lSDL2
+
+      - name: Run C++ Tests
+        run: ./tests/run_cpp_tests.sh
+
+  build-dotnet:
+    name: Build .NET Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore TacticalLegends.sln
+
+      - name: Build Solution
+        run: dotnet build TacticalLegends.sln --configuration Release
+
+      - name: Run .NET Tests
+        run: dotnet test TacticalLegends.Tests/TacticalLegends.Tests.csproj
+
+  build-windows:
+    name: Build Windows Binary
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          choco install cmake -y
+          choco install sdl2 -y
+
+      - name: Build Project
+        run: |
+          mkdir build
+          cmake -S . -B build
+          cmake --build build --config Release
+
+      - name: Package Binary
+        run: Compress-Archive -Path build\Release\* -DestinationPath tactical-legends-windows.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tactical-legends-windows
+          path: tactical-legends-windows.zip
+
+  build-macos:
+    name: Build macOS Binary
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: brew install cmake sdl2
+
+      - name: Build Project
+        run: |
+          mkdir build
+          cmake -S. -B build
+          cmake --build build --config Release
+
+      - name: Package Binary
+        run: zip -r tactical-legends-macos.zip build/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tactical-legends-macos
+          path: tactical-legends-macos.zip
+
+  release:
+    name: Create GitHub Release
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/tactical-legends-windows/tactical-legends-windows.zip
+            artifacts/tactical-legends-macos/tactical-legends-macos.zip
+
+  deploy:
+    name: Deploy to Vercel
+    needs: [build-cpp, build-dotnet]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel --prod --confirm --token $VERCEL_TOKEN
+
+      - name: Notify Discord
+        if: success()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          curl -X POST $DISCORD_WEBHOOK \
+          -H "Content-Type: application/json" \
+          -d '{
+            "username": "Tactical Legends",
+            "content": "**Deployment Complete!**\nThe Oistarian gates have opened. Tactical Legends is live.\n🛡️ https://tactical-legends.vercel.app"
+          }'
+
+      - name: Notify Ko-fi Supporters
+        if: success()
+        env:
+          KOFI_WEBHOOK: ${{ secrets.KOFI_WEBHOOK }}
+        run: |
+          curl -X POST $KOFI_WEBHOOK \
+          -H "Content-Type: application/json" \
+          -d '{
+            "title": "Tactical Legends Deployed!",
+            "message": "The realm expands. Thank you for fueling the forge, heroes!"
+          }'
+
+      - name: Notify Patreon Supporters
+        if: success()
+        env:
+          PATREON_WEBHOOK: ${{ secrets.PATREON_WEBHOOK }}
+        run: |
+          curl -X POST $PATREON_WEBHOOK \
+          -H "Content-Type: application/json" \
+          -d '{
+            "title": "Rise of the Oistarian",
+            "message": "New build deployed. Your support shapes the legend!"
+          }'
+          git tag v1.0.0
+git push origin v1.0.0

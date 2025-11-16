@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Ruth Friedman"
+role = "Medical Technician / Evac Lead"
+background = "Evacuation planning during coastal ops"
+expertise = [ "Evac routes", "Triage under fire", "Field med kit optimization" ]

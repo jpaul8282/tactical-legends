@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Sergeant Karim Soliman"
+role = "Cultural Liaison / Interpreter"
+background = "Multilingual, cross-cultural trainer"
+expertise = [ "Language agility", "Negotiation under stress" ]

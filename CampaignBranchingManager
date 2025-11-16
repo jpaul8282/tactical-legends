@@ -1,0 +1,76 @@
+CampaignBranchingManager:
+Tracks globalMorality (int)
+Tracks factionTrust: Dictionary<string, int> (0–100 clamp)
+Tracks squadTraits: Dictionary<string, TraitType>
+RecordMissionOutcome:
+Adjusts globalMorality by moralityDelta
+Updates factionTrust for the given faction with clamped delta
+Merges newTraits into squadTraits (overwrites existing keys)
+UnlockNextMission:
+If globalMorality >= 50 and Echo Ascendants trust > 60 -> load Dawn Accord
+Else if globalMorality < 0 -> Echo Collapse
+Else Grey Protocol
+PlayEpilogueTheme (outside class in snippet, but assumed to map to themes):
+75: theme_hope_rising
+
+< -50: theme_twilight_war
+otherwise theme_fragile_peace
+High-level assessment
+
+Strengths:
+Simple, data-driven branching logic that aligns with your design goals.
+Uses clamped morale/trust to prevent out-of-range values.
+Clear separation between outcome effects and audio cues.
+Risks and potential issues:
+Null keys: Accessing factionTrust["Echo Ascendants"] without ensuring the key exists can throw KeyNotFoundException if a faction hasn’t been initialized.
+Threading: If mission outcomes are updated from background threads, you’ll need thread-safety for dictionaries and Unity APIs.
+Tight coupling: UnlockNextMission hard-codes mission names; could benefit from a data-driven registry to avoid string literals.
+Trait merging: Overwrites existing traits without conflict resolution; consider how to handle conflicting traits or trait expiration.
+Persistence: No save/load shown; need to persist global Morality, factionTrust, and squadTraits between sessions.
+Unity-specific: Uses Mathf.Clamp and GetValueOrDefault (works in C# 7+); ensure using System.Collections.Generic and UnityEngine namespaces.
+
+Safety and initialization
+Ensure all factions exist before reading/updating:
+if (!factionTrust.ContainsKey(faction)) factionTrust[faction] = 0;
+Initialize squadTraits with defaults if needed.
+Guard PlayEpilogueTheme to avoid null audio clips:
+Use a centralized AudioManager with null checks.
+
+Data-driven mission registry
+Replace hard-coded strings with a MissionRepository or a ScriptableObject-based registry.
+public enum MissionKey { DawnAccord, EchoCollapse, GreyProtocol }
+A ScriptableObject MissionBranchConfig that maps morale/faction thresholds to MissionKey.
+UnlockNextMission then consults the registry to pick a MissionConfig, reducing string fragility.
+
+Safe trait updates
+Merge strategy:
+If a trait already exists, decide whether to override, merge, or aggregate.
+Consider versioning or cooldowns for trait effects.
+Persistence
+Implement SaveCampaignState/LoadCampaignState:
+Serialize globalMorality, factionTrust dictionary (string, int), and squadTraits.
+Use JSONUtility or a small binary format; consider PlayerPrefs for small data or a local file.
+Concurrency and Unity threading
+Ensure RecordMissionOutcome runs on the main thread if it touches Unity APIs. If you ever call it from a worker thread, dispatch to main thread (e.g., via a UnityMainThreadDispatcher).
+Testing and tooling
+Add unit tests (NUnit) for:
+Morality updates and clamping behavior
+Faction trust initialization and bounds
+Trait merge behavior
+Missio:n unlock logic across threshold scenarios
+Add a small editor tool to simulate mission outcomes and preview branching.
+Localization and UI feedback
+Surface the current Morality, Faction Trust, and active Traits in the UI.
+Add PS/PC prompts in English at a minimum; plan for localization.
+
+Concrete implementation suggestions (code-level sketches)
+
+Safe access pattern for faction trust:
+
+public int GetFactionTrust(string faction) { if (!factionTrust.TryGetValue(faction, out var t)) factionTrust[faction] = 0; return factionTrust[faction]; }
+public void AdjustFactionTrust(string faction, int delta) { if (!factionTrust.ContainsKey(faction)) factionTrust[faction] = 0; factionTrust[faction] = Mathf.Clamp(factionTrust[faction] + delta, 0, 100); }
+Data-driven approach concept (pseudocode):
+
+[CreateAssetMenu] public class MissionBranchConfig : ScriptableObject { public MissionKey key; public int moralityThreshold; public int trustThreshold; public string nextMission; }
+A central registry: public class MissionRegistry : ScriptableObject { public List<MissionBranchConfig> branches; public string GetNextMission(int morality, int trust) { // find best match } }
+

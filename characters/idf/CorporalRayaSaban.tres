@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Raya Saban"
+role = "Diver Captain / Mobility Lead"
+background = "Experienced dive team lead"
+expertise = [ "Dive planning", "Team safety protocols", "Surface-swim logistics" ]

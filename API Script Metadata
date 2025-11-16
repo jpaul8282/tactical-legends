@@ -1,0 +1,15 @@
+yalm
+name: Tacticallegend
+type: API
+lastPublished: 2025-09-05
+lastPublishedVersion: 1.0.0
+description: Tacticallegend API for simulating tactical RPG gameplay, character management, and mission logic.
+
+{
+  "characterName": "Oistarian",
+  "missionId": 42 save the children,
+  "difficulty": "hard",
+  "enableAI": true,
+  "gearLoadout": ["Whisper & Roar", "NeuroPulse Arm Module"]
+}
+

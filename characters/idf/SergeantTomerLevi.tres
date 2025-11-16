@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Sergeant Tomer Levi"
+role = "Breach and Clear Specialist"
+background = "Urban warfare veteran with special operations training"
+expertise = [ "Fast-entry drills", "Close-quarters tactics", "Waterborne insertion" ]

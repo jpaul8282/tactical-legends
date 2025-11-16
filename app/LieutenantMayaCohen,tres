@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Lieutenant Maya Cohen"
+role = "Team Leader, Aquatic Operations"
+background = "Former Navy Diver, trained in underwater breaching and amphibious assault"
+expertise = [ "Leadership under water", "Risk assessment", "Dive physics" ]

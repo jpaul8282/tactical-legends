@@ -1,0 +1,61 @@
+#include <SDL.h>
+#include <SDL_image.h>
+
+SDL_Texture* LoadTexture(const char* path, SDL_Renderer* renderer) {
+    SDL_Surface* surface = IMG_Load(path);
+    if (!surface) {
+        SDL_Log("IMG_Load Error: %s", IMG_GetError());
+        return nullptr;
+    }
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    return texture;
+}
+
+SDL_Texture* sprite = LoadTexture("assets/hero.png", renderer);
+SDL_RenderCopy(renderer, sprite, nullptr, &destRect);
+
+#include <SDL_mixer.h>
+
+Mix_Chunk* sound = Mix_LoadWAV("assets/blaster.wav");
+Mix_PlayChannel(-1, sound, 0); // -1 = first free channel
+
+Mix_Music* music = Mix_LoadMUS("assets/theme.mp3");
+Mix_PlayMusic(music, -1); // Loop forever
+
+int x = 100, y = 100;
+const int speed = 5;
+
+while (SDL_PollEvent(&event)) {
+    if (event.type == SDL_KEYDOWN) {
+        switch (event.key.keysym.sym) {
+            case SDLK_UP: y -= speed; break;
+            case SDLK_DOWN: y += speed; break;
+            case SDLK_LEFT: x -= speed; break;
+            case SDLK_RIGHT: x += speed; break;
+        }
+    }
+}
+
+class Sprite {
+public:
+    SDL_Texture* texture;
+    SDL_Rect rect;
+
+    Sprite(SDL_Renderer* renderer, const char* path, int x, int y) {
+        SDL_Surface* surface = IMG_Load(path);
+        texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface);
+        rect = { x, y, 64, 64 }; // Default size
+    }
+
+    void draw(SDL_Renderer* renderer) {
+        SDL_RenderCopy(renderer, texture, nullptr, &rect);
+    }
+
+    void move(int dx, int dy) {
+        rect.x += dx;
+        rect.y += dy;
+    }
+};
+

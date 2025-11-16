@@ -1,0 +1,263 @@
+# Tactical Legends - Enhanced Project Structure
+
+```
+tactical-legends/
+├── 📦 installer/
+│   ├── windows/
+│   │   ├── TacticalLegendsInstaller.nsi      # NSIS installer script
+│   │   ├── Install.ps1                       # PowerShell installation script
+│   │   ├── Uninstall.ps1                     # PowerShell uninstallation script
+│   │   ├── TacticalLegendsSettings.reg       # Registry settings
+│   │   └── installer-config.json             # Installation configuration
+│   ├── linux/
+│   │   ├── install.sh                        # Linux installation script
+│   │   ├── uninstall.sh                      # Linux uninstallation script
+│   │   └── tactical-legends.desktop          # Desktop entry file
+│   ├── mac/
+│   │   ├── Install.command                   # macOS installation script
+│   │   └── Info.plist                        # macOS app configuration
+│   └── assets/
+│       ├── icons/                            # Installer icons
+│       ├── banners/                          # Installation banners
+│       └── license.txt                       # License agreement
+│
+├── 🎮 Game/
+│   ├── TacticalLegends.exe                   # Main game executable
+│   ├── Config/
+│   │   ├── settings.json                     # Game settings
+│   │   ├── keybindings.json                  # Key configuration
+│   │   ├── graphics.json                     # Graphics settings
+│   │   └── audio.json                        # Audio settings
+│   ├── Data/
+│   │   ├── saves/                            # Save game files
+│   │   ├── replays/                          # Game replays
+│   │   ├── screenshots/                      # Screenshot storage
+│   │   └── temp/                             # Temporary files
+│   └── Logs/
+│       ├── game.log                          # Game runtime logs
+│       ├── error.log                         # Error logs
+│       └── performance.log                   # Performance metrics
+│
+├── 📚 Codex/
+│   ├── CodexViewer.exe                       # Standalone codex viewer
+│   ├── src/
+│   │   ├── main.py                          # Codex viewer source
+│   │   ├── ui/
+│   │   │   ├── main_window.py               # Main window UI
+│   │   │   ├── search_panel.py              # Search functionality
+│   │   │   └── content_viewer.py            # Content display
+│   │   └── data/
+│   │       ├── codex_parser.py              # Data parser
+│   │       └── codex_manager.py             # Content manager
+│   └── content/
+│       ├── lore/                            # Game lore entries
+│       ├── characters/                      # Character information
+│       ├── items/                           # Item database
+│       ├── abilities/                       # Abilities and skills
+│       └── tutorials/                       # Tutorial content
+│
+├── 🛠️ Dashboards/
+│   ├── modding_dashboard/
+│   │   ├── modding_dashboard.py             # Main dashboard application
+│   │   ├── requirements.txt                 # Python dependencies
+│   │   ├── ui/
+│   │   │   ├── main_window.py              # Dashboard main window
+│   │   │   ├── mod_manager.py              # Mod management interface
+│   │   │   ├── asset_browser.py            # Asset browsing tools
+│   │   │   └── console_output.py           # Debug console
+│   │   └── tools/
+│   │       ├── mod_validator.py            # Mod validation tool
+│   │       ├── asset_converter.py          # Asset conversion utilities
+│   │       └── package_builder.py          # Mod packaging tool
+│   ├── developer_dashboard/
+│   │   ├── dev_dashboard.py                # Developer tools dashboard
+│   │   ├── profiler.py                     # Performance profiler
+│   │   └── debug_tools.py                  # Debugging utilities
+│   └── server_dashboard/
+│       ├── server_monitor.py               # Server monitoring dashboard
+│       └── admin_panel.py                  # Admin control panel
+│
+├── 🎨 Mods/
+│   ├── Core/                               # Core game mods (official)
+│   │   ├── BaseGame/
+│   │   └── OfficialExpansions/
+│   ├── Community/                          # Community-created mods
+│   │   └── .gitkeep
+│   ├── Development/                        # Mods under development
+│   │   └── ExampleMod/
+│   │       ├── manifest.json              # Mod metadata
+│   │       ├── content/                   # Mod content
+│   │       ├── scripts/                   # Mod scripts
+│   │       └── README.md                  # Mod documentation
+│   └── ModTemplate/                       # Template for new mods
+│       ├── manifest.json
+│       ├── content/
+│       ├── scripts/
+│       └── documentation.md
+│
+├── 🔌 Plugins/
+│   ├── Core/                              # Core plugins (always loaded)
+│   │   ├── SaveSystem/
+│   │   ├── NetworkManager/
+│   │   ├── AudioEngine/
+│   │   └── InputSystem/
+│   ├── Optional/                          # Optional plugins
+│   │   ├── StreamingIntegration/
+│   │   ├── DiscordRPC/
+│   │   ├── Achievements/
+│   │   └── Analytics/
+│   ├── External/                          # Third-party plugins
+│   │   └── .gitkeep
+│   └── SDK/                              # Plugin development SDK
+│       ├── PluginAPI.dll
+│       ├── Documentation/
+│       └── Examples/
+│
+├── 🔧 Tools/
+│   ├── AssetPipeline/
+│   │   ├── TextureCompressor/
+│   │   ├── ModelConverter/
+│   │   └── AudioProcessor/
+│   ├── BuildTools/
+│   │   ├── build.py                      # Main build script
+│   │   ├── package.py                    # Packaging script
+│   │   └── deploy.py                     # Deployment script
+│   ├── Testing/
+│   │   ├── unit_tests/
+│   │   ├── integration_tests/
+│   │   └── performance_tests/
+│   └── Utilities/
+│       ├── save_editor.py                # Save file editor
+│       ├── config_generator.py           # Configuration generator
+│       └── log_analyzer.py               # Log analysis tool
+│
+├── 📖 Documentation/
+│   ├── UserGuide/
+│   │   ├── getting-started.md
+│   │   ├── gameplay-guide.md
+│   │   └── troubleshooting.md
+│   ├── ModdingGuide/
+│   │   ├── quick-start.md
+│   │   ├── api-reference.md
+│   │   ├── best-practices.md
+│   │   └── examples/
+│   ├── DeveloperGuide/
+│   │   ├── architecture.md
+│   │   ├── build-instructions.md
+│   │   └── contribution-guide.md
+│   └── API/
+│       ├── game-api.md
+│       ├── mod-api.md
+│       └── plugin-api.md
+│
+├── 🎮 Resources/
+│   ├── Assets/
+│   │   ├── Models/
+│   │   ├── Textures/
+│   │   ├── Sounds/
+│   │   ├── Music/
+│   │   ├── Animations/
+│   │   └── UI/
+│   ├── Localization/
+│   │   ├── en-US/
+│   │   ├── es-ES/
+│   │   ├── fr-FR/
+│   │   ├── de-DE/
+│   │   └── ja-JP/
+│   └── Shaders/
+│       ├── vertex/
+│       └── fragment/
+│
+├── 🌐 Server/
+│   ├── dedicated_server.exe              # Dedicated server executable
+│   ├── Config/
+│   │   ├── server.json
+│   │   ├── maps.json
+│   │   └── rules.json
+│   ├── Scripts/
+│   │   ├── start_server.sh
+│   │   └── stop_server.sh
+│   └── WebAPI/
+│       ├── api.py
+│       └── endpoints/
+│
+├── 📊 Scripts/
+│   ├── setup/
+│   │   ├── first_time_setup.py          # Initial setup script
+│   │   ├── check_dependencies.py        # Dependency checker
+│   │   └── configure_environment.py     # Environment setup
+│   ├── automation/
+│   │   ├── auto_update.py               # Auto-update script
+│   │   ├── backup_saves.py              # Save backup automation
+│   │   └── clean_temp.py                # Temp file cleanup
+│   └── maintenance/
+│       ├── verify_files.py              # File integrity check
+│       ├── optimize_cache.py            # Cache optimization
+│       └── repair_installation.py       # Installation repair
+│
+├── 📋 Config Files (Root)
+├── .gitignore                            # Git ignore rules
+├── .gitattributes                       # Git attributes
+├── .editorconfig                        # Editor configuration
+├── README.md                             # Project documentation
+├── LICENSE                               # License file
+├── CHANGELOG.md                          # Version history
+├── CONTRIBUTING.md                       # Contribution guidelines
+├── SECURITY.md                           # Security policy
+├── requirements.txt                      # Python dependencies (global)
+├── package.json                          # Node.js dependencies (if any)
+└── tactical-legends.sln                 # Solution file (if using VS)
+```
+
+## Key Improvements
+
+### 🚀 Enhanced Installation System
+- **Multi-platform support** with dedicated installer scripts for Windows, Linux, and macOS
+- **Automated setup** with dependency checking and environment configuration
+- **Clean uninstallation** process with registry cleanup
+
+### 🛠️ Comprehensive Dashboard System
+- **Modding Dashboard**: Full-featured mod creation and management tools
+- **Developer Dashboard**: Performance profiling and debugging utilities
+- **Server Dashboard**: Remote server monitoring and administration
+
+### 🎨 Advanced Modding Framework
+- **Structured mod organization** with Core, Community, and Development categories
+- **Mod templates** for quick start development
+- **Built-in validation** and packaging tools
+
+### 🔌 Flexible Plugin Architecture
+- **Core plugins** for essential functionality
+- **Optional plugins** for enhanced features
+- **Plugin SDK** with documentation and examples
+
+### 📚 Rich Documentation
+- **User guides** for players
+- **Modding documentation** with API references
+- **Developer documentation** for contributors
+
+### 🔧 Professional Tooling
+- **Asset pipeline** for content processing
+- **Build automation** for releases
+- **Testing framework** for quality assurance
+- **Utility scripts** for maintenance
+
+### 🌐 Multiplayer Support
+- **Dedicated server** executable
+- **Web API** for server management
+- **Configuration system** for custom game modes
+
+### 📊 Smart Automation
+- **Auto-update** functionality
+- **Save backup** system
+- **File integrity** checking
+- **Cache optimization**
+
+## Benefits of This Structure
+
+1. **Scalability**: Easily add new features, mods, and plugins
+2. **Maintainability**: Clear separation of concerns and organized file structure
+3. **Developer-Friendly**: Comprehensive tools and documentation
+4. **Mod Support**: Robust framework for community content
+5. **Cross-Platform**: Support for multiple operating systems
+6. **Professional**: Industry-standard organization and tooling

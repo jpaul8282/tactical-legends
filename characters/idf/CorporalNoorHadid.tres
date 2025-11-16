@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Noor Hadid"
+role = "Diver & EOD Technician"
+background = "Explosive ordnance disposal with underwater clearance"
+expertise = [ "Underwater breaching", "Device neutralization", "Risk assessment" ]

@@ -1,0 +1,114 @@
+Location: Assets/Scripts/Core/CampaignBranchingManager.cs (replace your existing file)
+Key features:
+Safe initialization
+Use MissionRegistry to determine the next mission
+Persist campaign state
+Skeleton (paste-ready)
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CampaignBranchingManager: MonoBehaviour
+{
+public int globalMorality = 0;
+private Dictionary<string, int> factionTrust = new Dictionary<string, int>();
+private Dictionary<string, string> squadTraits = new Dictionary<string, string>();
+
+// Dependency: registry and state (assign in Inspector or via code)
+[SerializeField] private MissionRegistry missionRegistry;
+[SerializeField] private CampaignState campaignState; // persisted state
+
+private void Awake()
+{
+// Initialize or load state
+if (campaignState != null)
+{
+LoadState(campaignState);
+}
+
+// Ensure registry exists
+if (missionRegistry == null)
+{
+var registryObj = new GameObject("MissionRegistry");
+missionRegistry = registryObj.AddComponent<MissionRegistry>();
+}
+
+// Initialize defaults safely
+EnsureFactionExists("Echo Ascendants"); // example default faction
+}
+
+private void EnsureFactionExists(string faction)
+{
+if (!factionTrust.ContainsKey(faction))
+factionTrust[faction] = 0;
+}
+
+public int GetFactionTrust(string faction)
+{
+if (!factionTrust.TryGetValue(faction, out int t))
+{
+t = 0;
+factionTrust[faction] = t;
+}
+return t;
+}
+
+public void AdjustFactionTrust(string faction, int delta)
+{
+if (!factionTrust.ContainsKey(faction))
+factionTrust[faction] = 0;
+
+factionTrust[faction] = Mathf.Clamp(factionTrust[faction] + delta, 0, 100);
+}
+
+public void RecordMissionOutcome(int moralityDelta, string faction, Dictionary<string, string> newTraits)
+{
+globalMorality = Mathf.Clamp(globalMorality + moralityDelta, -100, 100);
+
+if (!factionTrust.ContainsKey(faction))
+factionTrust[faction] = 0;
+
+factionTrust[faction] = Mathf.Clamp(factionTrust[faction] + moralityDelta, 0, 100);
+
+// Merge traits (overwrite existing keys; you can refine this)
+if (newTraits != null)
+{
+foreach (var kv in newTraits)
+squadTraits[kv.Key] = kv.Value;
+}
+
+// Optionally persist state after each outcome
+if (campaignState != null)
+SaveState(campaignState);
+}
+
+public string UnlockNextMission()
+{
+// Data-driven; consult registry
+// Fallback to hard-coded if registry not set
+if (missionRegistry != null)
+{
+return missionRegistry.GetNextMission(globalMorality, GetFactionTrust("Echo Ascendants"), squadTraits);
+}
+
+// Fallback simple logic
+if (globalMorality >= 50 && GetFactionTrust("Echo Ascendants") > 60)
+return "Dawn Accord";
+if (globalMorality < 0)
+return "Echo Collapse";
+
+return "Grey Protocol";
+}
+
+public void SetPlayEpilogueTheme(float moodValue)
+{
+// Example: call to AudioManager with safety
+// AudioManager.Instance?.PlayThemeForMood(moodValue);
+}
+
+// Persistence helpers
+public void SaveState(CampaignState state)
+{
+if (state != null)
+{
+state.globalMorality

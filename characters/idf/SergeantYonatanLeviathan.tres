@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Sergeant Yonatan Leviathan"
+role = "Team Leader / Logistics"
+background = "Specializes in mobility planning and morale systems"
+expertise = [ "Rations optimization", "Transport cell coordination", "Swim logistics" ]

@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Private Omar Yasin"
+role = "Field Medic / Logistical Runner"
+background = "Medical apprentice with physio focus"
+expertise = [ "On-site triage", "Rapid supply run", "Hydration management" ]

@@ -1,0 +1,18 @@
+GDscript
+extends Node
+
+var comp1
+var comp2
+
+func _ready():
+    comp1 = preload("res://components/Comp1.tscn").instance()
+    comp2 = preload("res://components/Comp2.tscn").instance()
+    add_child(comp1)
+    add_child(comp2)
+
+    fuse_components(comp1, comp2)
+
+func fuse_components(c1, c2):
+    c1.bind_to(c2)
+    c2.receive_fusion(c1)
+

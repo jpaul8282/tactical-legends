@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Omar Qadri"
+role = "RSO (Range Safety Officer) / Safety"
+background = "Former range master, calm under pressure"
+expertise = [ "Safety protocols", "Tethered operations", "Training oversight" ]

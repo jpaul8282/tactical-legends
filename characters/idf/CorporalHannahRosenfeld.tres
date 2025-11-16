@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Hannah Rosenfeld"
+role = "Sniper / Overwatch"
+background = "Marksman with mountain and waterborne ops"
+expertise = [ "Waterline concealment", "Long-range optics", "Wind/boat dynamics" ]

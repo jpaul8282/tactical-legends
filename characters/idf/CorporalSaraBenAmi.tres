@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Sara Ben-Ami"
+role = "Combat Medic"
+background = "Marines medical corps, underwater triage certifications"
+expertise = [ "Rapid-water extraction", "Field medevac", "Improvised field clinics" ]

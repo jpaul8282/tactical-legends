@@ -1,0 +1,127 @@
+Tactical Legend
+
+Project overview
+Tactical Legend is a sci-fi tactical shooter that blends deep loadout customization, futuristic gadgets, and dynamic mission branching driven by a morality and faction alignment system. Players can tackle solo campaigns or cooperative missions with friends, leveraging drones, energy shields, cloaking, and advanced hacking tools to outthink and outmaneuver opponents. The game emphasizes strategic planning, situational awareness, and teamwork, with a strong emphasis on replayability through procedurally varied maps, adaptive AI, and branching story paths.
+
+Key features
+
+Futuristic gadget ecosystem
+Drones for reconnaissance, hacking, and turret-like support
+Energy shields for defensive play and zone denial
+Invisibility cloaks for stealth approaches and flanking
+Additional gadgets (decoys, turrets, barriers, hacks, etc.)
+Solo and cooperative modes
+Solo campaigns with adaptive AI and branching storylines
+4-player co-op missions with role-based teamwork (Lead Scout, Anchor, Ghost, Tech Specialist)
+Deep customization
+Modular weapons with upgrade paths (ammo types, scopes, stability improvements)
+Gadget loadouts tailored to playstyle (stealth, DPS, tech emphasis)
+Character skins, weapon camos, and emblem customization
+Morality and faction system
+Global morality metric influences mission branching, rewards, and outcomes
+Faction trust levels unlock unique gadgets, buffs, or alternate routes
+Squad traits gained from mission outcomes influence loadouts and abilities
+Dynamic missions and environments
+Branching mission objectives and multiple end states
+Time-sensitive breaches, stealth runs, and high-stakes exfil operations
+Varied environments: urban ruins, industrial complexes, cyber-city corridors, fortress strongholds
+Audio and presentation
+Dynamic music that shifts with campaign mood and mission stakes
+PS, Xbox, and PC control mappings (with console-specific prompts)
+Data-driven design
+Config-driven mission branching, faction relationships, and reward scales
+Scriptable mission generation for extended replayability
+Technical highlights
+
+Engine/tech: Unity or Unreal (define clearly in your repository; this description assumes Unity for accessibility)
+Architecture
+Core gameplay loop: Loadout -> Infiltration -> Engagement -> Extraction -> Branching outcomes
+Systems: Combat, AI, Gadgets, Progression, Campaign Branching, Audio, UI
+Data-driven design
+MissionConfig objects define objectives, spawn points, AI difficulty, and branching rules
+CampaignState persists Morality, FactionTrust, and SquadTraits across sessions
+AI and combat
+Patrols with predictable patterns but dynamic adaptivity to player actions
+Snipers, drones, turrets, and tech obstacles requiring hack or bypass
+Networking (for co-op)
+Client-server architecture with host-authoritative state
+Synchronization of gadget cooldowns, drone control, and mission objectives
+Accessibility and UX
+Clear PS/PC control schemes, tutorials, and a compact quick-reference HUD
+Difficulty scaling options for stealth, balanced, and aggressive playstyles
+Project structure (suggested)
+
+Assets/
+Models, textures, animations, sounds, UI assets
+Assets/Scripts/
+Core gameplay logic, gadgets, weapons, AI, campaign branching, progression
+Assets/Config/
+MissionConfig, FactionConfig, GadgetConfig, WeaponConfig, SkinConfig
+Runtime/
+Scene templates, procedural map generators, camera rigs
+Docs/
+Design docs, API references, contributor guidelines
+Tests/
+Unit tests for game logic (campaign branching, gadget cooldowns, AI states)
+Tools/
+Data migration helpers, build scripts, local tooling for designers
+Core gameplay systems (detailed)
+
+Gadgets and weapons
+Drones: recon, combat support, hacking modules
+Energy shields: shield walls, shield regen mechanics
+Cloaks: stealth duration, cooldown, and detection logic
+Hacking: device interactions, gate controls, turret disabling
+Weapon system: modular base weapons with interchangeable ammo and optics
+Perks/Mods: gadget cooldown reductions, improved drone battery, movement tweaks
+Solo progression
+Early, mid, late-game loadouts
+Mission pacing and map control strategies
+Objectives that scale with player performance and branching outcomes
+Co-op progression
+Role-based teamwork: Lead Scout, Anchor, Ghost, Tech Specialist
+Shared cooldown mechanics and synergy bonuses
+Coordinated breaches, hacks, and retreats
+Morality and faction branching
+Global Morality: numeric scale -100 to +100
+= 50: Dawn Accord paths with high-security or legendary tech missions
+
+< 0: Echo Collapse paths with harsher, more covert missions
+0–49: Grey Protocol standard missions
+FactionTrust: 0–100 values per faction; high trust unlocks buffs, gadgets, or side quests
+SquadTraits: persistent traits that unlock special abilities or nerf/buff certain weapons/gadgets
+Outcome effects: mission rewards, ally support, and potential ally interference based on morality/faction state
+Mission system and branching
+MissionConfig defines:
+Objectives, time limits, objective order, and success criteria
+Enemy density, patrol patterns, and boss-like encounters
+Branching rules based on Morality, FactionTrust, and Traits
+End states influence next mission pool and available resources
+Audio prompts and UI cues reflect current campaign mood
+Audio and music
+Dynamic music layers that respond to Morality and mission state
+Sound cues for gadget readiness, success/failure, and branching events
+UI and UX
+Quick-reference sheets and HUD overlays for weapon/gadget cooldowns
+Campaign branch indicators showing available missions and potential outcomes
+Localization and accessibility
+Text localization system
+Keyboard/mouse/controller support with accessible mapping
+Development and contribution
+
+Coding standards
+Follow consistent naming conventions, clear comments, and modular design
+Data-driven approach for mission configs and campaign rules
+Testing
+Automated tests for branching logic and gadget cooldowns
+Manual playtests for balance across stealth, DPS, and tech-focused builds
+Documentation
+Inline code docs and external API references
+Contributing guidelines, issue templates, PR templates
+Licensing
+Choose an appropriate license (e.g., MIT, Apache 2.0) and include LICENSE file
+CI/CD
+GitHub Actions for builds, unit tests, and packaging
+Releasing
+Versioning (Semantic Versioning), changelog, and release notes
+

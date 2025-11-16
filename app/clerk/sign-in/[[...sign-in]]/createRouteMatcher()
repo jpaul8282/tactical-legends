@@ -1,0 +1,1 @@
+const isProtectedRoute = createRouteMatcher(['/dashboard(.*)', '/forum(.*)'])

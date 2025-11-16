@@ -1,0 +1,7 @@
+[gd_resource type="IDFSoldier" load_steps=2 format=3]
+
+[resource]
+name = "Corporal Eli Cohen"
+role = "Combat Engineer"
+background = "Field construction and fortification specialist"
+expertise = [ "Underwater bridge work", "Coastal fortifications" ]
